@@ -1,0 +1,576 @@
+{
+  "script": "MT5 v2 preflight seguro, solo lectura",
+  "hora_utc_pc": "2026-10-16T11:03:00.618011+00:00",
+  "cuenta_demo": true,
+  "trading_cuenta_permitido": true,
+  "trading_terminal_permitido": true,
+  "api_trading_deshabilitada": false,
+  "riesgo_ejemplo": 0.005,
+  "sin_operaciones": true,
+  "mercados": [
+    {
+      "symbol": "DE40",
+      "trade_mode": "DISABLED",
+      "puede_comprar_por_trade_mode": false,
+      "puede_vender_por_trade_mode": false,
+      "visible": true,
+      "precio_bid": 25652.5,
+      "precio_ask": 25653.0,
+      "spread_precio": 0.5,
+      "tick_epoch": 1792159379,
+      "tick_hora_si_utc": "2026-10-16T14:02:59+00:00",
+      "desfase_tick_vs_reloj_s": 10798.38,
+      "advertencia_hora": "Timestamps incompatibles con UTC del sistema; no convertir manualmente hasta confirmar el origen del desplazamiento",
+      "velas": {
+        "H1": {
+          "ultima_barra_actual_epoch": 1792152000,
+          "ultima_barra_actual_si_utc": "2026-10-16T12:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 7379,
+          "cronologia_compatible": false,
+          "ultima_barra_cerrada_epoch": 1792148400
+        },
+        "M15": {
+          "ultima_barra_actual_epoch": 1792154700,
+          "ultima_barra_actual_si_utc": "2026-10-16T12:45:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 4679,
+          "cronologia_compatible": false,
+          "ultima_barra_cerrada_epoch": 1792153800
+        }
+      },
+      "datos_temporales_coherentes": false,
+      "riesgo_compra_ejemplo": {
+        "error": "No se calcula riesgo operativo con series H1/M15 incoherentes"
+      },
+      "apto_para_estudiar_estrategia": false
+    },
+    {
+      "symbol": "US500",
+      "trade_mode": "DISABLED",
+      "puede_comprar_por_trade_mode": false,
+      "puede_vender_por_trade_mode": false,
+      "visible": true,
+      "precio_bid": 7754.0,
+      "precio_ask": 7754.5,
+      "spread_precio": 0.5,
+      "tick_epoch": 1792159378,
+      "tick_hora_si_utc": "2026-10-16T14:02:58+00:00",
+      "desfase_tick_vs_reloj_s": 10797.38,
+      "advertencia_hora": "Timestamps incompatibles con UTC del sistema; no convertir manualmente hasta confirmar el origen del desplazamiento",
+      "velas": {
+        "H1": {
+          "ultima_barra_actual_epoch": 1792159200,
+          "ultima_barra_actual_si_utc": "2026-10-16T14:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 178,
+          "cronologia_compatible": true,
+          "ultima_barra_cerrada_epoch": 1792155600
+        },
+        "M15": {
+          "ultima_barra_actual_epoch": 1792159200,
+          "ultima_barra_actual_si_utc": "2026-10-16T14:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 178,
+          "cronologia_compatible": true,
+          "ultima_barra_cerrada_epoch": 1792158300
+        }
+      },
+      "datos_temporales_coherentes": true,
+      "riesgo_compra_ejemplo": {
+        "error": "Símbolo no disponible para abrir COMPRAS"
+      },
+      "apto_para_estudiar_estrategia": false
+    },
+    {
+      "symbol": "US30",
+      "trade_mode": "DISABLED",
+      "puede_comprar_por_trade_mode": false,
+      "puede_vender_por_trade_mode": false,
+      "visible": true,
+      "precio_bid": 52253.2,
+      "precio_ask": 52254.4,
+      "spread_precio": 1.2,
+      "tick_epoch": 1792159379,
+      "tick_hora_si_utc": "2026-10-16T14:02:59+00:00",
+      "desfase_tick_vs_reloj_s": 10798.38,
+      "advertencia_hora": "Timestamps incompatibles con UTC del sistema; no convertir manualmente hasta confirmar el origen del desplazamiento",
+      "velas": {
+        "H1": {
+          "ultima_barra_actual_epoch": 1792152000,
+          "ultima_barra_actual_si_utc": "2026-10-16T12:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 7379,
+          "cronologia_compatible": false,
+          "ultima_barra_cerrada_epoch": 1792148400
+        },
+        "M15": {
+          "ultima_barra_actual_epoch": 1792154700,
+          "ultima_barra_actual_si_utc": "2026-10-16T12:45:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 4679,
+          "cronologia_compatible": false,
+          "ultima_barra_cerrada_epoch": 1792153800
+        }
+      },
+      "datos_temporales_coherentes": false,
+      "riesgo_compra_ejemplo": {
+        "error": "No se calcula riesgo operativo con series H1/M15 incoherentes"
+      },
+      "apto_para_estudiar_estrategia": false
+    },
+    {
+      "symbol": "XAUUSD",
+      "trade_mode": "FULL",
+      "puede_comprar_por_trade_mode": true,
+      "puede_vender_por_trade_mode": true,
+      "visible": true,
+      "precio_bid": 4174.43,
+      "precio_ask": 4174.75,
+      "spread_precio": 0.32,
+      "tick_epoch": 1792159379,
+      "tick_hora_si_utc": "2026-10-16T14:02:59+00:00",
+      "desfase_tick_vs_reloj_s": 10798.38,
+      "advertencia_hora": "Timestamps incompatibles con UTC del sistema; no convertir manualmente hasta confirmar el origen del desplazamiento",
+      "velas": {
+        "H1": {
+          "ultima_barra_actual_epoch": 1792159200,
+          "ultima_barra_actual_si_utc": "2026-10-16T14:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 179,
+          "cronologia_compatible": true,
+          "ultima_barra_cerrada_epoch": 1792155600
+        },
+        "M15": {
+          "ultima_barra_actual_epoch": 1792159200,
+          "ultima_barra_actual_si_utc": "2026-10-16T14:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 179,
+          "cronologia_compatible": true,
+          "ultima_barra_cerrada_epoch": 1792158300
+        }
+      },
+      "datos_temporales_coherentes": true,
+      "riesgo_compra_ejemplo": {
+        "cuenta_divisa": "USD",
+        "fraccion_riesgo": 0.005,
+        "presupuesto_perdida": 15.0,
+        "atr_m15_cerrado": 6.22857143,
+        "sl_distancia_precio_ejemplo": 7.47428571,
+        "volumen_minimo": 0.01,
+        "perdida_min_lote_estimada": 7.47,
+        "nota": "Estimación a SL sin comisiones, swaps ni deslizamientos. No se envían órdenes.",
+        "volumen_compatible_con_riesgo": 0.02,
+        "perdida_estimacion_al_stop": 14.95
+      },
+      "apto_para_estudiar_estrategia": false
+    },
+    {
+      "symbol": "EURUSD",
+      "trade_mode": "FULL",
+      "puede_comprar_por_trade_mode": true,
+      "puede_vender_por_trade_mode": true,
+      "visible": true,
+      "precio_bid": 1.12587,
+      "precio_ask": 1.12588,
+      "spread_precio": 1e-05,
+      "tick_epoch": 1792159378,
+      "tick_hora_si_utc": "2026-10-16T14:02:58+00:00",
+      "desfase_tick_vs_reloj_s": 10797.38,
+      "advertencia_hora": "Timestamps incompatibles con UTC del sistema; no convertir manualmente hasta confirmar el origen del desplazamiento",
+      "velas": {
+        "H1": {
+          "ultima_barra_actual_epoch": 1792152000,
+          "ultima_barra_actual_si_utc": "2026-10-16T12:00:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 7378,
+          "cronologia_compatible": false,
+          "ultima_barra_cerrada_epoch": 1792148400
+        },
+        "M15": {
+          "ultima_barra_actual_epoch": 1792154700,
+          "ultima_barra_actual_si_utc": "2026-10-16T12:45:00+00:00",
+          "segundos_tick_menos_apertura_barra_actual": 4678,
+          "cronologia_compatible": false,
+          "ultima_barra_cerrada_epoch": 1792153800
+        }
+      },
+      "datos_temporales_coherentes": false,
+      "riesgo_compra_ejemplo": {
+        "error": "No se calcula riesgo operativo con series H1/M15 incoherentes"
+      },
+      "apto_para_estudiar_estrategia": false
+    }
+  ],
+  "posibles_simbolos_alternativos": {
+    "DE40": [
+      {
+        "nombre": "DE40",
+        "descripcion": "Germany 40 Index",
+        "trade_mode": "DISABLED",
+        "visible": true
+      }
+    ],
+    "US500": [
+      {
+        "nombre": "APRP",
+        "descripcion": "PGIM S&P 500 Buffer 12 ETF - April",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "AUGP",
+        "descripcion": "PGIM S&P 500 Buffer 12 ETF August",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "BBB",
+        "descripcion": "CYBER HORNET S&P 500 and Bitcoin 75/25 Strategy ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "BUFP",
+        "descripcion": "PGIM Laddered S&P 500 Buffer 12 ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CATH",
+        "descripcion": "Global X S&P 500 Catholic Values ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CHRI",
+        "descripcion": "Global X S&P 500 Christian Values ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSA",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF August",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSD",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF December",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSF",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF February",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSJ",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF July",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSL",
+        "descripcion": "Calamos Laddered S&P 500 Structured Alt Protection ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSM",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF May",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSN",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF November",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSO",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF - October",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSP",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF - April",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSR",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF - March",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPST",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF September",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSU",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF June",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "CPSY",
+        "descripcion": "Calamos S&P 500 Structured Alt Protection ETF January",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DECP",
+        "descripcion": "PGIM S&P 500 Buffer 12 ETF - December",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DIVG",
+        "descripcion": "Invesco Exchange-Traded Fund Trust II Invesco S&P 500 High Divi",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DSPY",
+        "descripcion": "Tema S&P 500 Historical Weight ETF Strategy",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "EEE",
+        "descripcion": "CYBER HORNET S&P 500 and Ethereum 75/25 Strategy ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "EFIV",
+        "descripcion": "SPDR S&P 500 ESG ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "EGLE",
+        "descripcion": "Global X S&P 500 U.S. Revenue Leaders ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "EMOT",
+        "descripcion": "First Trust S&P 500 Economic Moat ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "FB",
+        "descripcion": "ProShares S&P 500 Dynamic Buffer ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "FCFY",
+        "descripcion": "First Trust S&P 500 Diversified Free Cash Flow ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "FEBP",
+        "descripcion": "PGIM S&P 500 Buffer 12 ETF - February",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "FLAG",
+        "descripcion": "Global X S&P 500 U.S. Market Leaders Top 50 ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "GPIX",
+        "descripcion": "Goldman Sachs S&P 500 Core Premium Income ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "HIBL",
+        "descripcion": "Direxion Daily S&P 500 High Beta Bull 3X Shares",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "HIBS",
+        "descripcion": "Direxion Daily S&P 500 High Beta Bear 3X Shares",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "ISPY",
+        "descripcion": "ProShares Trust ProShares S&P 500 High Income ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "IVV",
+        "descripcion": "iShares Core S&P 500 ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "IVVW",
+        "descripcion": "iShares S&P 500 BuyWrite ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "IVW",
+        "descripcion": "iShares S&P 500 Growth ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "JULP",
+        "descripcion": "PGIM S&P 500 Buffer 12 ETF - July",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "JUNP",
+        "descripcion": "PGIM S&P 500 Buffer 12 ETF - June",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "KNG",
+        "descripcion": "FT Vest S&P 500 Dividend Aristocrats Target Income ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      }
+    ],
+    "US30": [
+      {
+        "nombre": "DDM",
+        "descripcion": "ProShares Ultra Dow30",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DJD",
+        "descripcion": "Invesco Dow Jones Industrial Average Dividend ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DJT",
+        "descripcion": "Dow Jones Transportation Averag",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DOG",
+        "descripcion": "ProShares Short Dow30",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DXD",
+        "descripcion": "ProShares UltraShort Dow30",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "FDND",
+        "descripcion": "FT Vest Dow Jones Internet & Target Income ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "FDNI",
+        "descripcion": "First Trust Dow Jones International Internet ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "GYLD",
+        "descripcion": "Arrow Dow Jones Global Yield ETF ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "IYY",
+        "descripcion": "iShares Dow Jones U.S. ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "RWO",
+        "descripcion": "State Street SPDR Dow Jones Global Real Estate ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "RWR",
+        "descripcion": "State Street SPDR Dow Jones REIT ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "RWX",
+        "descripcion": "State Street SPDR Dow Jones International Real Estate ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "SDOW",
+        "descripcion": "UltraPro Short Dow30",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "SPSK",
+        "descripcion": "SP Funds Dow Jones Global Sukuk ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "UDOW",
+        "descripcion": "ProShares UltraPro Dow30",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "UMMA",
+        "descripcion": "Wahed Dow Jones Islamic World ETF",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "WEBL",
+        "descripcion": "Direxion Daily Dow Jones Internet Bull 3X Shares",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "WEBS",
+        "descripcion": "Direxion Daily Dow Jones Internet Bear 3X Shares",
+        "trade_mode": "FULL",
+        "visible": false
+      },
+      {
+        "nombre": "DIA",
+        "descripcion": "SPDR Dow Jones Industrial Average ETF",
+        "trade_mode": "DISABLED",
+        "visible": false
+      },
+      {
+        "nombre": "US30",
+        "descripcion": "US Wall Street 30 Index",
+        "trade_mode": "DISABLED",
+        "visible": true
+      },
+      {
+        "nombre": "US30M",
+        "descripcion": "US30m",
+        "trade_mode": "DISABLED",
+        "visible": false
+      }
+    ]
+  }
+}
