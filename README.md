@@ -1,55 +1,60 @@
-# Trade Algorithim - Sistema Cuantitativo y Bot de Trading Automatizado
+# Trading V2 — Sistema de investigación cuantitativa (MT5)
 
-Sistema algorítmico multi-factor con filtrado predictivo de Machine Learning (Meta-Labeling) y ejecución desatendida en **MetaTrader 5 (MT5)**.
+Repositorio colaborativo para analizar datos históricos y prototipar estrategias de trading con Python y MetaTrader 5.
 
----
+> **Estado: INVESTIGACIÓN / NO OPERATIVO.** Ninguna estrategia V2 está validada para enviar órdenes a una cuenta real ni a una DEMO automática. Los backtests actuales no demuestran rentabilidad fuera de muestra. **No ejecutar el bot antiguo `live_trader_mt5.py` con `--live`**: su control de riesgos sigue pendiente de auditoría.
 
-## 📁 Estructura del Proyecto
+## Componentes
 
-```text
-Trade Algorithim/
-├── data/                      # Históricos OHLCV diarios y horarios (CSV)
-│   ├── DAX40_1d.csv & 1h.csv
-│   ├── SP500_1d.csv & 1h.csv
-│   ├── DOW_JONES_1d.csv & 1h.csv
-│   └── EURUSD_1d.csv & 1h.csv
-├── download_data.py           # Descargador automático de datos de mercado
-├── backtester.py              # Motor de simulación con validación In-Sample / Out-of-Sample
-├── ml_strategy.py             # Modelo de Machine Learning (Meta-Labeling con NumPy puro)
-├── enhanced_strategy.py       # Estrategia con reglas de Freqtrade, vn.py y TradingAgents
-├── test_mt5_connection.py     # Comprobación de estado y símbolos de MetaTrader 5
-├── live_trader_mt5.py         # Bot de ejecución en vivo conectado a MetaTrader 5
-└── README.md                  # Manual y documentación técnica
-```
+| Ubicación | Contenido | Estado |
+|---|---|---|
+| `trading_v2/` | Validación de datos, baseline y selección ML offline | Experimental |
+| `scripts/investigar_admirals_v2.py` | Investigación M15/H1 multiactivo desde un ZIP local | Offline |
+| `scripts/diagnostico_admirals_mt5.py` | Inspección de especificaciones de una cuenta Admirals DEMO | Solo lectura |
+| `scripts/exportar_historial_admirals_mt5.py` | Exporta históricos de Admirals DEMO | Solo lectura |
+| `tests/` | Pruebas de causalidad, simulación y seguridad | Automáticas en GitHub |
+| `live_trader_mt5.py` y otros scripts originales | Código previo a V2 | **Legacy; no activar órdenes** |
 
----
+## Primeros pasos
 
-## 🚀 Cómo Ejecutar el Bot
+Crear un entorno virtual e instalar dependencias para V2:
 
-Abre un terminal en esta carpeta (`C:\Users\Usuario\Desktop\Trade Algorithim`):
-
-### 1. Modo Simulación / Dry-Run (Recomendado para observar):
-Calcula los indicadores y la probabilidad de éxito en cada tick sin enviar órdenes al broker:
 ```powershell
-python live_trader_mt5.py
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-v2.txt
+python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-### 2. Modo Operativo Real (Cuenta DEMO):
-Ejecuta las operaciones en tu cuenta demo cuando el modelo de ML aprueba la entrada ($> 52\%$ de probabilidad):
+Investigar datos exportados localmente (no se requiere MT5 para este comando):
+
 ```powershell
-python live_trader_mt5.py --live
+python scripts/investigar_admirals_v2.py --zip 'admirals_historial_local.zip'
 ```
 
----
+El ZIP del bróker no está en GitHub. Consulta
+[la guía de exportación](ADMIRALS_EXPORT.md) y
+[el informe de investigación](ADMIRALS_MULTI_ASSET_RESEARCH.md).
 
-## 🛡️ Parámetros de Control y Protección de Capital
+## Datos de referencia y límites
 
-| Parámetro | Valor | Propósito |
-| :--- | :--- | :--- |
-| **Portafolio Multi-Activo** | `DE40`, `US500`, `US30`, `XAUUSD` | Escaneo simultáneo de DAX 40, S&P 500, Dow Jones y Oro. |
-| **Selector de Oportunidad** | Convicción Máxima | Si varios activos dan señal, solo dispara en el activo con mayor probabilidad de éxito ML. |
-| **Auto-Reentrenamiento** | Diario a medianoche (00:00) | Actualiza las bases históricas con las velas del día y recalibra los modelos ML. |
-| **Riesgo por trade** | `1.0%` del Balance | Con $3.000 USD de cuenta, el riesgo máximo es de $30 USD por operación. |
-| **Stop Loss / Take Profit** | $1.0 \times \text{ATR}$ / $1.5 \times \text{ATR}$ | Dinámicos según la volatilidad del activo en ese instante. |
-| **Breakeven (Freqtrade)** | $+0.9 \times \text{ATR}$ | Mueve el Stop Loss a coste cero en cuanto la operación va a favor. |
-| **Límite de concurrencia**| Máx. 1 posición simultánea | Protege la cuenta evitando acumular riesgo correlacionado. |
+- Cuenta de estudio: Admirals Group AS, servidor `AdmiralsGroup-Demo`, 3.000 **EUR** ficticios, apalancamiento de la DEMO 1:100.
+- Instrumentos: `GERMANY40`, `[SP500]`, `[DJI30]`, `GOLD` y `EURUSD`.
+- Los costes de comisiones y swaps no están totalmente verificados. Los modelos de riesgo son aproximaciones en múltiplos R; no calculan todavía lotes reales ni margen efectivo.
+- **Ninguno de los cinco mercados pasó la evaluación final para activar órdenes.** Ver [informe multiactivo](ADMIRALS_MULTI_ASSET_RESEARCH.md).
+- No añadir al repositorio claves, tokens, números de cuenta, credenciales, informes personales del terminal ni datos privados.
+
+## Trabajo en equipo
+
+La rama `main` contiene código integrado; los cambios nuevos se hacen en ramas `feature/*` o `fix/*` y se revisan mediante Pull Requests.
+
+Leer [CONTRIBUTING.md](CONTRIBUTING.md) para el flujo de trabajo, las pruebas y las condiciones necesarias antes de cualquier integración. Los tests se ejecutan en PR dirigidas a `main` y después de cada push a `main`.
+
+## Documentación técnica
+
+- [Motor offline V2](TRADING_V2.md)
+- [Filtro ML y selección temporal](TRADING_V2_ML.md)
+- [Exportador Admirals](ADMIRALS_EXPORT.md)
+- [Investigación multiactivo Admirals](ADMIRALS_MULTI_ASSET_RESEARCH.md)
+
+**Aviso:** el repositorio es código experimental, no asesoramiento financiero.
