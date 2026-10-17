@@ -17,3 +17,5 @@ v2_research_result.json
 *_local_result.json
 *.log
 *_local.zip
+admirals_historial*.zip
+broker_exports/
