@@ -649,6 +649,23 @@ def research_market_high_winrate(
         "validation_candidates_count": len(options),
         "accepted_validation_count": len(accepted),
         "chosen": winner,
+        "validation_near_misses": [
+            {
+                "strategy": x["strategy"],
+                "horizon_bars": x["horizon_bars"],
+                "exit_profile": x["exit_profile"],
+                "ml_quantile": x["ml_quantile"],
+                "folds": [
+                    {k: f.get(k) for k in ("trades", "win_rate", "profit_factor", "mean_r")}
+                    for f in x["validation_folds"]
+                ],
+            }
+            for x in sorted(
+                [o for o in options if all(f["trades"] >= cfg.min_trades_fold for f in o["validation_folds"])],
+                key=lambda o: min((f["win_rate"] or 0.0) for f in o["validation_folds"]),
+                reverse=True,
+            )[:5]
+        ],
         "window_boundaries": {
             "folds": [
                 {
