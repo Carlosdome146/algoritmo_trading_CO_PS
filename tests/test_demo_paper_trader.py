@@ -35,6 +35,8 @@ class MockMT5Adapter:
         self.sent_orders = []
         self.TIMEFRAME_M15 = 15
         self.TIMEFRAME_H1 = 16385
+        self.TIMEFRAME_H4 = 16388
+        self.TIMEFRAME_D1 = 16408
         self.ORDER_TYPE_BUY = 0
         self.ORDER_TYPE_SELL = 1
         self.TRADE_ACTION_DEAL = 1
@@ -47,6 +49,7 @@ class MockMT5Adapter:
 
         self.mock_rates_m15 = {}
         self.mock_rates_h1 = {}
+        self.mock_rates_d1 = {}
         self.mock_ticks = {}
         self.mock_positions = []
         self.mock_deals = []
@@ -65,6 +68,8 @@ class MockMT5Adapter:
             return self.mock_rates_m15.get(symbol)
         elif timeframe == self.TIMEFRAME_H1:
             return self.mock_rates_h1.get(symbol)
+        elif timeframe == self.TIMEFRAME_D1:
+            return self.mock_rates_d1.get(symbol)
         return None
 
     def symbol_info_tick(self, symbol: str):
@@ -333,6 +338,46 @@ class DemoPaperTraderTests(unittest.TestCase):
         self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED"))
 
 
+    def test_daily_strategy_d1_evaluation_and_exit_rule(self):
+        adapter = MockMT5Adapter()
+        adapter.mock_rates_d1["[SP500]"] = make_synthetic_rates(260, base_price=5000.0, trend=1.0, step_minutes=1440)
+        adapter.mock_ticks["[SP500]"] = SimpleNamespace(bid=5260.0, ask=5260.40)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.12, ask=1.1201)
+
+        cfg = DemoTraderConfig(
+            symbols=["[SP500]"],
+            timeframe="D1",
+            strategy="idx_rsi2_dip_regime",
+            dry_run=True,
+            risk_fraction=0.0025,
+            sl_atr=2.5,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 10, 20, 22, 0, tzinfo=timezone.utc)
+        res = trader.evaluate_symbol("[SP500]", now_valid)
+        self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED"))
+
+        # Probar regla de salida en la siguiente barra diaria cuando ya existe una posición abierta
+        pos_open = SimpleNamespace(
+            ticket=201,
+            symbol="[SP500]",
+            type=adapter.ORDER_TYPE_BUY,
+            price_open=5000.0,
+            volume=0.1,
+            sl=4850.0,
+            tp=0.0,
+            magic=trader.cfg.magic_number,
+        )
+        adapter.mock_positions = [pos_open]
+        # Simular nueva barra diaria siguiente
+        adapter.mock_rates_d1["[SP500]"][-1]["time"] += 86400
+        now_next = datetime(2026, 10, 21, 22, 0, tzinfo=timezone.utc)
+        res_exit = trader.evaluate_symbol("[SP500]", now_next)
+        self.assertIn(res_exit["status"], ("POSITION_HELD", "DRY_RUN_CLOSED", "SUCCESS_CLOSED"))
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
