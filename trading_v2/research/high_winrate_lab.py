@@ -25,6 +25,7 @@ from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import RobustScaler
 from scripts import investigar_admirals_v2 as prior
+from trading_v2.backtesting.contract_specs import calculate_lot_size, get_contract_spec
 from trading_v2.strategies.precision_microstructure import (
     PRECISION_FEATURES,
     PRECISION_STRATEGIES,
@@ -782,11 +783,35 @@ def run_high_winrate_archive(
             loaded[market] = (m15, h1, point, consistency)
 
         close_series = {m: loaded[m][0]["Close"] for m in loaded}
+        eurusd_last = float(close_series["EURUSD"].iloc[-1]) if "EURUSD" in close_series else 1.12
         for market, (m15, h1, point, consistency) in loaded.items():
             other_closes = {k: v for k, v in close_series.items() if k != market}
             market_res = research_market_high_winrate(
                 m15, h1, point, cfg=config, cross_market_closes=other_closes
             )
+            sym_name = prior.SYMBOLS[market][0]
+            spec = get_contract_spec(sym_name)
+            tr = pd.concat(
+                [
+                    m15["High"] - m15["Low"],
+                    (m15["High"] - m15["Close"].shift(1)).abs(),
+                    (m15["Low"] - m15["Close"].shift(1)).abs(),
+                ],
+                axis=1,
+            ).max(axis=1)
+            med_atr = float(tr.rolling(14).mean().median())
+            last_close = float(m15["Close"].iloc[-1])
+            lot_audit = calculate_lot_size(
+                spec=spec,
+                account_equity=3000.0,
+                risk_fraction=0.005,
+                stop_distance_price=1.40 * med_atr,
+                entry_price=last_close,
+                eurusd_rate=eurusd_last,
+                leverage=100.0,
+                account_currency="EUR",
+            )
+            market_res["contract_sizing_audit"] = asdict(lot_audit)
             market_res["data_quality"] = {
                 "h1_consistency": consistency,
                 "m15_bars": len(m15),

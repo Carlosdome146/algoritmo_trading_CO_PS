@@ -40,6 +40,11 @@ from trading_v2.backtesting.contract_specs import (
 )
 from trading_v2.research.risk_pause import RiskPause
 from trading_v2.strategies.candidates import STRATEGIES, generate_signals
+from trading_v2.strategies.precision_microstructure import (
+    PRECISION_STRATEGIES,
+    enrich_microstructure_features,
+    generate_precision_signals,
+)
 from trading_v2.strategies.trend_following import add_indicators
 
 # Ventanas de liquidez institucional en UTC (lunes a viernes)
@@ -462,6 +467,7 @@ class DemoPaperTrader:
                 "low": "Low",
                 "close": "Close",
                 "spread": "Spread",
+                "tick_volume": "TickVolume",
             },
             inplace=True,
         )
@@ -539,7 +545,12 @@ class DemoPaperTrader:
                 sig = 1
             elif (e20 < e50) and (c < e50) and (32 <= rsi <= 58) and (atr_r >= 0.82) and (h1_dir == -1):
                 sig = -1
+        elif self.cfg.strategy in PRECISION_STRATEGIES:
+            enriched_df = enrich_microstructure_features(m15_df, h1_df, spec.point)
+            signals_df = generate_precision_signals(enriched_df, self.cfg.strategy, spec.point)
+            sig = int(signals_df["signal"].iloc[-1])
         else:
+            m15_df["signal"] = 0
             signals_df = generate_signals(m15_df, self.cfg.strategy, spec.point)
             sig = int(signals_df["signal"].iloc[-1])
 
@@ -789,8 +800,8 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--strategy",
         type=str,
-        default="ema_rsi_baseline",
-        choices=["ema_rsi_baseline", "donchian_breakout", "bollinger_reversion", "supertrend_follow"],
+        default="adr_exhaustion_fade",
+        choices=list(STRATEGIES) + list(PRECISION_STRATEGIES),
         help="Estrategia a ejecutar.",
     )
     parser.add_argument(

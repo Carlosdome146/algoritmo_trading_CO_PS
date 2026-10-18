@@ -313,6 +313,26 @@ class DemoPaperTraderTests(unittest.TestCase):
         # Verificar que el adapter contiene el check de cuenta demo
         self.assertEqual(trader_live.adapter.account_info().trade_mode, 0)
 
+    def test_precision_strategy_integration_in_demo_paper_trader(self):
+        adapter = MockMT5Adapter()
+        adapter.mock_rates_m15["GOLD"] = make_synthetic_rates(160, base_price=2600.0, trend=0.5)
+        adapter.mock_rates_h1["GOLD"] = make_synthetic_rates(80, base_price=2600.0, trend=1.0, step_minutes=60)
+        adapter.mock_ticks["GOLD"] = SimpleNamespace(bid=2680.0, ask=2680.25)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.12, ask=1.1201)
+
+        cfg = DemoTraderConfig(
+            symbols=["GOLD"],
+            strategy="adr_exhaustion_fade",
+            dry_run=True,
+            risk_fraction=0.0025,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 10, 20, 14, 0, tzinfo=timezone.utc)
+        res = trader.evaluate_symbol("GOLD", now_valid)
+        self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED"))
+
 
 if __name__ == "__main__":
     unittest.main()
+
