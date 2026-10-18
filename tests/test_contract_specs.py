@@ -12,7 +12,7 @@ from trading_v2.backtesting.contract_specs import (
 
 class ContractSpecsTests(unittest.TestCase):
     def test_all_admirals_specs_configured(self):
-        expected = {"GERMANY40", "[SP500]", "[DJI30]", "GOLD", "EURUSD"}
+        expected = {"GERMANY40", "[SP500]", "[DJI30]", "GOLD", "EURUSD", "US100", "[JP225]"}
         self.assertEqual(set(ADMIRALS_SPECS.keys()), expected)
         for sym in expected:
             spec = get_contract_spec(sym)
@@ -21,6 +21,19 @@ class ContractSpecsTests(unittest.TestCase):
             self.assertGreater(spec.point, 0)
             self.assertGreater(spec.tick_size, 0)
             self.assertGreaterEqual(spec.lot_max, spec.lot_min)
+
+    def test_us100_and_jp225_specs(self):
+        us100 = get_contract_spec("US100")
+        self.assertEqual(us100.profit_currency, "USD")
+        self.assertEqual(us100.lot_min, 0.02)
+        tick_val_us100 = us100.tick_value_in_account_currency(eurusd_rate=1.12, account_currency="EUR")
+        self.assertAlmostEqual(tick_val_us100, 0.01 / 1.12, places=6)
+
+        jp225 = get_contract_spec("[JP225]")
+        self.assertEqual(jp225.profit_currency, "JPY")
+        self.assertEqual(jp225.contract_size, 10.0)
+        tick_val_jp225 = jp225.tick_value_in_account_currency(eurusd_rate=1.12, account_currency="EUR")
+        self.assertAlmostEqual(tick_val_jp225, (10.0 * 0.01) / 162.0, places=6)
 
     def test_germany40_tick_value_eur(self):
         spec = get_contract_spec("GERMANY40")

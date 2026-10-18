@@ -28,8 +28,16 @@ import pandas as pd
 
 from trading_v2.backtesting.contract_specs import get_contract_spec
 
-INDICES = ("DAX40", "SP500", "DOW30")
-MARKET_SYMBOL = {"DAX40": "GERMANY40", "SP500": "[SP500]", "DOW30": "[DJI30]", "GOLD": "GOLD", "EURUSD": "EURUSD"}
+INDICES = ("DAX40", "SP500", "DOW30", "NASDAQ100", "NIKKEI225")
+MARKET_SYMBOL = {
+    "DAX40": "GERMANY40",
+    "SP500": "[SP500]",
+    "DOW30": "[DJI30]",
+    "NASDAQ100": "US100",
+    "NIKKEI225": "[JP225]",
+    "GOLD": "GOLD",
+    "EURUSD": "EURUSD",
+}
 
 
 # --------------------------------------------------------------------------------------
@@ -119,7 +127,14 @@ def entry_exit_signals(d: pd.DataFrame, s: StrategySpec) -> tuple[pd.Series, pd.
 # --------------------------------------------------------------------------------------
 # Simulador diario causal con costes
 # --------------------------------------------------------------------------------------
-def simulate_daily(d: pd.DataFrame, s: StrategySpec, market: str, slip_mult: float = 0.5) -> pd.DataFrame:
+def simulate_daily(
+    d: pd.DataFrame,
+    s: StrategySpec,
+    market: str,
+    slip_mult: float = 0.5,
+    entry_mode: str = "market",
+    limit_offset_atr: float = 0.0,
+) -> pd.DataFrame:
     spec = get_contract_spec(MARKET_SYMBOL[market])
     point = spec.point
     recent_med_spread = float(d["Spread"].iloc[-250:].replace(0, np.nan).median())
@@ -136,9 +151,41 @@ def simulate_daily(d: pd.DataFrame, s: StrategySpec, market: str, slip_mult: flo
         if side == 0 or not math.isfinite(atr[i]) or atr[i] <= 0:
             i += 1
             continue
-        k = i + 1  # entrada en apertura de k
+        k = i + 1  # entrada en k
         spr = cost_spread[k]
-        entry = o[k] + (spr if side == 1 else 0.0) + side * spr * slip_mult
+        if entry_mode == "market":
+            entry = o[k] + (spr if side == 1 else 0.0) + side * spr * slip_mult
+        elif entry_mode == "limit_close":
+            limit_target = c[i]
+            if side == 1:
+                if l[k] > limit_target:
+                    i += 1
+                    continue
+                fill_raw = min(o[k], limit_target)
+                entry = fill_raw + spr + spr * slip_mult
+            else:
+                if h[k] < limit_target:
+                    i += 1
+                    continue
+                fill_raw = max(o[k], limit_target)
+                entry = fill_raw - spr * slip_mult
+        elif entry_mode == "limit_discount":
+            limit_target = o[k] - side * limit_offset_atr * atr[i]
+            if side == 1:
+                if l[k] > limit_target:
+                    i += 1
+                    continue
+                fill_raw = limit_target
+                entry = fill_raw + spr + spr * slip_mult
+            else:
+                if h[k] < limit_target:
+                    i += 1
+                    continue
+                fill_raw = limit_target
+                entry = fill_raw - spr * slip_mult
+        else:
+            raise ValueError(f"Modo de entrada desconocido: {entry_mode}")
+
         stop_dist = s.stop_atr * atr[i]
         stop = entry - side * stop_dist
         exit_px, reason, j = None, "TIME", k

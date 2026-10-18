@@ -1,0 +1,282 @@
+{
+  "SP500_idx_rsi2_dip_regime": {
+    "market": "SP500",
+    "strategy": "idx_rsi2_dip_regime",
+    "modes": {
+      "Market on Open": {
+        "filled": 99,
+        "fill_rate": 100.0,
+        "win_rate": 78.8,
+        "profit_factor": 2.086,
+        "mean_r_trade": 0.1442,
+        "mean_r_per_signal": 0.1442,
+        "total_r": 14.28,
+        "max_dd_r": 2.68
+      },
+      "Limit at Prior Close": {
+        "filled": 91,
+        "fill_rate": 91.9,
+        "win_rate": 78.0,
+        "profit_factor": 1.985,
+        "mean_r_trade": 0.1398,
+        "mean_r_per_signal": 0.1285,
+        "total_r": 12.72,
+        "max_dd_r": 2.87
+      },
+      "Limit Discount 0.10 ATR": {
+        "filled": 80,
+        "fill_rate": 80.8,
+        "win_rate": 77.5,
+        "profit_factor": 1.993,
+        "mean_r_trade": 0.1451,
+        "mean_r_per_signal": 0.1173,
+        "total_r": 11.61,
+        "max_dd_r": 3.14
+      },
+      "Limit Discount 0.20 ATR": {
+        "filled": 74,
+        "fill_rate": 74.7,
+        "win_rate": 75.7,
+        "profit_factor": 2.203,
+        "mean_r_trade": 0.1765,
+        "mean_r_per_signal": 0.1319,
+        "total_r": 13.06,
+        "max_dd_r": 2.78
+      },
+      "Limit Discount 0.30 ATR": {
+        "filled": 64,
+        "fill_rate": 64.6,
+        "win_rate": 76.6,
+        "profit_factor": 2.116,
+        "mean_r_trade": 0.1822,
+        "mean_r_per_signal": 0.1178,
+        "total_r": 11.66,
+        "max_dd_r": 3.39
+      }
+    }
+  },
+  "NASDAQ100_idx_ibs_dip": {
+    "market": "NASDAQ100",
+    "strategy": "idx_ibs_dip",
+    "modes": {
+      "Market on Open": {
+        "filled": 265,
+        "fill_rate": 100.0,
+        "win_rate": 71.7,
+        "profit_factor": 1.57,
+        "mean_r_trade": 0.0928,
+        "mean_r_per_signal": 0.0928,
+        "total_r": 24.58,
+        "max_dd_r": 3.28
+      },
+      "Limit at Prior Close": {
+        "filled": 248,
+        "fill_rate": 93.6,
+        "win_rate": 71.0,
+        "profit_factor": 1.532,
+        "mean_r_trade": 0.0876,
+        "mean_r_per_signal": 0.082,
+        "total_r": 21.73,
+        "max_dd_r": 2.61
+      },
+      "Limit Discount 0.10 ATR": {
+        "filled": 233,
+        "fill_rate": 87.9,
+        "win_rate": 71.7,
+        "profit_factor": 1.465,
+        "mean_r_trade": 0.0824,
+        "mean_r_per_signal": 0.0725,
+        "total_r": 19.21,
+        "max_dd_r": 3.16
+      },
+      "Limit Discount 0.20 ATR": {
+        "filled": 201,
+        "fill_rate": 75.8,
+        "win_rate": 69.2,
+        "profit_factor": 1.458,
+        "mean_r_trade": 0.0838,
+        "mean_r_per_signal": 0.0636,
+        "total_r": 16.85,
+        "max_dd_r": 3.87
+      },
+      "Limit Discount 0.30 ATR": {
+        "filled": 184,
+        "fill_rate": 69.4,
+        "win_rate": 69.0,
+        "profit_factor": 1.593,
+        "mean_r_trade": 0.1064,
+        "mean_r_per_signal": 0.0739,
+        "total_r": 19.58,
+        "max_dd_r": 3.51
+      }
+    }
+  },
+  "NASDAQ100_idx_rsi2_dip_regime": {
+    "market": "NASDAQ100",
+    "strategy": "idx_rsi2_dip_regime",
+    "modes": {
+      "Market on Open": {
+        "filled": 90,
+        "fill_rate": 100.0,
+        "win_rate": 64.4,
+        "profit_factor": 1.474,
+        "mean_r_trade": 0.0858,
+        "mean_r_per_signal": 0.0858,
+        "total_r": 7.72,
+        "max_dd_r": 3.98
+      },
+      "Limit at Prior Close": {
+        "filled": 86,
+        "fill_rate": 95.6,
+        "win_rate": 64.0,
+        "profit_factor": 1.446,
+        "mean_r_trade": 0.0827,
+        "mean_r_per_signal": 0.079,
+        "total_r": 7.11,
+        "max_dd_r": 3.98
+      },
+      "Limit Discount 0.10 ATR": {
+        "filled": 84,
+        "fill_rate": 93.3,
+        "win_rate": 66.7,
+        "profit_factor": 1.653,
+        "mean_r_trade": 0.1094,
+        "mean_r_per_signal": 0.1021,
+        "total_r": 9.19,
+        "max_dd_r": 3.74
+      },
+      "Limit Discount 0.20 ATR": {
+        "filled": 73,
+        "fill_rate": 81.1,
+        "win_rate": 65.8,
+        "profit_factor": 1.464,
+        "mean_r_trade": 0.0856,
+        "mean_r_per_signal": 0.0694,
+        "total_r": 6.25,
+        "max_dd_r": 5.13
+      },
+      "Limit Discount 0.30 ATR": {
+        "filled": 65,
+        "fill_rate": 72.2,
+        "win_rate": 69.2,
+        "profit_factor": 1.467,
+        "mean_r_trade": 0.0926,
+        "mean_r_per_signal": 0.0669,
+        "total_r": 6.02,
+        "max_dd_r": 5.05
+      }
+    }
+  },
+  "DAX40_idx_rsi2_dip_regime": {
+    "market": "DAX40",
+    "strategy": "idx_rsi2_dip_regime",
+    "modes": {
+      "Market on Open": {
+        "filled": 86,
+        "fill_rate": 100.0,
+        "win_rate": 66.3,
+        "profit_factor": 1.314,
+        "mean_r_trade": 0.0548,
+        "mean_r_per_signal": 0.0548,
+        "total_r": 4.71,
+        "max_dd_r": 2.8
+      },
+      "Limit at Prior Close": {
+        "filled": 82,
+        "fill_rate": 95.3,
+        "win_rate": 67.1,
+        "profit_factor": 1.221,
+        "mean_r_trade": 0.0403,
+        "mean_r_per_signal": 0.0384,
+        "total_r": 3.3,
+        "max_dd_r": 3.21
+      },
+      "Limit Discount 0.10 ATR": {
+        "filled": 72,
+        "fill_rate": 83.7,
+        "win_rate": 63.9,
+        "profit_factor": 1.125,
+        "mean_r_trade": 0.0242,
+        "mean_r_per_signal": 0.0202,
+        "total_r": 1.74,
+        "max_dd_r": 3.51
+      },
+      "Limit Discount 0.20 ATR": {
+        "filled": 62,
+        "fill_rate": 72.1,
+        "win_rate": 64.5,
+        "profit_factor": 1.043,
+        "mean_r_trade": 0.0088,
+        "mean_r_per_signal": 0.0063,
+        "total_r": 0.54,
+        "max_dd_r": 4.97
+      },
+      "Limit Discount 0.30 ATR": {
+        "filled": 53,
+        "fill_rate": 61.6,
+        "win_rate": 64.2,
+        "profit_factor": 1.003,
+        "mean_r_trade": 0.0007,
+        "mean_r_per_signal": 0.0005,
+        "total_r": 0.04,
+        "max_dd_r": 4.47
+      }
+    }
+  },
+  "DOW30_idx_rsi2_dip_regime": {
+    "market": "DOW30",
+    "strategy": "idx_rsi2_dip_regime",
+    "modes": {
+      "Market on Open": {
+        "filled": 102,
+        "fill_rate": 100.0,
+        "win_rate": 68.6,
+        "profit_factor": 1.308,
+        "mean_r_trade": 0.0557,
+        "mean_r_per_signal": 0.0558,
+        "total_r": 5.69,
+        "max_dd_r": 3.33
+      },
+      "Limit at Prior Close": {
+        "filled": 98,
+        "fill_rate": 96.1,
+        "win_rate": 71.4,
+        "profit_factor": 1.363,
+        "mean_r_trade": 0.0641,
+        "mean_r_per_signal": 0.0616,
+        "total_r": 6.28,
+        "max_dd_r": 3.26
+      },
+      "Limit Discount 0.10 ATR": {
+        "filled": 93,
+        "fill_rate": 91.2,
+        "win_rate": 74.2,
+        "profit_factor": 1.487,
+        "mean_r_trade": 0.0835,
+        "mean_r_per_signal": 0.0761,
+        "total_r": 7.76,
+        "max_dd_r": 2.85
+      },
+      "Limit Discount 0.20 ATR": {
+        "filled": 83,
+        "fill_rate": 81.4,
+        "win_rate": 78.3,
+        "profit_factor": 1.846,
+        "mean_r_trade": 0.1294,
+        "mean_r_per_signal": 0.1053,
+        "total_r": 10.74,
+        "max_dd_r": 2.1
+      },
+      "Limit Discount 0.30 ATR": {
+        "filled": 75,
+        "fill_rate": 73.5,
+        "win_rate": 77.3,
+        "profit_factor": 1.993,
+        "mean_r_trade": 0.1509,
+        "mean_r_per_signal": 0.1109,
+        "total_r": 11.31,
+        "max_dd_r": 2.27
+      }
+    }
+  }
+}

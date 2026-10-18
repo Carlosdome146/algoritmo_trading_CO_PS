@@ -58,6 +58,8 @@ class ContractSpec:
             return value_in_profit_ccy / eurusd_rate
         elif prof_ccy == "EUR" and acc_ccy == "USD":
             return value_in_profit_ccy * eurusd_rate
+        elif prof_ccy == "JPY" and acc_ccy == "EUR":
+            return value_in_profit_ccy / 162.0
         else:
             raise ValueError(f"Conversión no soportada entre {prof_ccy} y {acc_ccy}")
 
@@ -170,6 +172,42 @@ ADMIRALS_SPECS: dict[str, ContractSpec] = {
         calc_mode=0,
         swap_long=-3.87,
         swap_short=-0.83,
+        swap_mode=5,
+    ),
+    "US100": ContractSpec(
+        symbol="US100",
+        description="US100 Index CFD, cash (USD)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="USD",
+        margin_currency="USD",
+        lot_min=0.02,
+        lot_step=0.01,
+        lot_max=500.0,
+        stops_level_points=80,
+        calc_mode=4,
+        swap_long=-6.39,
+        swap_short=1.39,
+        swap_mode=5,
+    ),
+    "[JP225]": ContractSpec(
+        symbol="[JP225]",
+        description="Nikkei 225 Index CFD, cash (JPY)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=10.0,
+        profit_currency="JPY",
+        margin_currency="JPY",
+        lot_min=1.0,
+        lot_step=1.0,
+        lot_max=500.0,
+        stops_level_points=900,
+        calc_mode=4,
+        swap_long=-3.728,
+        swap_short=-1.272,
         swap_mode=5,
     ),
 }
