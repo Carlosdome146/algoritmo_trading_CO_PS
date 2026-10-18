@@ -38,6 +38,12 @@ from trading_v2.backtesting.contract_specs import (
     calculate_lot_size,
     get_contract_spec,
 )
+from trading_v2.research.regime_lab_v3 import (
+    StrategySpec,
+    add_indicators as add_daily_indicators,
+    canonical_strategies,
+    entry_exit_signals,
+)
 from trading_v2.research.risk_pause import RiskPause
 from trading_v2.strategies.candidates import STRATEGIES, generate_signals
 from trading_v2.strategies.precision_microstructure import (
@@ -46,6 +52,14 @@ from trading_v2.strategies.precision_microstructure import (
     generate_precision_signals,
 )
 from trading_v2.strategies.trend_following import add_indicators
+
+V3_DAILY_STRATEGIES = (
+    "idx_rsi2_dip_regime",
+    "idx_rsi2_dip",
+    "idx_ibs_dip",
+    "turn_of_month",
+    "tsmom",
+)
 
 # Ventanas de liquidez institucional en UTC (lunes a viernes)
 # Formato: (hora_inicio, minuto_inicio, hora_fin, minuto_fin)
@@ -200,6 +214,14 @@ class MT5Adapter:
         return getattr(self.backend, "TIMEFRAME_H1", 16385)
 
     @property
+    def TIMEFRAME_H4(self) -> int:
+        return getattr(self.backend, "TIMEFRAME_H4", 16388)
+
+    @property
+    def TIMEFRAME_D1(self) -> int:
+        return getattr(self.backend, "TIMEFRAME_D1", 16408)
+
+    @property
     def ORDER_TYPE_BUY(self) -> int:
         return getattr(self.backend, "ORDER_TYPE_BUY", 0)
 
@@ -256,6 +278,7 @@ class DemoTraderConfig:
     cooldown_minutes: int = 60
     max_consecutive_losses: int = 3
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
+    timeframe: str = "M15"  # "M15" o "D1"
 
 
 class DemoPaperTrader:
@@ -493,7 +516,10 @@ class DemoPaperTrader:
         return 0
 
     def evaluate_symbol(self, symbol: str, now_utc: datetime) -> dict:
-        """Evalúa un símbolo al cierre de su vela M15 cumpliendo causalidad y filtros de riesgo."""
+        """Evalúa un símbolo al cierre de su vela (M15 o D1) cumpliendo causalidad y filtros de riesgo."""
+        if self.cfg.timeframe == "D1":
+            return self.evaluate_daily_symbol(symbol, now_utc)
+
         spec = get_contract_spec(symbol)
 
         # 1. Copiar últimas 100 barras M15 CERRADAS (start_pos=1, nunca barra 0 en formación)
@@ -715,8 +741,237 @@ class DemoPaperTrader:
                 "comment": err_comment,
             }
 
+    def _close_position(self, pos: Any, reason: str) -> dict:
+        ticket = getattr(pos, "ticket", 0)
+        symbol = getattr(pos, "symbol", "")
+        volume = float(getattr(pos, "volume", 0.0))
+        pos_type = getattr(pos, "type", 0)
+
+        self.log(f"[CIERRE POSICIÓN] Ticket #{ticket} en {symbol} ({reason})")
+        if self.cfg.dry_run:
+            return {"status": "DRY_RUN_CLOSED", "ticket": ticket, "symbol": symbol, "reason": reason}
+
+        tick = self.adapter.symbol_info_tick(symbol)
+        close_price = float(tick.bid) if pos_type == self.adapter.ORDER_TYPE_BUY else float(tick.ask)
+        close_action = (
+            self.adapter.ORDER_TYPE_SELL if pos_type == self.adapter.ORDER_TYPE_BUY else self.adapter.ORDER_TYPE_BUY
+        )
+
+        req = {
+            "action": self.adapter.TRADE_ACTION_DEAL,
+            "position": ticket,
+            "symbol": symbol,
+            "volume": volume,
+            "type": close_action,
+            "price": close_price,
+            "deviation": 20,
+            "magic": self.cfg.magic_number,
+            "comment": f"Close {reason}",
+            "type_time": self.adapter.ORDER_TIME_GTC,
+            "type_filling": self.adapter.ORDER_FILLING_IOC,
+        }
+        res = self.adapter.order_send(req)
+        retcode = getattr(res, "retcode", None)
+        if retcode == self.adapter.TRADE_RETCODE_DONE:
+            self.log(f"[CIERRE OK] Posición #{ticket} cerrada en broker.")
+            return {"status": "SUCCESS_CLOSED", "ticket": ticket, "symbol": symbol}
+        err = getattr(res, "comment", "Error al cerrar")
+        return {"status": "FAILED_CLOSE", "ticket": ticket, "error": err}
+
+    def evaluate_daily_symbol(self, symbol: str, now_utc: datetime) -> dict:
+        """Evalúa un símbolo en marco temporal Diario (D1) según las estrategias robustas V3."""
+        spec = get_contract_spec(symbol)
+
+        # 1. Copiar 250 barras D1 cerradas (start_pos=1 para asegurar que la vela de hoy no ha cerrado)
+        d1_rates = self.adapter.copy_rates_from_pos(symbol, self.adapter.TIMEFRAME_D1, 1, 260)
+        if d1_rates is None or len(d1_rates) < 220:
+            return {"status": "INSUFFICIENT_D1_DATA", "symbol": symbol}
+
+        last_bar_time = int(d1_rates["time"][-1])
+        if self.last_m15_bar_time.get(symbol) == last_bar_time:
+            return {"status": "BAR_ALREADY_PROCESSED", "symbol": symbol}
+
+        d1_df = self._build_dataframe_from_rates(d1_rates)
+        d1_df = add_daily_indicators(d1_df)
+
+        # Historial de spreads
+        last_spread_pts = float(d1_df["Spread"].iloc[-1])
+        self.recent_spreads[symbol].append(last_spread_pts)
+        if len(self.recent_spreads[symbol]) > 100:
+            self.recent_spreads[symbol].pop(0)
+
+        atr = float(d1_df["atr20"].iloc[-1])
+        self.latest_atr[symbol] = atr
+
+        # Comprobar si ya tenemos posición abierta en este símbolo con nuestro magic_number
+        current_positions = self.adapter.positions_get()
+        our_positions = [p for p in (current_positions or []) if getattr(p, "magic", 0) == self.cfg.magic_number]
+        sym_positions = [p for p in our_positions if getattr(p, "symbol", "") == symbol]
+
+        # Estrategia V3 canónica
+        s_spec = None
+        for cs in canonical_strategies():
+            if cs.name == self.cfg.strategy:
+                s_spec = cs
+                break
+        if s_spec is None:
+            s_spec = StrategySpec(
+                self.cfg.strategy,
+                (symbol,),
+                "long",
+                {"sma": 200, "rsi_th": 10},
+                stop_atr=self.cfg.sl_atr,
+                max_bars=10,
+                regime_cap=1.8 if "regime" in self.cfg.strategy else None,
+            )
+
+        entry_sig_series, exit_rule_series = entry_exit_signals(d1_df, s_spec)
+        sig = int(entry_sig_series.iloc[-1])
+        exit_rule_active = bool(exit_rule_series.iloc[-1])
+
+        # 2. Si ya hay posición abierta, verificar regla de salida al cierre (ej. Close > SMA5)
+        if sym_positions:
+            pos = sym_positions[0]
+            if exit_rule_active:
+                self.log(
+                    f"[{symbol}] Regla de salida D1 activada "
+                    f"(Close={d1_df['Close'].iloc[-1]:.2f} > SMA5={d1_df['sma5'].iloc[-1]:.2f}). "
+                    f"Cerrando posición ticket #{pos.ticket}..."
+                )
+                return self._close_position(pos, reason="DAILY_RULE_EXIT_SMA5")
+            return {"status": "POSITION_HELD", "symbol": symbol, "ticket": pos.ticket, "exit_rule": False}
+
+        # Marcar barra como procesada si no hay señal o se rechaza
+        self.last_m15_bar_time[symbol] = last_bar_time
+
+        if sig == 0:
+            self.log(
+                f"[{symbol}] Evaluación D1 ({self.cfg.strategy}): Sin señal "
+                f"(Close={d1_df['Close'].iloc[-1]:.2f}, SMA200={d1_df['sma200'].iloc[-1]:.2f}, "
+                f"RSI2={d1_df['rsi2'].iloc[-1]:.1f}, IBS={d1_df['ibs'].iloc[-1]:.2f})"
+            )
+            return {
+                "status": "NO_SIGNAL",
+                "symbol": symbol,
+                "atr": atr,
+                "rsi2": float(d1_df["rsi2"].iloc[-1]),
+                "timeframe": "D1",
+            }
+
+        # 3. Filtros de liquidez y RiskPause
+        spread_ok, spread_msg = check_spread_and_liquidity(
+            symbol=symbol,
+            spread_pts=last_spread_pts,
+            atr=atr,
+            point=spec.point,
+            recent_spreads=self.recent_spreads[symbol],
+            max_spread_atr_ratio=self.cfg.max_spread_atr_ratio,
+            max_spread_median_ratio=self.cfg.max_spread_median_ratio,
+        )
+        if not spread_ok:
+            return {"status": "REJECTED_SPREAD", "symbol": symbol, "reason": spread_msg}
+
+        if self.risk_pause:
+            can_trade, pause_reason = self.risk_pause.can_open_new_trade(now_utc)
+            if not can_trade:
+                return {"status": "REJECTED_RISK_PAUSE", "symbol": symbol, "reason": pause_reason}
+
+        if len(our_positions) >= self.cfg.max_open_positions:
+            return {"status": "REJECTED_MAX_POSITIONS", "symbol": symbol}
+
+        # 4. Obtener tick actual y dimensionar
+        tick = self.adapter.symbol_info_tick(symbol)
+        if not tick:
+            return {"status": "FAILED_NO_TICK", "symbol": symbol}
+
+        entry_price = float(tick.ask) if sig == 1 else float(tick.bid)
+        stop_dist_price = self.cfg.sl_atr * atr
+        sl_price = round(entry_price - sig * stop_dist_price, spec.digits)
+        tp_price = 0.0  # En D1 la salida es por regla SMA5 al cierre de barra
+
+        acc = self.adapter.account_info()
+        assert_demo_account(acc)
+        eurusd_rate = self.get_eurusd_rate()
+
+        lot_res = calculate_lot_size(
+            spec=spec,
+            account_equity=acc.equity,
+            risk_fraction=self.cfg.risk_fraction,
+            stop_distance_price=stop_dist_price,
+            entry_price=entry_price,
+            eurusd_rate=eurusd_rate,
+            leverage=getattr(acc, "leverage", 100.0),
+            account_currency=acc.currency,
+        )
+        if lot_res.status != "OK":
+            return {"status": lot_res.status, "symbol": symbol, "reason": lot_res.reason}
+
+        direction_str = "LONG" if sig == 1 else "SHORT"
+        self.log(
+            f"🎯 [DISPARO D1 {direction_str} en {symbol} ({self.cfg.strategy})] Lotes: {lot_res.lots} | "
+            f"Entrada: {entry_price:.{spec.digits}f} | SL: {sl_price:.{spec.digits}f} | "
+            f"Riesgo: {lot_res.actual_risk_account_ccy:.2f} {acc.currency}"
+        )
+        if self.cfg.dry_run:
+            return {
+                "status": "SIMULATED_ORDER",
+                "symbol": symbol,
+                "direction": direction_str,
+                "lots": lot_res.lots,
+                "entry": entry_price,
+                "sl": sl_price,
+                "tp": tp_price,
+                "timeframe": "D1",
+            }
+
+        sym_info = self.adapter.symbol_info(symbol)
+        filling = self.adapter.ORDER_FILLING_IOC
+        if sym_info and hasattr(sym_info, "filling_mode"):
+            if sym_info.filling_mode & 2:
+                filling = self.adapter.ORDER_FILLING_IOC
+            elif sym_info.filling_mode & 1:
+                filling = self.adapter.ORDER_FILLING_FOK
+            else:
+                filling = self.adapter.ORDER_FILLING_RETURN
+
+        trade_request = {
+            "action": self.adapter.TRADE_ACTION_DEAL,
+            "symbol": symbol,
+            "volume": lot_res.lots,
+            "type": self.adapter.ORDER_TYPE_BUY if sig == 1 else self.adapter.ORDER_TYPE_SELL,
+            "price": entry_price,
+            "sl": sl_price,
+            "tp": tp_price,
+            "deviation": 20,
+            "magic": self.cfg.magic_number,
+            "comment": f"V3_D1_{direction_str}",
+            "type_time": self.adapter.ORDER_TIME_GTC,
+            "type_filling": filling,
+        }
+        order_res = self.adapter.order_send(trade_request)
+        retcode = getattr(order_res, "retcode", None)
+        if retcode == self.adapter.TRADE_RETCODE_DONE:
+            order_ticket = getattr(order_res, "order", getattr(order_res, "deal", 0))
+            self.log(f"🚀 [ORDEN D1 EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
+            return {
+                "status": "LIVE_ORDER_EXECUTED",
+                "symbol": symbol,
+                "ticket": order_ticket,
+                "direction": direction_str,
+                "lots": lot_res.lots,
+            }
+        else:
+            err_comment = getattr(order_res, "comment", "Desconocido")
+            self.log(f"❌ [ERROR MT5] Fallo al enviar orden D1 en {symbol}: {err_comment} (retcode={retcode})")
+            return {
+                "status": "ORDER_SEND_ERROR",
+                "symbol": symbol,
+                "retcode": retcode,
+                "comment": err_comment,
+            }
+
     def run_cycle(self) -> dict:
-        """Ejecuta un ciclo completo de escaneo: sincronización deals, breakeven y evaluación M15."""
+        """Ejecuta un ciclo completo de escaneo: sincronización deals, breakeven y evaluación."""
         now_utc = datetime.now(timezone.utc)
         deals_closed = self._sync_deals_history(now_utc)
         be_actions = self.check_and_apply_causal_breakeven()
@@ -798,10 +1053,17 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         help="Multiplicador de ATR sobre entrada para fijar nuevo SL (default: 0.05).",
     )
     parser.add_argument(
+        "--timeframe",
+        type=str,
+        default="M15",
+        choices=["M15", "D1"],
+        help="Marco temporal de ejecución (default: M15).",
+    )
+    parser.add_argument(
         "--strategy",
         type=str,
         default="adr_exhaustion_fade",
-        choices=list(STRATEGIES) + list(PRECISION_STRATEGIES),
+        choices=list(STRATEGIES) + list(PRECISION_STRATEGIES) + list(V3_DAILY_STRATEGIES),
         help="Estrategia a ejecutar.",
     )
     parser.add_argument(
@@ -829,6 +1091,7 @@ def main():
     args = parse_args()
     config = DemoTraderConfig(
         symbols=args.symbols,
+        timeframe=args.timeframe,
         risk_fraction=args.risk_fraction,
         sl_atr=args.sl_atr,
         tp_atr=args.tp_atr,
