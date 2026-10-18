@@ -162,8 +162,8 @@ def gather(mt5, m15_bars, h1_bars):
 def main(argv=None):
     p = argparse.ArgumentParser(description="Exportación histórica MT5 Admirals DEMO, solo lectura")
     p.add_argument("--terminal", help="Ruta a terminal64.exe Admirals si hay varios MT5")
-    p.add_argument("--m15-bars", type=int, default=12000)
-    p.add_argument("--h1-bars", type=int, default=3500)
+    p.add_argument("--m15-bars", type=int, default=50000, help="Barras M15 a solicitar (defecto: 50.000+)")
+    p.add_argument("--h1-bars", type=int, default=15000, help="Barras H1 a solicitar (defecto: 15.000+)")
     p.add_argument("--out", default="admirals_historial_local.zip")
     args = p.parse_args(argv)
     if not 500 <= args.m15_bars <= 100000 or not 500 <= args.h1_bars <= 100000:
