@@ -58,3 +58,23 @@ Leer [CONTRIBUTING.md](CONTRIBUTING.md) para el flujo de trabajo, las pruebas y 
 - [Investigación multiactivo Admirals](ADMIRALS_MULTI_ASSET_RESEARCH.md)
 
 **Aviso:** el repositorio es código experimental, no asesoramiento financiero.
+
+
+## Laboratorio ampliado de estrategias (experimental)
+
+Añadidas 3 familias de señales causales: Donchian Breakout, Bollinger/RSI/ADX
+y Supertrend con H1; se conserva EMA/RSI como control. El proyecto ahora
+puede comparar 4 estrategias x 3 horizontes (4/16/32 M15) x 2 modos
+(sin ML / filtro ML), mediante **dos folds temporales de validación y
+holdout final protegido**.
+
+Ejecutar **sin conexión a MT5** desde la raíz del repositorio:
+
+    python -m scripts.estrategias_admirals_v2 --zip "admirals_historial_local.zip"
+
+Los cinco mercados Admirals obtuvieron decisión NO_TRADE en la primera
+validación doble: ningún modelo justifica operar todavía. El sistema aprende
+de trades ganadores/perdedores únicamente durante entrenamiento OFFLINE;
+no altera el modelo por pérdidas individuales.
+
+[Metodología, procedencia, resultados y limitaciones](STRATEGY_LAB.md).
