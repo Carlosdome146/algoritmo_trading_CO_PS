@@ -81,6 +81,15 @@ class RegimeLabV3Tests(unittest.TestCase):
     def test_bonferroni_grows_with_trials(self):
         self.assertGreater(bonferroni_t(20), bonferroni_t(1))
 
+    def test_limit_order_simulation_modes(self):
+        d = add_indicators(synthetic_daily())
+        s = StrategySpec("idx_rsi2_dip", ("DAX40",), "long", {"sma": 200, "rsi_th": 30}, 2.5, 10)
+        t_mkt = simulate_daily(d, s, "DAX40", entry_mode="market")
+        t_lim = simulate_daily(d, s, "DAX40", entry_mode="limit_discount", limit_offset_atr=0.20)
+        self.assertFalse(t_mkt.empty)
+        # Una orden límite con descuento exigente debe ejecutar igual o menos operaciones que a mercado
+        self.assertLessEqual(len(t_lim), len(t_mkt))
+
 
 if __name__ == "__main__":
     unittest.main()

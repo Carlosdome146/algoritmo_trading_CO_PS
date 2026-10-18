@@ -15,7 +15,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from scripts.exportar_historial_admirals_mt5 import SYMBOLS, read_history  # noqa: E402
+from scripts.exportar_historial_admirals_mt5 import read_history  # noqa: E402
+
+SYMBOLS_LONG = {
+    "DAX40": "GERMANY40",
+    "SP500": "[SP500]",
+    "DOW30": "[DJI30]",
+    "NASDAQ100": "US100",
+    "NIKKEI225": "[JP225]",
+    "GOLD": "GOLD",
+    "EURUSD": "EURUSD",
+}
 
 
 def gather_long(mt5, d1_bars: int, h4_bars: int):
@@ -46,7 +56,7 @@ def gather_long(mt5, d1_bars: int, h4_bars: int):
         "symbols": {},
     }
     files = {}
-    for market, symbol in SYMBOLS.items():
+    for market, symbol in SYMBOLS_LONG.items():
         meta = mt5.symbol_info(symbol)
         info = {"symbol": symbol, "market": market, "found": meta is not None, "frames": {}}
         if meta is None:
