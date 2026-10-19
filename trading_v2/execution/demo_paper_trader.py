@@ -59,6 +59,8 @@ V3_DAILY_STRATEGIES = (
     "idx_ibs_dip",
     "turn_of_month",
     "tsmom",
+    "idx_dax_bollinger_dip",
+    "fx_eurusd_ker_exhaustion",
 )
 
 # Ventanas de liquidez institucional en UTC (lunes a viernes)
@@ -68,6 +70,8 @@ SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
     "DE40": (7, 0, 15, 30),
     "[SP500]": (13, 30, 19, 30),
     "US500": (13, 30, 19, 30),
+    "US100": (13, 30, 19, 30),
+    "USTEC": (13, 30, 19, 30),
     "[DJI30]": (13, 30, 19, 30),
     "US30": (13, 30, 19, 30),
     "GOLD": (7, 0, 18, 0),
@@ -271,12 +275,13 @@ class DemoTraderConfig:
     max_spread_atr_ratio: float = 0.08  # Máximo spread <= 8% de ATR
     max_spread_median_ratio: float = 2.0  # Bloqueo si spread > 2x mediana
     strategy: str = "ema_rsi_baseline"
+    broker: str = "admirals"  # "admirals" o "icmarkets"
     poll_seconds: float = 15.0
     max_open_positions: int = 2
     magic_number: int = 20261018
     dry_run: bool = True
     cooldown_minutes: int = 60
-    max_consecutive_losses: int = 3
+    max_consecutive_losses: int = 2
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
     timeframe: str = "M15"  # "M15" o "D1"
 
@@ -402,7 +407,7 @@ class DemoPaperTrader:
 
             symbol = getattr(pos, "symbol", "")
             try:
-                spec = get_contract_spec(symbol)
+                spec = get_contract_spec(symbol, broker=self.cfg.broker)
             except KeyError:
                 continue
 
@@ -520,7 +525,7 @@ class DemoPaperTrader:
         if self.cfg.timeframe == "D1":
             return self.evaluate_daily_symbol(symbol, now_utc)
 
-        spec = get_contract_spec(symbol)
+        spec = get_contract_spec(symbol, broker=self.cfg.broker)
 
         # 1. Copiar últimas 100 barras M15 CERRADAS (start_pos=1, nunca barra 0 en formación)
         m15_rates = self.adapter.copy_rates_from_pos(symbol, self.adapter.TIMEFRAME_M15, 1, 100)
@@ -723,7 +728,7 @@ class DemoPaperTrader:
         retcode = getattr(order_res, "retcode", None)
         if retcode == self.adapter.TRADE_RETCODE_DONE:
             order_ticket = getattr(order_res, "order", getattr(order_res, "deal", 0))
-            self.log(f"🚀 [ORDEN EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
+            self.log(f"[ORDEN EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
             return {
                 "status": "LIVE_ORDER_EXECUTED",
                 "symbol": symbol,
@@ -733,7 +738,7 @@ class DemoPaperTrader:
             }
         else:
             err_comment = getattr(order_res, "comment", "Desconocido")
-            self.log(f"❌ [ERROR MT5] Fallo al enviar orden en {symbol}: {err_comment} (retcode={retcode})")
+            self.log(f"[ERROR MT5] Fallo al enviar orden en {symbol}: {err_comment} (retcode={retcode})")
             return {
                 "status": "ORDER_SEND_ERROR",
                 "symbol": symbol,
@@ -780,7 +785,7 @@ class DemoPaperTrader:
 
     def evaluate_daily_symbol(self, symbol: str, now_utc: datetime) -> dict:
         """Evalúa un símbolo en marco temporal Diario (D1) según las estrategias robustas V3."""
-        spec = get_contract_spec(symbol)
+        spec = get_contract_spec(symbol, broker=self.cfg.broker)
 
         # 1. Copiar 250 barras D1 cerradas (start_pos=1 para asegurar que la vela de hoy no ha cerrado)
         d1_rates = self.adapter.copy_rates_from_pos(symbol, self.adapter.TIMEFRAME_D1, 1, 260)
@@ -832,7 +837,13 @@ class DemoPaperTrader:
         # 2. Si ya hay posición abierta, verificar regla de salida al cierre (ej. Close > SMA5)
         if sym_positions:
             pos = sym_positions[0]
-            if exit_rule_active:
+            should_exit = exit_rule_active
+            if self.cfg.strategy.startswith("fx_"):
+                is_long = getattr(pos, "type", 0) == 0
+                c_last = float(d1_df["Close"].iloc[-1])
+                sma5_last = float(d1_df["sma5"].iloc[-1])
+                should_exit = (c_last > sma5_last) if is_long else (c_last < sma5_last)
+            if should_exit:
                 self.log(
                     f"[{symbol}] Regla de salida D1 activada "
                     f"(Close={d1_df['Close'].iloc[-1]:.2f} > SMA5={d1_df['sma5'].iloc[-1]:.2f}). "
@@ -908,7 +919,7 @@ class DemoPaperTrader:
 
         direction_str = "LONG" if sig == 1 else "SHORT"
         self.log(
-            f"🎯 [DISPARO D1 {direction_str} en {symbol} ({self.cfg.strategy})] Lotes: {lot_res.lots} | "
+            f"[DISPARO D1 {direction_str} en {symbol} ({self.cfg.strategy})] Lotes: {lot_res.lots} | "
             f"Entrada: {entry_price:.{spec.digits}f} | SL: {sl_price:.{spec.digits}f} | "
             f"Riesgo: {lot_res.actual_risk_account_ccy:.2f} {acc.currency}"
         )
@@ -952,7 +963,7 @@ class DemoPaperTrader:
         retcode = getattr(order_res, "retcode", None)
         if retcode == self.adapter.TRADE_RETCODE_DONE:
             order_ticket = getattr(order_res, "order", getattr(order_res, "deal", 0))
-            self.log(f"🚀 [ORDEN D1 EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
+            self.log(f"[ORDEN D1 EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
             return {
                 "status": "LIVE_ORDER_EXECUTED",
                 "symbol": symbol,
@@ -962,7 +973,7 @@ class DemoPaperTrader:
             }
         else:
             err_comment = getattr(order_res, "comment", "Desconocido")
-            self.log(f"❌ [ERROR MT5] Fallo al enviar orden D1 en {symbol}: {err_comment} (retcode={retcode})")
+            self.log(f"[ERROR MT5] Fallo al enviar orden D1 en {symbol}: {err_comment} (retcode={retcode})")
             return {
                 "status": "ORDER_SEND_ERROR",
                 "symbol": symbol,
@@ -1067,6 +1078,13 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         help="Estrategia a ejecutar.",
     )
     parser.add_argument(
+        "--broker",
+        type=str,
+        default="admirals",
+        choices=["admirals", "icmarkets"],
+        help="Perfil contractual del bróker: 'admirals' o 'icmarkets' (default: admirals).",
+    )
+    parser.add_argument(
         "--poll-seconds",
         type=float,
         default=15.0,
@@ -1098,6 +1116,7 @@ def main():
         be_trigger_atr=args.be_trigger_atr,
         be_lock_atr=args.be_lock_atr,
         strategy=args.strategy,
+        broker=args.broker,
         poll_seconds=args.poll_seconds,
         max_open_positions=args.max_positions,
         dry_run=not args.live,

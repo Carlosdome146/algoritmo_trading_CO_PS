@@ -376,6 +376,66 @@ class DemoPaperTraderTests(unittest.TestCase):
         res_exit = trader.evaluate_symbol("[SP500]", now_next)
         self.assertIn(res_exit["status"], ("POSITION_HELD", "DRY_RUN_CLOSED", "SUCCESS_CLOSED"))
 
+    def test_daily_strategy_dax_bollinger_dip(self):
+        adapter = MockMT5Adapter()
+        adapter.mock_rates_d1["GERMANY40"] = make_synthetic_rates(260, base_price=18000.0, trend=1.0, step_minutes=1440)
+        adapter.mock_ticks["GERMANY40"] = SimpleNamespace(bid=19000.0, ask=19001.0)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.12, ask=1.1201)
+
+        cfg = DemoTraderConfig(
+            symbols=["GERMANY40"],
+            timeframe="D1",
+            strategy="idx_dax_bollinger_dip",
+            broker="admirals",
+            dry_run=True,
+            risk_fraction=0.0025,
+            sl_atr=2.5,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 10, 20, 22, 0, tzinfo=timezone.utc)
+        res = trader.evaluate_symbol("GERMANY40", now_valid)
+        self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED"))
+
+    def test_daily_strategy_fx_eurusd_ker_exhaustion(self):
+        adapter = MockMT5Adapter()
+        adapter.mock_rates_d1["EURUSD"] = make_synthetic_rates(260, base_price=1.10, trend=0.0001, step_minutes=1440)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.1050, ask=1.1051)
+
+        cfg = DemoTraderConfig(
+            symbols=["EURUSD"],
+            timeframe="D1",
+            strategy="fx_eurusd_ker_exhaustion",
+            broker="icmarkets",
+            dry_run=True,
+            risk_fraction=0.0025,
+            sl_atr=2.5,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 10, 20, 22, 0, tzinfo=timezone.utc)
+        res = trader.evaluate_symbol("EURUSD", now_valid)
+        self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED"))
+
+    def test_broker_config_switching_icmarkets(self):
+        adapter = MockMT5Adapter()
+        adapter.mock_rates_d1["DE40"] = make_synthetic_rates(260, base_price=18000.0, trend=1.0, step_minutes=1440)
+        adapter.mock_ticks["DE40"] = SimpleNamespace(bid=19000.0, ask=19001.0)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.12, ask=1.1201)
+
+        cfg = DemoTraderConfig(
+            symbols=["DE40"],
+            timeframe="D1",
+            strategy="idx_dax_bollinger_dip",
+            broker="icmarkets",
+            dry_run=True,
+            risk_fraction=0.0025,
+            sl_atr=2.5,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        self.assertEqual(trader.cfg.broker, "icmarkets")
+
 
 if __name__ == "__main__":
     unittest.main()

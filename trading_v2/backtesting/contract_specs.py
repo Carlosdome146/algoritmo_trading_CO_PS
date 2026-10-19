@@ -33,6 +33,8 @@ class ContractSpec:
     swap_long: float = 0.0
     swap_short: float = 0.0
     swap_mode: int = 5  # 5 = SWAP_BY_INTEREST_CURRENT, 0 = SWAP_BY_POINTS
+    commission_per_lot: float = 0.0  # Comisión contractual round-trip en USD (ej. 7.0 USD/lote en FX Raw Spread)
+    typical_spread_points: float = 0.0  # Spread típico en puntos de precio
 
     def __post_init__(self):
         if min(self.point, self.tick_size, self.contract_size, self.lot_min, self.lot_step, self.lot_max) <= 0:
@@ -213,15 +215,228 @@ ADMIRALS_SPECS: dict[str, ContractSpec] = {
 }
 
 
-def get_contract_spec(symbol: str) -> ContractSpec:
-    """Devuelve la especificación auditada del símbolo. Lanza KeyError si no existe."""
-    clean = symbol.strip()
+# Especificaciones canónicas auditadas en IC Markets (Raw Spread / Global 1:500)
+ICMARKETS_SPECS: dict[str, ContractSpec] = {
+    "DE40": ContractSpec(
+        symbol="DE40",
+        description="Germany 40 Index CFD (IC Markets Raw)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="EUR",
+        margin_currency="EUR",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=200.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-5.50,
+        swap_short=0.20,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=100.0,  # 1.00 pt típico
+    ),
+    "US500": ContractSpec(
+        symbol="US500",
+        description="S&P 500 Index CFD (IC Markets Raw)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="USD",
+        margin_currency="USD",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=200.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-6.00,
+        swap_short=1.20,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=40.0,  # 0.40 pt típico
+    ),
+    "US30": ContractSpec(
+        symbol="US30",
+        description="US Wall Street 30 Index CFD (IC Markets Raw)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="USD",
+        margin_currency="USD",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=200.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-6.20,
+        swap_short=1.20,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=150.0,  # 1.50 pt típico
+    ),
+    "USTEC": ContractSpec(
+        symbol="USTEC",
+        description="US Tech 100 Index CFD (IC Markets Raw)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="USD",
+        margin_currency="USD",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=200.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-6.20,
+        swap_short=1.20,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=100.0,  # 1.00 pt típico
+    ),
+    "EURUSD": ContractSpec(
+        symbol="EURUSD",
+        description="Euro vs US Dollar Raw Spread (IC Markets)",
+        point=0.00001,
+        digits=5,
+        tick_size=0.00001,
+        contract_size=100000.0,
+        profit_currency="USD",
+        margin_currency="EUR",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=200.0,
+        stops_level_points=0,
+        calc_mode=0,
+        swap_long=-4.20,
+        swap_short=1.10,
+        swap_mode=0,
+        commission_per_lot=7.00,  # $7.00 USD round-trip por lote estándar
+        typical_spread_points=1.0,  # 0.1 pip típico en Raw Spread
+    ),
+    "XAUUSD": ContractSpec(
+        symbol="XAUUSD",
+        description="Gold (100 oz) vs US Dollar (IC Markets)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=100.0,
+        profit_currency="USD",
+        margin_currency="USD",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=100.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-6.50,
+        swap_short=1.80,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=15.0,  # 0.15 USD típico
+    ),
+    "JP225": ContractSpec(
+        symbol="JP225",
+        description="Nikkei 225 Index CFD (IC Markets Raw)",
+        point=1.0,
+        digits=0,
+        tick_size=1.0,
+        contract_size=100.0,
+        profit_currency="JPY",
+        margin_currency="JPY",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=100.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-3.50,
+        swap_short=-1.20,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=500.0,
+    ),
+}
+
+# Tabla de sinónimos inter-broker
+SYMBOL_ALIASES: dict[str, dict[str, str]] = {
+    "DAX40": {"admirals": "GERMANY40", "icmarkets": "DE40"},
+    "GERMANY40": {"admirals": "GERMANY40", "icmarkets": "DE40"},
+    "DE40": {"admirals": "GERMANY40", "icmarkets": "DE40"},
+    "SP500": {"admirals": "[SP500]", "icmarkets": "US500"},
+    "[SP500]": {"admirals": "[SP500]", "icmarkets": "US500"},
+    "US500": {"admirals": "[SP500]", "icmarkets": "US500"},
+    "DOW30": {"admirals": "[DJI30]", "icmarkets": "US30"},
+    "[DJI30]": {"admirals": "[DJI30]", "icmarkets": "US30"},
+    "US30": {"admirals": "[DJI30]", "icmarkets": "US30"},
+    "NASDAQ100": {"admirals": "US100", "icmarkets": "USTEC"},
+    "US100": {"admirals": "US100", "icmarkets": "USTEC"},
+    "USTEC": {"admirals": "US100", "icmarkets": "USTEC"},
+    "GOLD": {"admirals": "GOLD", "icmarkets": "XAUUSD"},
+    "XAUUSD": {"admirals": "GOLD", "icmarkets": "XAUUSD"},
+    "EURUSD": {"admirals": "EURUSD", "icmarkets": "EURUSD"},
+    "NIKKEI225": {"admirals": "[JP225]", "icmarkets": "JP225"},
+    "[JP225]": {"admirals": "[JP225]", "icmarkets": "JP225"},
+    "JP225": {"admirals": "[JP225]", "icmarkets": "JP225"},
+}
+
+
+def get_contract_spec(symbol: str, broker: str = "admirals") -> ContractSpec:
+    """Devuelve la especificación auditada del símbolo para el bróker indicado ('admirals' o 'icmarkets').
+    
+    Lanza KeyError si no existe.
+    """
+    clean = symbol.strip().upper()
+    b = broker.strip().lower()
+
+    if b == "icmarkets":
+        if clean in ICMARKETS_SPECS:
+            return ICMARKETS_SPECS[clean]
+        if clean in SYMBOL_ALIASES and "icmarkets" in SYMBOL_ALIASES[clean]:
+            target_sym = SYMBOL_ALIASES[clean]["icmarkets"]
+            if target_sym in ICMARKETS_SPECS:
+                return ICMARKETS_SPECS[target_sym]
+        for key, spec in ICMARKETS_SPECS.items():
+            if key.replace("[", "").replace("]", "").upper() == clean.replace("[", "").replace("]", ""):
+                return spec
+        raise KeyError(f"Símbolo no configurado en ICMARKETS_SPECS: {symbol}")
+
+    # Admirals por defecto
     if clean in ADMIRALS_SPECS:
         return ADMIRALS_SPECS[clean]
+    if clean in SYMBOL_ALIASES and "admirals" in SYMBOL_ALIASES[clean]:
+        target_sym = SYMBOL_ALIASES[clean]["admirals"]
+        if target_sym in ADMIRALS_SPECS:
+            return ADMIRALS_SPECS[target_sym]
     for key, spec in ADMIRALS_SPECS.items():
-        if key.replace("[", "").replace("]", "").upper() == clean.replace("[", "").replace("]", "").upper():
+        if key.replace("[", "").replace("]", "").upper() == clean.replace("[", "").replace("]", ""):
             return spec
+    if clean in ICMARKETS_SPECS:
+        return ICMARKETS_SPECS[clean]
     raise KeyError(f"Símbolo no configurado en contract_specs: {symbol}")
+
+
+def calculate_commission(
+    spec: ContractSpec,
+    lots: float,
+    eurusd_rate: float = 1.12,
+    account_currency: str = "EUR"
+) -> float:
+    """Calcula la comisión contractual del bróker en divisa de cuenta.
+    
+    En Forex Raw Spread (ej. IC Markets): $7.00 USD por lote round-trip -> convertido a EUR.
+    En Índices CFDs: 0.0 EUR (spread puro).
+    """
+    if lots <= 0 or spec.commission_per_lot <= 0:
+        return 0.0
+    comm_usd = lots * spec.commission_per_lot
+    acc_ccy = account_currency.upper()
+    if acc_ccy == "EUR":
+        return comm_usd / eurusd_rate
+    elif acc_ccy == "USD":
+        return comm_usd
+    return comm_usd / eurusd_rate
 
 
 def calculate_lot_size(

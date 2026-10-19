@@ -30,11 +30,10 @@ from trading_v2.research.regime_lab_v3 import add_indicators
 
 SYMBOLS_TO_SCAN = [
     ("SP500", "[SP500]", "idx_rsi2_dip_regime"),
+    ("DAX40", "GERMANY40", "idx_dax_bollinger_dip"),
+    ("EURUSD", "EURUSD", "fx_eurusd_ker_exhaustion"),
     ("NASDAQ100", "US100", "idx_ibs_dip"),
-    ("DAX40", "GERMANY40", "idx_ibs_dip"),
     ("DOW30", "[DJI30]", "idx_rsi2_dip_regime"),
-    ("NASDAQ100_RSI", "US100", "idx_rsi2_dip_regime"),
-    ("DAX40_ALT", "GERMANY40", "idx_rsi2_dip"),
 ]
 
 
@@ -112,6 +111,36 @@ def scan_markets(mt5, account_equity: float, risk_fraction: float = 0.0025, verb
             else:
                 reason.append(f"IBS neutral ({ibs:.2f} >= 0.20)")
             signal_active = trend_bullish and dip_active
+        elif strategy == "idx_dax_bollinger_dip":
+            bb_lower = float(last.get("bb_lower_18", close * 0.98))
+            dip_active = (rsi2 < 15.0) and (close <= bb_lower)
+            if rsi2 < 15.0:
+                reason.append(f"RSI(2) en sobreventa ({rsi2:.1f} < 15.0)")
+            else:
+                reason.append(f"RSI(2) neutral ({rsi2:.1f} >= 15.0)")
+            if close <= bb_lower:
+                reason.append(f"Precio en agotamiento inferior Bollinger 1.8σ ({close:.2f} <= {bb_lower:.2f})")
+            else:
+                reason.append(f"Precio dentro de bandas Bollinger ({close:.2f} > {bb_lower:.2f})")
+            signal_active = trend_bullish and dip_active
+        elif strategy == "fx_eurusd_ker_exhaustion":
+            ker = float(last.get("ker10", 0.50))
+            is_ranging = ker < 0.42
+            bb_lo = float(last.get("bb_lower_20", close * 0.98))
+            bb_up = float(last.get("bb_upper_20", close * 1.02))
+            long_cond = is_ranging and (rsi2 < 8.0) and (close <= bb_lo)
+            short_cond = is_ranging and (rsi2 > 92.0) and (close >= bb_up)
+            if is_ranging:
+                reason.append(f"Mercado en rango / no tendencial (KER10={ker:.2f} < 0.42)")
+            else:
+                reason.append(f"Mercado tendencial o ruidoso (KER10={ker:.2f} >= 0.42) [Entrada vetada]")
+            if long_cond:
+                reason.append(f"LONG: RSI2={rsi2:.1f} < 8.0 y Cierre <= Banda Inf 2.0σ ({close:.5f} <= {bb_lo:.5f})")
+            elif short_cond:
+                reason.append(f"SHORT: RSI2={rsi2:.1f} > 92.0 y Cierre >= Banda Sup 2.0σ ({close:.5f} >= {bb_up:.5f})")
+            else:
+                reason.append(f"Sin extremo de agotamiento en bandas 2.0σ (RSI2={rsi2:.1f})")
+            signal_active = long_cond or short_cond
 
         # Dimensionamiento de lote si hubiera entrada
         stop_dist = 2.5 * atr

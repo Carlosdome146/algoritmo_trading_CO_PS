@@ -60,8 +60,19 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     tr = pd.concat([h - l, (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
     out["atr20"] = tr.rolling(20).mean()
     out["atr_regime"] = out["atr20"] / out["atr20"].rolling(250, min_periods=120).median()
-    for n in (5, 50, 100, 150, 200, 250):
+    for n in (5, 20, 50, 100, 150, 200, 250):
         out[f"sma{n}"] = c.rolling(n).mean()
+    bb_std20 = c.rolling(20).std(ddof=0)
+    out["bb_lower_18"] = out["sma20"] - 1.8 * bb_std20
+    out["bb_upper_18"] = out["sma20"] + 1.8 * bb_std20
+    out["bb_lower_20"] = out["sma20"] - 2.0 * bb_std20
+    out["bb_upper_20"] = out["sma20"] + 2.0 * bb_std20
+    
+    # Kaufman Efficiency Ratio (10 barras): ruido vs dirección macro
+    change_10 = (c - c.shift(10)).abs()
+    sum_diffs_10 = c.diff().abs().rolling(10).sum()
+    out["ker10"] = change_10 / sum_diffs_10.replace(0, np.nan)
+
     delta = c.diff()
     for n in (2, 3):
         up = delta.clip(lower=0).ewm(alpha=1 / n, adjust=False).mean()
@@ -115,6 +126,27 @@ def entry_exit_signals(d: pd.DataFrame, s: StrategySpec) -> tuple[pd.Series, pd.
         entry = entry.astype(int)
         dom_rank = idx.to_series().groupby([idx.year, idx.month]).cumcount() + 1
         exit_rule = pd.Series((dom_rank.values >= p.get("exit_day", 3)) & (bdays_left > 5), index=idx)
+    elif s.name.startswith("idx_dax_bollinger_dip"):
+        sma = d[f"sma{p.get('sma', 200)}"]
+        sigma = p.get("sigma", 1.8)
+        bb_mid = d["sma20"] if "sma20" in d else d["Close"].rolling(20).mean()
+        bb_std = d["Close"].rolling(20).std(ddof=0)
+        bb_lower = bb_mid - sigma * bb_std
+        entry = ((c > sma) & (d["rsi2"] < p.get("rsi_th", 15)) & (c <= bb_lower)).astype(int)
+        exit_rule = c > d["sma5"]
+    elif s.name.startswith("fx_eurusd_ker_exhaustion"):
+        ker_cap = p.get("ker_cap", 0.42)
+        rsi_th = p.get("rsi_th", 8)
+        sigma = p.get("sigma", 2.0)
+        bb_mid = d["sma20"] if "sma20" in d else d["Close"].rolling(20).mean()
+        bb_std = d["Close"].rolling(20).std(ddof=0)
+        bb_lo = bb_mid - sigma * bb_std
+        bb_up = bb_mid + sigma * bb_std
+        is_ranging = (d["ker10"] < ker_cap) if "ker10" in d else pd.Series(True, index=d.index)
+        long_sig = is_ranging & (d["rsi2"] < rsi_th) & (c <= bb_lo)
+        short_sig = is_ranging & (d["rsi2"] > (100 - rsi_th)) & (c >= bb_up)
+        entry = long_sig.astype(int) - short_sig.astype(int)
+        exit_rule = c > d["sma5"]
     else:
         raise ValueError(f"Estrategia desconocida: {s.name}")
     if s.side == "long":
@@ -200,7 +232,12 @@ def simulate_daily(
             if (side == 1 and ex_l <= stop) or (side == -1 and ex_h >= stop):
                 exit_px, reason = stop - side * spr_j * slip_mult, "STOP"
                 break
-            rule = ex[j] if not s.name.startswith("tsmom") else (es[j] != side)
+            if s.name.startswith("fx_"):
+                rule = (c[j] > d["sma5"].iloc[j]) if side == 1 else (c[j] < d["sma5"].iloc[j])
+            elif s.name.startswith("tsmom"):
+                rule = (es[j] != side)
+            else:
+                rule = ex[j]
             if rule and j + 1 < n:
                 spr_n = cost_spread[j + 1]
                 exit_px = o[j + 1] + (spr_n if side == -1 else 0.0) - side * spr_n * slip_mult
@@ -298,6 +335,8 @@ def canonical_strategies() -> list[StrategySpec]:
         StrategySpec("idx_ibs_dip", INDICES, "long", {"sma": 200, "ibs_th": 0.2}, stop_atr=2.5, max_bars=5),
         StrategySpec("turn_of_month", INDICES, "long", {"days_before": 1, "exit_day": 3, "sma": 200, "trend_filter": False}, stop_atr=3.0, max_bars=8),
         StrategySpec("tsmom", tuple(MARKET_SYMBOL), "both", {"sma": 200}, stop_atr=3.0, max_bars=60),
+        StrategySpec("idx_dax_bollinger_dip", ("DAX40",), "long", {"sma": 200, "rsi_th": 15, "sigma": 1.8}, stop_atr=2.5, max_bars=10),
+        StrategySpec("fx_eurusd_ker_exhaustion", ("EURUSD",), "both", {"ker_cap": 0.42, "rsi_th": 8, "sigma": 2.5}, stop_atr=2.5, max_bars=8),
     ]
 
 
@@ -321,6 +360,18 @@ def neighbours(s: StrategySpec) -> list[StrategySpec]:
         for sma in (100, 150, 200, 250):
             for st in (2.5, 3.0, 4.0):
                 out.append(StrategySpec(s.name, s.markets, s.side, {"sma": sma}, st, s.max_bars))
+    elif s.name.startswith("idx_dax_bollinger_dip"):
+        for sma in (150, 200, 250):
+            for th in (10, 15, 20):
+                for sig in (1.5, 1.8, 2.0):
+                    for st in (2.0, 2.5, 3.0):
+                        out.append(StrategySpec(s.name, s.markets, s.side, {"sma": sma, "rsi_th": th, "sigma": sig}, st, s.max_bars))
+    elif s.name.startswith("fx_eurusd_ker_exhaustion"):
+        for kc in (0.38, 0.42, 0.45):
+            for th in (6, 8, 10):
+                for sig in (2.3, 2.5, 2.7):
+                    for st in (2.0, 2.5, 3.0):
+                        out.append(StrategySpec(s.name, s.markets, s.side, {"ker_cap": kc, "rsi_th": th, "sigma": sig}, st, s.max_bars))
     return out
 
 
