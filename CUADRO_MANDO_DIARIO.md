@@ -1,5 +1,5 @@
 # 📊 Cuadro de Mando Ejecutivo y Liquidación Diaria (2026-10-19)
-**Generado:** `2026-10-19 15:30:23 UTC` | **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
+**Generado:** `2026-10-19 20:46:41 UTC` | **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
 
 ---
 
@@ -13,7 +13,7 @@
 | **Swaps / Financiación** | `+0.00 €` | Coste o abono por mantener posiciones durante la noche |
 | **Resultado Neto Cerrado** | **`0.00 €`** 🟢 | **Beneficio/Pérdida neto realizado hoy** |
 | **Balance Actual** | **`3000.00 €`** | Capital consolidado en cuenta |
-| **Equity Flotante (En vivo)** | **`3005.98 €`** | Capital total incluyendo operaciones abiertas (+5.98 €) |
+| **Equity Flotante (En vivo)** | **`2998.39 €`** | Capital total incluyendo operaciones abiertas (-1.61 €) |
 
 ---
 
@@ -34,7 +34,7 @@
 ## 3. 📈 Posiciones Abiertas y en Seguimiento
 | Ticket | Activo | Tipo | Lotes | Precio Entrada | Precio Actual | Stop Loss | P&L Flotante (EUR) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| #1233248789 | **US100** | COMPRA (LONG) | 0.04 | 29597.38 | 29765.17 | `28986.09` | **+5.98 €** |
+| #1233248789 | **US100** | COMPRA (LONG) | 0.04 | 29597.38 | 29552.17 | `28986.09` | **-1.61 €** |
 
 ---
 
