@@ -142,6 +142,47 @@ class ContractSpecsTests(unittest.TestCase):
         swap_long = calculate_overnight_swap(spec, direction=1, nights=1, lots=1.0, close_price=25000.0)
         self.assertLess(swap_long, 0.0)  # Es un coste negativo
 
+    def test_icmarkets_specs_and_aliases(self):
+        from trading_v2.backtesting.contract_specs import ICMARKETS_SPECS
+        expected_icm = {"DE40", "US500", "US30", "USTEC", "EURUSD", "XAUUSD", "JP225"}
+        self.assertEqual(set(ICMARKETS_SPECS.keys()), expected_icm)
+
+        # Búsqueda directa con broker="icmarkets"
+        de40 = get_contract_spec("DE40", broker="icmarkets")
+        self.assertEqual(de40.symbol, "DE40")
+        self.assertEqual(de40.lot_min, 0.01)  # Micro-lotes en índices en IC Markets
+
+        # Resolución transparente de alias
+        us500 = get_contract_spec("[SP500]", broker="icmarkets")
+        self.assertEqual(us500.symbol, "US500")
+        self.assertEqual(us500.lot_min, 0.01)
+
+        ustec = get_contract_spec("US100", broker="icmarkets")
+        self.assertEqual(ustec.symbol, "USTEC")
+
+    def test_icmarkets_margin_1_500_vs_admirals(self):
+        spec_icm = get_contract_spec("DE40", broker="icmarkets")
+        # 1.0 lote a 19,000 EUR con apalancamiento 1:500 (IC Markets)
+        margin_500 = estimate_margin(spec_icm, lots=1.0, entry_price=19000.0, leverage=500.0)
+        self.assertAlmostEqual(margin_500, 38.0, places=2)  # Solo 38 EUR de margen
+
+        # Con 0.10 lotes (posición típica con 4000 EUR de capital):
+        margin_micro = estimate_margin(spec_icm, lots=0.10, entry_price=19000.0, leverage=500.0)
+        self.assertAlmostEqual(margin_micro, 3.80, places=2)  # Menos de 4 EUR de margen retenido
+
+    def test_commission_calculation_fx_and_indices(self):
+        from trading_v2.backtesting.contract_specs import calculate_commission
+        fx_spec = get_contract_spec("EURUSD", broker="icmarkets")
+        # 1.0 lote EURUSD en IC Markets: 7.00 USD round-trip -> en EUR a 1.10 = 6.36 EUR
+        comm_eur = calculate_commission(fx_spec, lots=1.0, eurusd_rate=1.10, account_currency="EUR")
+        self.assertAlmostEqual(comm_eur, 7.00 / 1.10, places=4)
+
+        # Índices en IC Markets no cobran comisión por lote (solo spread)
+        idx_spec = get_contract_spec("DE40", broker="icmarkets")
+        comm_idx = calculate_commission(idx_spec, lots=1.0, eurusd_rate=1.10, account_currency="EUR")
+        self.assertEqual(comm_idx, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
