@@ -29,11 +29,9 @@ from trading_v2.execution.demo_paper_trader import assert_demo_account, get_mt5_
 from trading_v2.research.regime_lab_v3 import add_indicators
 
 SYMBOLS_TO_SCAN = [
-    ("SP500", "[SP500]", "idx_rsi2_dip_regime"),
     ("DAX40", "GERMANY40", "idx_dax_bollinger_dip"),
+    ("SP500", "[SP500]", "idx_rsi2_dip_regime"),
     ("EURUSD", "EURUSD", "fx_eurusd_ker_exhaustion"),
-    ("NASDAQ100", "US100", "idx_ibs_dip"),
-    ("DOW30", "[DJI30]", "idx_rsi2_dip_regime"),
 ]
 
 
