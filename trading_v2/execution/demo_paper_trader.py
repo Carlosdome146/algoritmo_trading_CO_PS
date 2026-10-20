@@ -51,6 +51,10 @@ from trading_v2.strategies.precision_microstructure import (
     enrich_microstructure_features,
     generate_precision_signals,
 )
+from trading_v2.strategies.micro_scalping import (
+    SniperScalpConfig,
+    generate_sniper_signals,
+)
 from trading_v2.strategies.trend_following import add_indicators
 
 V3_DAILY_STRATEGIES = (
@@ -576,6 +580,20 @@ class DemoPaperTrader:
                 sig = 1
             elif (e20 < e50) and (c < e50) and (32 <= rsi <= 58) and (atr_r >= 0.82) and (h1_dir == -1):
                 sig = -1
+        elif self.cfg.strategy == "institutional_sniper_scalp":
+            cfg_sniper = SniperScalpConfig(
+                symbol=symbol,
+                target_units=2.5 if symbol == "EURUSD" else (15.0 if "GERMANY" in symbol else 4.5),
+                stop_units=5.0 if symbol == "EURUSD" else (25.0 if "GERMANY" in symbol else 7.5),
+                session_start_h=7,
+                session_end_h=17,
+                max_holding_bars=4,
+                min_sweep_units=1.5 if symbol == "EURUSD" else (8.0 if "GERMANY" in symbol else 2.5),
+                min_rejection_wick=0.35,
+                use_h1_filter=False,
+            )
+            signals_df = generate_sniper_signals(m15_df, cfg_sniper)
+            sig = int(signals_df["signal"].iloc[-1])
         elif self.cfg.strategy in PRECISION_STRATEGIES:
             enriched_df = enrich_microstructure_features(m15_df, h1_df, spec.point)
             signals_df = generate_precision_signals(enriched_df, self.cfg.strategy, spec.point)
@@ -1074,7 +1092,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         "--strategy",
         type=str,
         default="adr_exhaustion_fade",
-        choices=list(STRATEGIES) + list(PRECISION_STRATEGIES) + list(V3_DAILY_STRATEGIES),
+        choices=list(STRATEGIES) + list(PRECISION_STRATEGIES) + list(V3_DAILY_STRATEGIES) + ["institutional_sniper_scalp"],
         help="Estrategia a ejecutar.",
     )
     parser.add_argument(
