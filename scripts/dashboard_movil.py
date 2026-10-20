@@ -255,8 +255,9 @@ def render_markdown(data: dict) -> str:
     lines.extend([
         "",
         "### 🛡️ Transparencia de Costes y Comisiones",
-        "- **Comisión por lote:** 0.00 EUR (Trade.MT5).",
-        "- **Spread Bid/Ask:** Descontado automáticamente en cada señal y comprobación de ejecución.",
+        "- **Broker Demo Actual:** Admirals DEMO `#58678879` (Cuenta Trade.MT5: comisión 0.00 EUR en broker; coste integrado en spread).",
+        "- **Modelo Cuantitativo Auditado:** IC Markets Raw ECN (Forex: comisión 3.50 USD/lado = ~6.30 EUR/lote round-trip + 0.1 pip spread crudo; Índices: 1.0 pt DAX / 0.4 pt SP500).",
+        "- **Spread y Deslizamiento:** Descontados causalmente al Bid/Ask en cada señal y ejecución.",
         "",
         "---",
         "*Actualizado automáticamente desde el motor local en segundo plano.*",

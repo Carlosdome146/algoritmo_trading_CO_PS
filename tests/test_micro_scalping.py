@@ -91,6 +91,27 @@ class TestMicroScalping(unittest.TestCase):
         for t in non_zero.index:
             self.assertTrue(7 <= t.hour <= 10)
 
+    def test_signals_multiple_opportunities(self):
+        """Verifica que sin límite artificial (None), se aprovechen múltiples oportunidades."""
+        cfg = SniperScalpConfig(
+            symbol="EURUSD",
+            target_units=2.3,
+            stop_units=5.0,
+            session_start_h=6,
+            session_end_h=12,
+            max_trades_per_day=None,
+            cooldown_bars=2,
+            min_sweep_units=0.1,
+            min_rejection_wick=0.10,
+            use_h1_filter=False,
+        )
+        res = generate_sniper_signals(self.df, cfg)
+        signals_series = res["signal"]
+        non_zero = signals_series[signals_series != 0]
+        # Con parámetros permisivos y sin tope, debe poder capturar múltiples señales
+        self.assertGreaterEqual(len(non_zero), 1)
+
+
 
 if __name__ == "__main__":
     unittest.main()

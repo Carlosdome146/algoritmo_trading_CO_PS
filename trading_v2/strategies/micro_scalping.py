@@ -1,20 +1,23 @@
 """Estrategia de Micro-Scalping Institucional Francotirador (V3 Intraday).
 
-Inspirada en el patrón forense verificado de Ismael (operativa EURUSD / DAX en ventanas
-de apertura institucional con capturas rápidas de liquidez y salida estricta por tiempo).
+Inspirada en la operativa de alta selectividad institucional (captura rápida de
+desequilibrios de liquidez en apertura de sesión con salida disciplinada).
 
 Principios:
-1. Filtro estricto de sesión:
+1. Filtro de sesión de alta liquidez:
    - Londres / Frankfurt (07:00 a 10:30 UTC) para EURUSD y DAX40.
    - Wall Street (13:30 a 16:30 UTC) para SP500 y NASDAQ100.
-2. Detección de Barrido de Liquidez (Liquidity Sweep):
+2. Detección de Barrido de Liquidez (Liquidity Sweep) y Absorción:
    - El precio rebasa el extremo de la última hora (Initial Balance) y presenta
      una mecha de rechazo absorptiva (rejection wick >= 35%).
-3. Regla del 'Francotirador' (Máximo 1 operación diaria por activo):
-   - Evita la trampa de sobre-operar el ruido que devora la cuenta en costes de spread.
-4. Salida por tiempo de catástrofe:
-   - Si en N barras (15-30 minutos) el objetivo no ha sido alcanzado, se fuerza
-     la salida para evitar quedar atrapado en continuaciones tendenciales adversas.
+3. Filtro de Calidad sin límite artificial de trades:
+   - No se limita arbitrariamente a 1 trade diario. Si el mercado presenta 2, 3 o 5
+     oportunidades prístinas que cumplan todos los filtros institucionales, el
+     algoritmo las ejecuta. Se incluye un cooldown de seguridad entre entradas
+     para evitar sobre-exposición simultánea.
+4. Salida estricta por tiempo o target:
+   - Se busca captura rápida de recorrido (impulso inicial) con protección de
+     catástrofe temporal para no quedar atrapado en continuaciones tendenciales adversas.
 """
 from __future__ import annotations
 
@@ -33,7 +36,8 @@ class SniperScalpConfig:
     max_holding_bars: int = 4
     min_sweep_units: float = 1.5
     min_rejection_wick: float = 0.35
-    max_trades_per_day: int = 1
+    max_trades_per_day: int | None = None  # None = sin límite artificial, opera cada oportunidad válida
+    cooldown_bars: int = 4                 # Barras mínimas de separación entre operaciones consecutivas
     use_h1_filter: bool = True
 
     def __post_init__(self):
@@ -45,8 +49,10 @@ class SniperScalpConfig:
             raise ValueError("max_holding_bars debe ser >= 1")
         if not 0.0 <= self.min_rejection_wick < 1.0:
             raise ValueError("min_rejection_wick debe estar en [0, 1)")
-        if self.max_trades_per_day < 1:
-            raise ValueError("max_trades_per_day debe ser >= 1")
+        if self.max_trades_per_day is not None and self.max_trades_per_day < 1:
+            raise ValueError("max_trades_per_day debe ser >= 1 o None")
+        if self.cooldown_bars < 1:
+            raise ValueError("cooldown_bars debe ser >= 1")
 
 
 def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
@@ -74,7 +80,7 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.DataFrame:
-    """Genera señales causales (-1, 0, 1) respetando el límite de 1 trade/día y la sesión."""
+    """Genera señales causales (-1, 0, 1) hilando fino en las mejores oportunidades del día."""
     ind = compute_sniper_indicators(df)
     n = len(ind)
     signals = np.zeros(n, dtype=int)
@@ -100,6 +106,7 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
 
     trades_today = 0
     current_date = None
+    last_signal_idx = -cfg.cooldown_bars
 
     for i in range(15, n):
         d = dates[i]
@@ -107,11 +114,15 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
             current_date = d
             trades_today = 0
 
-        # Filtro de cuota diaria
-        if trades_today >= cfg.max_trades_per_day:
+        # Filtro de cuota diaria opcional
+        if cfg.max_trades_per_day is not None and trades_today >= cfg.max_trades_per_day:
             continue
 
-        # Filtro de sesión
+        # Cooldown para no disparar sobre la misma posición abierta
+        if (i - last_signal_idx) < cfg.cooldown_bars:
+            continue
+
+        # Filtro de sesión de liquidez
         hr = hours[i]
         if not (cfg.session_start_h <= hr <= cfg.session_end_h):
             continue
@@ -130,9 +141,11 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
         if long_cond and not short_cond:
             signals[i] = 1
             trades_today += 1
+            last_signal_idx = i
         elif short_cond and not long_cond:
             signals[i] = -1
             trades_today += 1
+            last_signal_idx = i
 
     out = ind.copy()
     out["signal"] = signals
