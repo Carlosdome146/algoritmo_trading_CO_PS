@@ -68,12 +68,29 @@ def validate_m5(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("CSV M5 sin campos OHLC o Spread")
     b=df.copy()
     b.index=b.index.tz_convert("UTC")
-    for col in ("Open","High","Low","Close","Spread"):
-        b[col]=pd.to_numeric(b[col], errors="raise")
+    # Spread=0 en CSV MT5 no implica negociar gratis: dato desconocido.
+    # No usamos ni propagamos nunca información de spreads futuros.
+    raw_col = "SpreadRaw" if "SpreadRaw" in b.columns else "Spread"
+    for col in ("Open", "High", "Low", "Close", raw_col):
+        b[col] = pd.to_numeric(b[col], errors="raise")
         if not np.isfinite(b[col].to_numpy(dtype=float)).all():
-            raise ValueError("Precio/Spread no finito")
-    if (b[["Open","High","Low","Close"]]<=0).any().any() or (b.Spread<=0).any():
-        raise ValueError("Precios no positivos o spreads no utilizables")
+            raise ValueError(f"{col}: valores no finitos")
+    if (b[["Open","High","Low","Close"]] <= 0).any().any():
+        raise ValueError("OHLC: precios no positivos")
+    raw = b[raw_col].astype(float)
+    if (raw < 0).any():
+        raise ValueError("Spread: valores negativos, exportación inválida")
+    b["SpreadRaw"] = raw
+    b["SpreadMissing"] = raw.eq(0)
+    # Estimación conservadora solo para estudio exploratorio: percentil 75
+    # de los spread POSITIVOS observados en hasta 288 barras ANTERIORES.
+    # Hasta tener 8 observaciones positivas históricas se deja NaN y se
+    # prohíbe abrir o simular trades en esas barras.
+    past_positive = raw.where(raw > 0).shift(1)
+    estimate = past_positive.rolling(288, min_periods=8).quantile(.75)
+    b["Spread"] = raw.where(raw > 0, estimate)
+    b["SpreadUsable"] = b["Spread"].notna() & (b["Spread"] > 0)
+    b["SpreadImputed"] = b["SpreadMissing"] & b["SpreadUsable"]
     if ((b.High < b[["Open","Close","Low"]].max(axis=1)) |
         (b.Low > b[["Open","Close"]].min(axis=1))).any():
         raise ValueError("OHLC inconsistente")
@@ -144,6 +161,10 @@ def generate_orb_signals(df:pd.DataFrame, cfg:ORBConfig, point:float) -> pd.Data
                 continue
             atr=float(b["atr14"].iloc[i])
             if not math.isfinite(atr) or atr<=0 or not cfg.min_range_atr<=width/atr<=cfg.max_range_atr:
+                continue
+            # Sin spread utilizable no hay señal. Imputados solo con
+            # spread positivo observado ANTES de esta vela.
+            if not bool(b.SpreadUsable.iloc[i]):
                 continue
             spread=float(b.Spread.iloc[i])*point
             if spread / atr >= .15:
