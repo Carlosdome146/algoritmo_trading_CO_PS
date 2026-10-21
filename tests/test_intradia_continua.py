@@ -67,9 +67,13 @@ class ContinuousIntradayTests(unittest.TestCase):
         b=resample_complete(m5,15)
         h=resample_complete(m5,60)
         direction=causal_h1_direction(b,h,15)
-        # a las 13:15 cerró solo 13:00, no usar 13:00-14:00 H1.
+        # A las 13:15 se puede utilizar H1 12:00-13:00,
+        # pero NUNCA H1 13:00-14:00 (todavia sin cerrar).
         t=pd.Timestamp("2026-03-09 13:00Z")
-        self.assertTrue(np.isnan(direction.loc[t]))
+        future_h1=h.copy()
+        future_h1.loc[pd.Timestamp("2026-03-09 13:00Z"),"Close"] *= 1.1
+        altered=causal_h1_direction(b,future_h1,15)
+        self.assertEqual(direction.loc[t],altered.loc[t])
         self.assertTrue(np.isfinite(direction.loc[pd.Timestamp("2026-03-09 13:45Z")]))
 
     def test_signal_causal_from_past_only(self):
