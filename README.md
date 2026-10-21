@@ -78,3 +78,25 @@ de trades ganadores/perdedores únicamente durante entrenamiento OFFLINE;
 no altera el modelo por pérdidas individuales.
 
 [Metodología, procedencia, resultados y limitaciones](STRATEGY_LAB.md).
+
+## Prototipo ORB intradia M5 (apertura de 15/30 minutos)
+
+El lanzador DEMO actual usa **D1** y una estrategia RSI2: no es un
+Opening Range Breakout intradia, por eso una operacion al dia es plausible.
+
+Nueva investigacion offline sobre DAX40, SP500, NASDAQ100 y DOW30:
+ORB 15/30 minutos, ruptura/retest, calendario europeo/EEUU con DST,
+stop de ATR, costes BID/ASK y dos bloques de validacion temporal.
+No existe ningun modelo ORB aprobado para enviar ordenes.
+
+Exportador seguro M5:
+```powershell
+python scripts/exportar_orb_m5_mt5.py --bars 80000
+```
+
+Investigacion reproducible SIN conectar a MT5:
+```powershell
+python -m scripts.investigar_orb_m5 --zip "admirals_orb_m5_local.zip"
+```
+
+[Consultar reglas ORB, limitaciones y pasos](ORB_INTRADIA.md).
