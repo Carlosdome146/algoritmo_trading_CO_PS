@@ -119,3 +119,32 @@ ni afirmar una tasa de acierto objetivo.**
 5. Validación prospectiva y aprobación específica antes de usar --live.
 
 No se garantiza rentabilidad ni porcentaje de aciertos.
+
+
+## Incidencia MT5: Spreads históricos igual a cero
+
+Algunos CSV M5 del terminal registran `Spread=0`. Eso **NO demuestra
+que no hubiera coste de negociación**; generalmente significa que el
+spread histórico de esa barra no puede reconstruirse con seguridad.
+
+La validación inicial detenía el estudio ante la primera barra cero.
+El validador actual conserva `SpreadRaw` y marca `SpreadMissing`;
+si existen al menos ocho observaciones positivas en las 288 barras
+anteriores, sustituye el cero por el percentil 75 de esos spreads
+anteriores. La estimación es causal (sin valores futuros) y el backtest
+no envía órdenes. Si no hay historial previo suficiente, la barra no
+puede utilizarse para abrir/simular una operación.
+
+El JSON informa de:
+- `raw_zero_spread_bars` y `raw_zero_spread_pct`;
+- `imputed_from_past_bars` y `spread_unusable_bars`;
+- `real_spreads_verified: false`.
+
+**Si más del 20% de barras M5 presenta spread cero,
+`NO_TRADE_DATA_QUALITY`**, sin selección automática de la estrategia.
+Un porcentaje inferior sigue implicando resultados provisionales:
+hay que obtener spreads bid/ask/ticks más fiables antes de automatizar.
+
+Después de actualizar la rama ejecutar el laboratorio sobre el ZIP ya
+descargado: no hace falta repetir la exportación salvo que el archivo
+sea realmente inválido.
