@@ -78,3 +78,20 @@ de trades ganadores/perdedores únicamente durante entrenamiento OFFLINE;
 no altera el modelo por pérdidas individuales.
 
 [Metodología, procedencia, resultados y limitaciones](STRATEGY_LAB.md).
+
+
+## Nuevo laboratorio V3: trading intradía CONTINUO M15/M30
+
+La estrategia principal solicitada es analizar **cada cierre M15 o M30 a lo
+largo de toda la sesión**. Esto NO es ORB de apertura 15/30 minutos.
+Compara EMA/RSI, Donchian, Bollinger y Supertrend, dos horizontes 60/120 min
+y un filtro ML opcional en un estudio OFFLINE, con datos del ZIP M5
+Admirals DEMO ya exportado.
+
+```powershell
+python -m scripts.investigar_intradia_m15_m30 --zip "admirals_orb_m5_local.zip"
+```
+
+Los resultados se guardan en `intradia_m15_m30_local_result.json`.
+**No envía órdenes MT5** ni sustituye el actual lanzador D1.
+[Reglas, costes, validación y limitaciones](INTRADIA_M15_M30.md).
