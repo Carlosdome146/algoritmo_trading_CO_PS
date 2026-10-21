@@ -53,7 +53,9 @@ def read_m5(z:zipfile.ZipFile,market:str)->pd.DataFrame:
     df=pd.read_csv(BytesIO(data))
     df["Time"]=pd.to_datetime(df.Time,utc=True,errors="raise")
     df=df.set_index("Time")
-    # Rechazo de datos dudosos: cero de spread en cualquier barra es inseguro
+    # MT5 puede exportar cero como spread histórico desconocido.
+    # validate_m5 lo marca como dato ausente y calcula una estimación
+    # ÚNICAMENTE con spreads positivos PREVIOS (nunca spread gratuito).
     return validate_m5(df)
 
 
@@ -76,6 +78,8 @@ def _intraday_event(b:pd.DataFrame,i:int,side:int,point:float,tp_atr:float,cfg:O
     if not np.isfinite(atr) or atr<=0:
         return None
     stopdist=cfg.stop_atr*atr
+    if not bool(b.SpreadUsable.iloc[i+1]):
+        return None  # Sin estimación histórica causal no hay precio de entrada
     entry_spr=float(b.Spread.iloc[i+1])*point
     entry_bid=float(b.Open.iloc[i+1])
     entry=entry_bid+(entry_spr if side==1 else 0)+side*cfg.slippage_spread_fraction*entry_spr
@@ -84,6 +88,8 @@ def _intraday_event(b:pd.DataFrame,i:int,side:int,point:float,tp_atr:float,cfg:O
     horizon_end=min(len(b)-1,i+HOLD_BARS)
     exit_price=None;reason="TIMEOUT";end_i=i+1
     for j in range(i+1,horizon_end+1):
+        if not bool(b.SpreadUsable.iloc[j]):
+            return None  # Histórico insuficiente, no contabilizar como win
         if j>i+1 and idx[j]-idx[j-1]!=pd.Timedelta(minutes=5):
             # Hueco imprevisto: salida en la primera apertura disponible.
             spr=float(b.Spread.iloc[j])*point
@@ -228,6 +234,34 @@ def run_zip(zip_file:str|Path,cfg:ORBLabConfig=ORBLabConfig()):
                 result["markets"][market]={"decision":"NO_TRADE","reason":"Faltan barras M5"}
                 continue
             sym,point=SYMBOLS[market]
-            data=read_m5(z,market)
-            result["markets"][market]=analyze_market(data,sym,point,cfg)
+            try:
+                data=read_m5(z,market)
+                missing=int(data["SpreadMissing"].sum())
+                usable=int(data["SpreadUsable"].sum())
+                quality={"m5_bars":len(data),"raw_zero_spread_bars":missing,
+                         "raw_zero_spread_pct":round(100*missing/len(data),2),
+                         "imputed_from_past_bars":int(data["SpreadImputed"].sum()),
+                         "spread_unusable_bars":len(data)-usable,
+                         "method":"Q75 positive spread in previous 288 M5, at least 8 positives; never zero cost",
+                         "real_spreads_verified":False}
+                # Una proporción elevada de spreads desconocidos no permite
+                # seleccionar estrategias con confianza ni aprobar operaciones.
+                if missing/len(data) > .20:
+                    result["markets"][market]={
+                        "decision":"NO_TRADE_DATA_QUALITY",
+                        "reason":"Más del 20% de spreads históricos cero; solicitar datos bid/ask o ticks",
+                        "data_quality":quality,"chosen":None,"holdout":None
+                    }
+                    continue
+                study=analyze_market(data,sym,point,cfg)
+                study["data_quality"]=quality
+                if missing:
+                    study["data_warning"]="Spreads cero estimados con pasado; resultados exploratorios, NO operativos"
+                result["markets"][market]=study
+            except (ValueError, KeyError, pd.errors.ParserError) as exc:
+                result["markets"][market]={
+                    "decision":"NO_TRADE_DATA_INVALID",
+                    "reason":f"{market}: {exc}",
+                    "chosen":None,"holdout":None
+                }
     return result
