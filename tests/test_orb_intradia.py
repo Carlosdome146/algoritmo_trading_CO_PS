@@ -110,11 +110,45 @@ class ORBSignalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ORBConfig("[SP500]",mode="fake")
 
-    def test_spread_zero_rejected(self):
+    def test_zero_spread_is_missing_not_free(self):
         b,_=example()
         b.iloc[0,b.columns.get_loc("Spread")]=0
-        with self.assertRaisesRegex(ValueError,"spreads"):
+        result=validate_m5(b)
+        self.assertTrue(bool(result["SpreadMissing"].iloc[0]))
+        self.assertFalse(bool(result["SpreadUsable"].iloc[0]))
+        self.assertTrue(np.isnan(result["Spread"].iloc[0]))
+        self.assertEqual(result["SpreadRaw"].iloc[0],0)
+
+    def test_zero_spread_imputed_from_past_only(self):
+        b,_=example()
+        ts=b.index[20]
+        b.at[ts,"Spread"]=0
+        first=validate_m5(b)
+        self.assertTrue(bool(first.at[ts,"SpreadImputed"]))
+        self.assertAlmostEqual(float(first.at[ts,"Spread"]),5.0)
+        # El cambio a barras POSTERIORES no puede alterar la imputacion.
+        late=b.copy()
+        late.loc[late.index>ts,"Spread"]=250
+        after=validate_m5(late)
+        self.assertAlmostEqual(float(after.at[ts,"Spread"]),float(first.at[ts,"Spread"]))
+
+    def test_negative_spread_rejected(self):
+        b,_=example()
+        b.iloc[0,b.columns.get_loc("Spread")]=-1
+        with self.assertRaisesRegex(ValueError,"Spread: valores negativos"):
             validate_m5(b)
+
+    def test_zeros_do_not_create_free_breakout(self):
+        b,op=example()
+        ts=op+pd.Timedelta(minutes=15)
+        set_breakout(b,ts)
+        # Primero se acumula el histórico positivo y luego falla el dato:
+        # se puede estimar conservadoramente con el pasado (no cero).
+        b.at[ts,"Spread"]=0
+        s=generate_orb_signals(b,ORBConfig("[SP500]"),.01)
+        self.assertEqual(s.signal.loc[ts],1)
+        self.assertGreater(s.Spread.loc[ts],0)
+        self.assertTrue(bool(s.SpreadImputed.loc[ts]))
 
     def test_no_reconstruction_from_unsafe_timestamps(self):
         b,_=example()
