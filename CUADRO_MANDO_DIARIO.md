@@ -1,5 +1,5 @@
-# 📊 Cuadro de Mando Ejecutivo y Liquidación Diaria (2026-10-20)
-**Generado:** `2026-10-20 21:17:57 UTC` | **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
+# 📊 Cuadro de Mando Ejecutivo y Liquidación Diaria (2026-10-22)
+**Generado:** `2026-10-22 20:27:17 UTC` | **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
 
 ---
 
@@ -12,8 +12,8 @@
 | **Comisiones Bróker** | `-0.00 €` | Coste fijo por lote cobrado por Admirals (0.00 € en Trade.MT5) |
 | **Swaps / Financiación** | `+0.00 €` | Coste o abono por mantener posiciones durante la noche |
 | **Resultado Neto Cerrado** | **`0.00 €`** 🟢 | **Beneficio/Pérdida neto realizado hoy** |
-| **Balance Actual** | **`3000.00 €`** | Capital consolidado en cuenta |
-| **Equity Flotante (En vivo)** | **`3003.42 €`** | Capital total incluyendo operaciones abiertas (+3.42 €) |
+| **Balance Actual** | **`3008.54 €`** | Capital consolidado en cuenta |
+| **Equity Flotante (En vivo)** | **`3008.54 €`** | Capital total incluyendo operaciones abiertas (+0.00 €) |
 
 ---
 
@@ -32,9 +32,7 @@
 ---
 
 ## 3. 📈 Posiciones Abiertas y en Seguimiento
-| Ticket | Activo | Tipo | Lotes | Precio Entrada | Precio Actual | Stop Loss | P&L Flotante (EUR) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| #1233248789 | **US100** | COMPRA (LONG) | 0.04 | 29597.38 | 29704.10 | `28986.09` | **+3.80 €** |
+*No hay posiciones abiertas en este momento (100% liquidez protegida).*
 
 ---
 
@@ -43,21 +41,21 @@ Este apartado detalla de forma pedagógica **por qué el sistema actuó o se abs
 
 ### DAX40 (`GERMANY40`) — 🟡 **ABSTENCIÓN / ESPERA**
 - **Estrategia:** `idx_dax_bollinger_dip`
-- **Valores Técnicos:** Cierre: `25179.81` | Media 200: `24884.76` | RSI(2): `17.8` | IBS: `0.01` | Régimen ATR: `0.90`
+- **Valores Técnicos:** Cierre: `25609.84` | Media 200: `24887.44` | RSI(2): `81.5` | IBS: `0.77` | Régimen ATR: `0.90`
 - **Motivo de la Decisión:**
-  • RSI(2) neutral (17.8 >= 15.0)<br>• Precio dentro de bandas Bollinger (25179.81 > 24970.62)
+  • RSI(2) neutral (81.5 >= 15.0)<br>• Precio dentro de bandas Bollinger (25609.84 > 24981.35)
 
 ### SP500 (`[SP500]`) — 🟡 **ABSTENCIÓN / ESPERA**
 - **Estrategia:** `idx_rsi2_dip_regime`
-- **Valores Técnicos:** Cierre: `7698.27` | Media 200: `7287.21` | RSI(2): `46.8` | IBS: `0.61` | Régimen ATR: `0.87`
+- **Valores Técnicos:** Cierre: `7759.56` | Media 200: `7295.33` | RSI(2): `79.2` | IBS: `0.80` | Régimen ATR: `0.89`
 - **Motivo de la Decisión:**
-  • RSI(2) neutral (46.8 >= 10.0)
+  • RSI(2) neutral (79.2 >= 10.0)
 
 ### EURUSD (`EURUSD`) — 🟡 **ABSTENCIÓN / ESPERA**
 - **Estrategia:** `fx_eurusd_ker_exhaustion`
-- **Valores Técnicos:** Cierre: `1.12` | Media 200: `1.16` | RSI(2): `69.6` | IBS: `0.58` | Régimen ATR: `1.20`
+- **Valores Técnicos:** Cierre: `1.12` | Media 200: `1.16` | RSI(2): `60.1` | IBS: `0.70` | Régimen ATR: `1.15`
 - **Motivo de la Decisión:**
-  • Precio (1.12) < SMA200 (1.16) [Tendencia bajista]<br>• Mercado en rango / no tendencial (KER10=0.06 < 0.42)<br>• Sin extremo de agotamiento en bandas 2.0σ (RSI2=69.6)
+  • Precio (1.12) < SMA200 (1.16) [Tendencia bajista]<br>• Mercado en rango / no tendencial (KER10=0.13 < 0.42)<br>• Sin extremo de agotamiento en bandas 2.0σ (RSI2=60.1)
 
 ---
 
