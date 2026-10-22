@@ -214,6 +214,10 @@ class MT5Adapter:
         return self.backend.order_send(request)
 
     @property
+    def TIMEFRAME_M5(self) -> int:
+        return getattr(self.backend, "TIMEFRAME_M5", 5)
+
+    @property
     def TIMEFRAME_M15(self) -> int:
         return getattr(self.backend, "TIMEFRAME_M15", 15)
 
@@ -287,7 +291,7 @@ class DemoTraderConfig:
     cooldown_minutes: int = 60
     max_consecutive_losses: int = 2
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
-    timeframe: str = "M15"  # "M15" o "D1"
+    timeframe: str = "M15"  # "M5", "M15" o "D1"
 
 
 class DemoPaperTrader:
@@ -531,8 +535,9 @@ class DemoPaperTrader:
 
         spec = get_contract_spec(symbol, broker=self.cfg.broker)
 
-        # 1. Copiar últimas 100 barras M15 CERRADAS (start_pos=1, nunca barra 0 en formación)
-        m15_rates = self.adapter.copy_rates_from_pos(symbol, self.adapter.TIMEFRAME_M15, 1, 100)
+        # 1. Copiar últimas 100 barras intradía CERRADAS (M5 o M15)
+        tf_code = self.adapter.TIMEFRAME_M5 if self.cfg.timeframe == "M5" else self.adapter.TIMEFRAME_M15
+        m15_rates = self.adapter.copy_rates_from_pos(symbol, tf_code, 1, 100)
         if m15_rates is None or len(m15_rates) < 65:
             return {"status": "INSUFFICIENT_M15_DATA", "symbol": symbol}
 
@@ -1085,7 +1090,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         "--timeframe",
         type=str,
         default="M15",
-        choices=["M15", "D1"],
+        choices=["M5", "M15", "D1"],
         help="Marco temporal de ejecución (default: M15).",
     )
     parser.add_argument(

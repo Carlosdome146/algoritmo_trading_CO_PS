@@ -33,6 +33,7 @@ class MockMT5Adapter:
     def __init__(self, account_info=None):
         self.acc = account_info or MockAccountInfo()
         self.sent_orders = []
+        self.TIMEFRAME_M5 = 5
         self.TIMEFRAME_M15 = 15
         self.TIMEFRAME_H1 = 16385
         self.TIMEFRAME_H4 = 16388
