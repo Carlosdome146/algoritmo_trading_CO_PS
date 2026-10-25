@@ -287,7 +287,7 @@ class DemoTraderConfig:
     max_spread_atr_ratio: float = 0.08  # Máximo spread <= 8% de ATR
     max_spread_median_ratio: float = 2.0  # Bloqueo si spread > 2x mediana
     strategy: str = "ema_rsi_baseline"
-    broker: str = "admirals"  # "admirals" o "icmarkets"
+    broker: str = "auto"  # "auto", "admirals" o "icmarkets"
     poll_seconds: float = 15.0
     max_open_positions: int = 2
     magic_number: int = 20261018
@@ -326,6 +326,22 @@ class DemoPaperTrader:
 
         acc = self.adapter.account_info()
         assert_demo_account(acc)
+
+        if self.cfg.broker == "auto":
+            server_str = str(getattr(acc, "server", "")).lower()
+            company_str = str(getattr(acc, "company", "")).lower()
+            if "icmarket" in server_str or "icmarket" in company_str:
+                self.cfg.broker = "icmarkets"
+            else:
+                self.cfg.broker = "admirals"
+
+        # Resolver símbolos canónicos según el broker detectado
+        from trading_v2.backtesting.contract_specs import resolve_broker_symbol
+        resolved_symbols = [resolve_broker_symbol(s, broker=self.cfg.broker) for s in self.cfg.symbols]
+        self.cfg.symbols = resolved_symbols
+        for s in resolved_symbols:
+            if s not in self.recent_spreads:
+                self.recent_spreads[s] = []
 
         mode_desc = "SIMULACIÓN DRY-RUN (Sin órdenes reales)" if self.cfg.dry_run else "LIVE DEMO (Enviando órdenes reales al broker)"
         self.log(
@@ -1121,9 +1137,9 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--broker",
         type=str,
-        default="admirals",
-        choices=["admirals", "icmarkets"],
-        help="Perfil contractual del bróker: 'admirals' o 'icmarkets' (default: admirals).",
+        default="auto",
+        choices=["auto", "admirals", "icmarkets"],
+        help="Perfil contractual del bróker: 'auto', 'admirals' o 'icmarkets' (default: auto).",
     )
     parser.add_argument(
         "--poll-seconds",

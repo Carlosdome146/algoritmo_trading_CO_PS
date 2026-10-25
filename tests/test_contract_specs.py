@@ -143,8 +143,8 @@ class ContractSpecsTests(unittest.TestCase):
         self.assertLess(swap_long, 0.0)  # Es un coste negativo
 
     def test_icmarkets_specs_and_aliases(self):
-        from trading_v2.backtesting.contract_specs import ICMARKETS_SPECS
-        expected_icm = {"DE40", "US500", "US30", "USTEC", "EURUSD", "XAUUSD", "JP225"}
+        from trading_v2.backtesting.contract_specs import ICMARKETS_SPECS, resolve_broker_symbol
+        expected_icm = {"DE40", "US500", "US30", "USTEC", "EURUSD", "XAUUSD", "JP225", "ES35"}
         self.assertEqual(set(ICMARKETS_SPECS.keys()), expected_icm)
 
         # Búsqueda directa con broker="icmarkets"
@@ -159,6 +159,17 @@ class ContractSpecsTests(unittest.TestCase):
 
         ustec = get_contract_spec("US100", broker="icmarkets")
         self.assertEqual(ustec.symbol, "USTEC")
+
+        es35 = get_contract_spec("[IBEX35]", broker="icmarkets")
+        self.assertEqual(es35.symbol, "ES35")
+
+        # Comprobar resolución bidireccional de símbolos
+        self.assertEqual(resolve_broker_symbol("GERMANY40", "icmarkets"), "DE40")
+        self.assertEqual(resolve_broker_symbol("[SP500]", "icmarkets"), "US500")
+        self.assertEqual(resolve_broker_symbol("[IBEX35]", "icmarkets"), "ES35")
+        self.assertEqual(resolve_broker_symbol("DE40", "admirals"), "GERMANY40")
+        self.assertEqual(resolve_broker_symbol("US500", "admirals"), "[SP500]")
+        self.assertEqual(resolve_broker_symbol("ES35", "admirals"), "[IBEX35]")
 
     def test_icmarkets_margin_1_500_vs_admirals(self):
         spec_icm = get_contract_spec("DE40", broker="icmarkets")

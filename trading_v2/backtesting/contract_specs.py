@@ -375,6 +375,26 @@ ICMARKETS_SPECS: dict[str, ContractSpec] = {
         commission_per_lot=0.0,
         typical_spread_points=500.0,
     ),
+    "ES35": ContractSpec(
+        symbol="ES35",
+        description="Spain 35 Index CFD (IC Markets Raw)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="EUR",
+        margin_currency="EUR",
+        lot_min=0.01,
+        lot_step=0.01,
+        lot_max=200.0,
+        stops_level_points=0,
+        calc_mode=4,
+        swap_long=-5.50,
+        swap_short=0.20,
+        swap_mode=5,
+        commission_per_lot=0.0,
+        typical_spread_points=350.0,
+    ),
 }
 
 # Tabla de sinónimos inter-broker
@@ -400,7 +420,21 @@ SYMBOL_ALIASES: dict[str, dict[str, str]] = {
     "IBEX35": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
     "[IBEX35]": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
     "SPAIN35": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
+    "ES35": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
+    "SPA35": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
 }
+
+
+def resolve_broker_symbol(symbol: str, broker: str = "admirals") -> str:
+    """Traduce un símbolo canónico o genérico al nombre exacto en el broker especificado."""
+    clean = symbol.strip().upper()
+    b = broker.strip().lower()
+    if clean in SYMBOL_ALIASES and b in SYMBOL_ALIASES[clean]:
+        return SYMBOL_ALIASES[clean][b]
+    unbracketed = clean.replace("[", "").replace("]", "")
+    if unbracketed in SYMBOL_ALIASES and b in SYMBOL_ALIASES[unbracketed]:
+        return SYMBOL_ALIASES[unbracketed][b]
+    return symbol
 
 
 def get_contract_spec(symbol: str, broker: str = "admirals") -> ContractSpec:
