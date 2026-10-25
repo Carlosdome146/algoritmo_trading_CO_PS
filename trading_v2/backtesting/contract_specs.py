@@ -212,6 +212,24 @@ ADMIRALS_SPECS: dict[str, ContractSpec] = {
         swap_short=-1.272,
         swap_mode=5,
     ),
+    "[IBEX35]": ContractSpec(
+        symbol="[IBEX35]",
+        description="IBEX 35 Index CFD, cash (EUR)",
+        point=0.01,
+        digits=2,
+        tick_size=0.01,
+        contract_size=1.0,
+        profit_currency="EUR",
+        margin_currency="EUR",
+        lot_min=0.1,
+        lot_step=0.1,
+        lot_max=500.0,
+        stops_level_points=350,
+        calc_mode=4,
+        swap_long=-4.942,
+        swap_short=-0.058,
+        swap_mode=5,
+    ),
 }
 
 
@@ -379,6 +397,9 @@ SYMBOL_ALIASES: dict[str, dict[str, str]] = {
     "NIKKEI225": {"admirals": "[JP225]", "icmarkets": "JP225"},
     "[JP225]": {"admirals": "[JP225]", "icmarkets": "JP225"},
     "JP225": {"admirals": "[JP225]", "icmarkets": "JP225"},
+    "IBEX35": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
+    "[IBEX35]": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
+    "SPAIN35": {"admirals": "[IBEX35]", "icmarkets": "ES35"},
 }
 
 

@@ -12,7 +12,7 @@ from trading_v2.backtesting.contract_specs import (
 
 class ContractSpecsTests(unittest.TestCase):
     def test_all_admirals_specs_configured(self):
-        expected = {"GERMANY40", "[SP500]", "[DJI30]", "GOLD", "EURUSD", "US100", "[JP225]"}
+        expected = {"GERMANY40", "[SP500]", "[DJI30]", "GOLD", "EURUSD", "US100", "[JP225]", "[IBEX35]"}
         self.assertEqual(set(ADMIRALS_SPECS.keys()), expected)
         for sym in expected:
             spec = get_contract_spec(sym)

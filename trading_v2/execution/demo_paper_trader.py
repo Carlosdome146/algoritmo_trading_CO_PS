@@ -81,6 +81,9 @@ SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
     "GOLD": (7, 0, 18, 0),
     "XAUUSD": (7, 0, 18, 0),
     "EURUSD": (7, 0, 18, 0),
+    "[IBEX35]": (7, 0, 15, 30),
+    "IBEX35": (7, 0, 15, 30),
+    "SPAIN35": (7, 0, 15, 30),
 }
 
 
