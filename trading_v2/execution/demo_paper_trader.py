@@ -282,7 +282,7 @@ class DemoTraderConfig:
     risk_fraction: float = 0.0025  # 0.25% por operación
     sl_atr: float = 1.20
     tp_atr: float = 0.55
-    be_trigger_atr: float = 0.40  # Nivel para activar Breakeven
+    be_trigger_atr: float = 0.35  # Nivel para activar Breakeven
     be_lock_atr: float = 0.05    # Nivel donde se coloca el SL (+0.05*ATR cubre spread)
     max_spread_atr_ratio: float = 0.08  # Máximo spread <= 8% de ATR
     max_spread_median_ratio: float = 2.0  # Bloqueo si spread > 2x mediana
@@ -575,6 +575,7 @@ class DemoPaperTrader:
         # 4. Alinear tendencia H1 de forma estrictamente causal
         h1_dir = self._compute_causal_h1_direction(m15_close_dt, h1_df)
         m15_df["h1_direction"] = h1_dir
+        m15_df["h1_trend"] = h1_dir
 
         # 5. Generar señal según estrategia configurada
         if self.cfg.strategy == "ema_rsi_baseline":
@@ -590,16 +591,29 @@ class DemoPaperTrader:
             elif (e20 < e50) and (c < e50) and (32 <= rsi <= 58) and (atr_r >= 0.82) and (h1_dir == -1):
                 sig = -1
         elif self.cfg.strategy == "institutional_sniper_scalp":
+            is_ibex = "IBEX" in symbol
+            is_dax = "GERMANY" in symbol or "DE40" in symbol
+            is_fx = symbol == "EURUSD"
+
+            if is_fx:
+                target_u, stop_u, sweep_u, s_start, s_end = 2.5, 5.0, 1.5, 7, 16
+            elif is_dax:
+                target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 8.0, 7, 15
+            elif is_ibex:
+                target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 8.0, 7, 15
+            else:  # [SP500] / US500
+                target_u, stop_u, sweep_u, s_start, s_end = 4.5, 7.5, 2.5, 13, 20
+
             cfg_sniper = SniperScalpConfig(
                 symbol=symbol,
-                target_units=2.5 if symbol == "EURUSD" else (15.0 if "GERMANY" in symbol else 4.5),
-                stop_units=5.0 if symbol == "EURUSD" else (25.0 if "GERMANY" in symbol else 7.5),
-                session_start_h=7,
-                session_end_h=17,
+                target_units=target_u,
+                stop_units=stop_u,
+                session_start_h=s_start,
+                session_end_h=s_end,
                 max_holding_bars=4,
-                min_sweep_units=1.5 if symbol == "EURUSD" else (8.0 if "GERMANY" in symbol else 2.5),
+                min_sweep_units=sweep_u,
                 min_rejection_wick=0.35,
-                use_h1_filter=False,
+                use_h1_filter=True,
             )
             signals_df = generate_sniper_signals(m15_df, cfg_sniper)
             sig = int(signals_df["signal"].iloc[-1])
