@@ -32,6 +32,7 @@ SYMBOLS_TO_SCAN = [
     ("DAX40", "GERMANY40", "idx_dax_bollinger_dip"),
     ("SP500", "[SP500]", "idx_rsi2_dip_regime"),
     ("EURUSD", "EURUSD", "fx_eurusd_ker_exhaustion"),
+    ("IBEX35", "[IBEX35]", "idx_ibex_bollinger_dip"),
 ]
 
 
@@ -109,15 +110,18 @@ def scan_markets(mt5, account_equity: float, risk_fraction: float = 0.0025, verb
             else:
                 reason.append(f"IBS neutral ({ibs:.2f} >= 0.20)")
             signal_active = trend_bullish and dip_active
-        elif strategy == "idx_dax_bollinger_dip":
-            bb_lower = float(last.get("bb_lower_18", close * 0.98))
-            dip_active = (rsi2 < 15.0) and (close <= bb_lower)
-            if rsi2 < 15.0:
-                reason.append(f"RSI(2) en sobreventa ({rsi2:.1f} < 15.0)")
+        elif strategy in ("idx_dax_bollinger_dip", "idx_ibex_bollinger_dip"):
+            sigma_col = "bb_lower_20" if strategy == "idx_ibex_bollinger_dip" else "bb_lower_18"
+            rsi_th = 10.0 if strategy == "idx_ibex_bollinger_dip" else 15.0
+            sigma_label = "2.0σ" if strategy == "idx_ibex_bollinger_dip" else "1.8σ"
+            bb_lower = float(last.get(sigma_col, close * 0.98))
+            dip_active = (rsi2 < rsi_th) and (close <= bb_lower)
+            if rsi2 < rsi_th:
+                reason.append(f"RSI(2) en sobreventa ({rsi2:.1f} < {rsi_th:.1f})")
             else:
-                reason.append(f"RSI(2) neutral ({rsi2:.1f} >= 15.0)")
+                reason.append(f"RSI(2) neutral ({rsi2:.1f} >= {rsi_th:.1f})")
             if close <= bb_lower:
-                reason.append(f"Precio en agotamiento inferior Bollinger 1.8σ ({close:.2f} <= {bb_lower:.2f})")
+                reason.append(f"Precio en agotamiento inferior Bollinger {sigma_label} ({close:.2f} <= {bb_lower:.2f})")
             else:
                 reason.append(f"Precio dentro de bandas Bollinger ({close:.2f} > {bb_lower:.2f})")
             signal_active = trend_bullish and dip_active

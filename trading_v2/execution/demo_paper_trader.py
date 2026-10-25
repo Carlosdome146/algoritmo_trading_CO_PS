@@ -64,6 +64,7 @@ V3_DAILY_STRATEGIES = (
     "turn_of_month",
     "tsmom",
     "idx_dax_bollinger_dip",
+    "idx_ibex_bollinger_dip",
     "fx_eurusd_ker_exhaustion",
 )
 

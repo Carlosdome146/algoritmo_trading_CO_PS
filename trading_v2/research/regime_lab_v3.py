@@ -37,6 +37,7 @@ MARKET_SYMBOL = {
     "NIKKEI225": "[JP225]",
     "GOLD": "GOLD",
     "EURUSD": "EURUSD",
+    "IBEX35": "[IBEX35]",
 }
 
 
@@ -126,7 +127,7 @@ def entry_exit_signals(d: pd.DataFrame, s: StrategySpec) -> tuple[pd.Series, pd.
         entry = entry.astype(int)
         dom_rank = idx.to_series().groupby([idx.year, idx.month]).cumcount() + 1
         exit_rule = pd.Series((dom_rank.values >= p.get("exit_day", 3)) & (bdays_left > 5), index=idx)
-    elif s.name.startswith("idx_dax_bollinger_dip"):
+    elif s.name.startswith("idx_dax_bollinger_dip") or s.name.startswith("idx_ibex_bollinger_dip"):
         sma = d[f"sma{p.get('sma', 200)}"]
         sigma = p.get("sigma", 1.8)
         bb_mid = d["sma20"] if "sma20" in d else d["Close"].rolling(20).mean()
@@ -360,7 +361,7 @@ def neighbours(s: StrategySpec) -> list[StrategySpec]:
         for sma in (100, 150, 200, 250):
             for st in (2.5, 3.0, 4.0):
                 out.append(StrategySpec(s.name, s.markets, s.side, {"sma": sma}, st, s.max_bars))
-    elif s.name.startswith("idx_dax_bollinger_dip"):
+    elif s.name.startswith("idx_dax_bollinger_dip") or s.name.startswith("idx_ibex_bollinger_dip"):
         for sma in (150, 200, 250):
             for th in (10, 15, 20):
                 for sig in (1.5, 1.8, 2.0):
