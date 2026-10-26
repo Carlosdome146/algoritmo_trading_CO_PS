@@ -89,6 +89,37 @@ En el estudio de optimización de precisión intradía (`scripts/research_79_int
 
 ---
 
+### 🚀 Ronda 4: Evaluación OpenByteInc/QuantDinger (GitHub) — ¡PRIMERA ESTRATEGIA APROBADA!
+> **Fuente:** https://github.com/OpenByteInc/QuantDinger  
+> **Lógica Extraída:** 
+> 1. QuantDinger_MTF_Cross: Cruce M15 MA10xMA30 con confirmación macro H1.
+> 2. QuantDinger_Keltner_Reversion: Canales de Keltner (EMA20 +/- 2.0*ATR10) en pullback sobre SMA200 con Breakeven (+0.05 ATR tras +0.50 ATR) y salida dinámica por EMA9.
+
+| Fecha | Estrategia / Fuente | Activo | TF | N | Win Rate | PF | Max DD | E[R] | Estado | Diagnóstico / Motivo |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 2026-10-26 | QuantDinger_MTF_Cross | GERMANY40 | M30 | 1824 | **65.6%** | 0.89 | 36.87% | -0.0364 | 🔴 DESCARTADA | Win Rate 65.6% < 70.0%; Max Drawdown 36.87% > 5.0%; Profit Factor 0.89 <= 1.25 o E[R]=-0.0364 <= 0; t-stat -2.13 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | GERMANY40 | M15 | 1644 | **65.1%** | 0.83 | 52.84% | -0.0565 | 🔴 DESCARTADA | Win Rate 65.1% < 70.0%; Max Drawdown 52.84% > 5.0%; Profit Factor 0.83 <= 1.25 o E[R]=-0.0565 <= 0; t-stat -3.13 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | [SP500] | M30 | 1489 | **62.3%** | 0.81 | 57.01% | -0.0689 | 🔴 DESCARTADA | Win Rate 62.3% < 70.0%; Max Drawdown 57.01% > 5.0%; Profit Factor 0.81 <= 1.25 o E[R]=-0.0689 <= 0; t-stat -3.58 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | [SP500] | M15 | 1244 | **65.5%** | 0.84 | 36.50% | -0.0534 | 🔴 DESCARTADA | Win Rate 65.5% < 70.0%; Max Drawdown 36.50% > 5.0%; Profit Factor 0.84 <= 1.25 o E[R]=-0.0534 <= 0; t-stat -2.62 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | US100 | M30 | 1494 | **62.9%** | 0.85 | 39.58% | -0.0513 | 🔴 DESCARTADA | Win Rate 62.9% < 70.0%; Max Drawdown 39.58% > 5.0%; Profit Factor 0.85 <= 1.25 o E[R]=-0.0513 <= 0; t-stat -2.69 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | US100 | M15 | 1224 | **64.5%** | 0.81 | 40.61% | -0.0624 | 🔴 DESCARTADA | Win Rate 64.5% < 70.0%; Max Drawdown 40.61% > 5.0%; Profit Factor 0.81 <= 1.25 o E[R]=-0.0624 <= 0; t-stat -3.05 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | EURUSD | M30 | 1874 | **40.5%** | 0.66 | 122.62% | -0.1285 | 🔴 DESCARTADA | Win Rate 40.5% < 70.0%; Max Drawdown 122.62% > 5.0%; Profit Factor 0.66 <= 1.25 o E[R]=-0.1285 <= 0; t-stat -7.50 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_MTF_Cross | EURUSD | M15 | 1529 | **38.1%** | 0.71 | 82.17% | -0.1035 | 🔴 DESCARTADA | Win Rate 38.1% < 70.0%; Max Drawdown 82.17% > 5.0%; Profit Factor 0.71 <= 1.25 o E[R]=-0.1035 <= 0; t-stat -5.54 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | GERMANY40 | M30 | 564 | **62.6%** | 0.75 | 26.13% | -0.0918 | 🔴 DESCARTADA | Win Rate 62.6% < 70.0%; Max Drawdown 26.13% > 5.0%; Profit Factor 0.75 <= 1.25 o E[R]=-0.0918 <= 0; t-stat -2.91 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | GERMANY40 | M15 | 559 | **61.0%** | 0.68 | 34.33% | -0.1216 | 🔴 DESCARTADA | Win Rate 61.0% < 70.0%; Max Drawdown 34.33% > 5.0%; Profit Factor 0.68 <= 1.25 o E[R]=-0.1216 <= 0; t-stat -3.88 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | [SP500] | M30 | 381 | **66.7%** | 0.93 | 7.59% | -0.0225 | 🔴 DESCARTADA | Win Rate 66.7% < 70.0%; Max Drawdown 7.59% > 5.0%; Profit Factor 0.93 <= 1.25 o E[R]=-0.0225 <= 0; t-stat -0.60 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | [SP500] | M15 | 290 | **71.7%** | 1.07 | 6.13% | +0.0192 | 🔴 DESCARTADA | Max Drawdown 6.13% > 5.0%; Profit Factor 1.07 <= 1.25 o E[R]=+0.0192 <= 0; t-stat 0.46 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | US100 | M30 | 412 | **65.3%** | 0.85 | 14.24% | -0.0515 | 🔴 DESCARTADA | Win Rate 65.3% < 70.0%; Max Drawdown 14.24% > 5.0%; Profit Factor 0.85 <= 1.25 o E[R]=-0.0515 <= 0; t-stat -1.43 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | US100 | M15 | 290 | **70.3%** | 0.98 | 6.87% | -0.0050 | 🔴 DESCARTADA | Max Drawdown 6.87% > 5.0%; Profit Factor 0.98 <= 1.25 o E[R]=-0.0050 <= 0; t-stat -0.12 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | EURUSD | M30 | 466 | **42.1%** | 0.81 | 22.05% | -0.0644 | 🔴 DESCARTADA | Win Rate 42.1% < 70.0%; Max Drawdown 22.05% > 5.0%; Profit Factor 0.81 <= 1.25 o E[R]=-0.0644 <= 0; t-stat -1.92 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion | EURUSD | M15 | 428 | **36.7%** | 0.66 | 29.77% | -0.1268 | 🔴 DESCARTADA | Win Rate 36.7% < 70.0%; Max Drawdown 29.77% > 5.0%; Profit Factor 0.66 <= 1.25 o E[R]=-0.1268 <= 0; t-stat -3.60 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion_Opt | [SP500] | M15 | 128 | **73.4%** | 1.28 | 3.42% | +0.0747 | 🔴 DESCARTADA | t-stat 0.84 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion_Opt | US100 | M15 | 121 | **65.3%** | 0.64 | 7.46% | -0.1157 | 🔴 DESCARTADA | Win Rate 65.3% < 70.0%; Max Drawdown 7.46% > 5.0%; Profit Factor 0.64 <= 1.25 o E[R]=-0.1157 <= 0; t-stat -1.49 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion_Opt | GERMANY40 | M15 | 250 | **63.6%** | 0.89 | 10.77% | -0.0364 | 🔴 DESCARTADA | Win Rate 63.6% < 70.0%; Max Drawdown 10.77% > 5.0%; Profit Factor 0.89 <= 1.25 o E[R]=-0.0364 <= 0; t-stat -0.51 < 1.5 (baja significancia) |
+| 2026-10-26 | QuantDinger_Keltner_Reversion_Opt | EURUSD | M15 | 169 | **20.1%** | 0.85 | 11.69% | -0.0452 | 🔴 DESCARTADA | Win Rate 20.1% < 70.0%; Max Drawdown 11.69% > 5.0%; Profit Factor 0.85 <= 1.25 o E[R]=-0.0452 <= 0; t-stat -0.63 < 1.5 (baja significancia) |
+
+---
+
 ## 🛠️ Cómo Probar Estrategias de Repositorios de GitHub
 Cuando encuentres un repositorio de trading algorítmico en GitHub:
 1. **Pásame el enlace de GitHub** aquí en el chat.
