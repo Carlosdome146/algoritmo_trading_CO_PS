@@ -1,6 +1,6 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-10-25 16:44:21 (Hora España)` | `15:44:21 UTC`
+**Última actualización:** `2026-10-26 21:07:45 (Hora España)` | `20:07:45 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
@@ -13,10 +13,10 @@
 ### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
 | Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25365.85 | 24887.00 | 37.5 | 0.20 | RSI(2) neutral (37.5 >= 15.0); Precio dentro de bandas Bollinger (25365.85 > 24981.07) |
-| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7664.92 | 7298.92 | 19.9 | 0.22 | RSI(2) neutral (19.9 >= 10.0) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 30.2 | 0.41 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.02 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=30.2) |
-| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18945.95 | 18636.48 | 25.6 | 0.22 | RSI(2) neutral (25.6 >= 10.0); Precio dentro de bandas Bollinger (18945.95 > 18805.53) |
+| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25130.87 | 24885.62 | 18.4 | 0.33 | RSI(2) neutral (18.4 >= 15.0); Precio dentro de bandas Bollinger (25130.87 > 24970.21) |
+| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7632.83 | 7302.39 | 13.2 | 0.35 | RSI(2) neutral (13.2 >= 10.0) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 16.2 | 0.42 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.00 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=16.2) |
+| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18949.37 | 18642.68 | 26.6 | 0.73 | RSI(2) neutral (26.6 >= 10.0); Precio dentro de bandas Bollinger (18949.37 > 18821.67) |
 
 ### 🛡️ Transparencia de Costes y Comisiones
 - **Broker Demo Actual:** Admirals DEMO `#58678879` (Cuenta Trade.MT5: comisión 0.00 EUR en broker; coste integrado en spread).
