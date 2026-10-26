@@ -1,23 +1,18 @@
-"""Estrategia de Micro-Scalping Institucional Francotirador (V3 Intraday).
+"""Estrategia de Micro-Scalping Institucional Francotirador (V3 Intraday M15 / M30).
 
 Inspirada en la operativa de alta selectividad institucional (captura rápida de
 desequilibrios de liquidez en apertura de sesión con salida disciplinada).
 
 Principios:
 1. Filtro de sesión de alta liquidez:
-   - Londres / Frankfurt (07:00 a 10:30 UTC) para EURUSD y DAX40.
-   - Wall Street (13:30 a 16:30 UTC) para SP500 y NASDAQ100.
-2. Detección de Barrido de Liquidez (Liquidity Sweep) y Absorción:
-   - El precio rebasa el extremo de la última hora (Initial Balance) y presenta
-     una mecha de rechazo absorptiva (rejection wick >= 35%).
-3. Filtro de Calidad sin límite artificial de trades:
-   - No se limita arbitrariamente a 1 trade diario. Si el mercado presenta 2, 3 o 5
-     oportunidades prístinas que cumplan todos los filtros institucionales, el
-     algoritmo las ejecuta. Se incluye un cooldown de seguridad entre entradas
-     para evitar sobre-exposición simultánea.
-4. Salida estricta por tiempo o target:
-   - Se busca captura rápida de recorrido (impulso inicial) con protección de
-     catástrofe temporal para no quedar atrapado en continuaciones tendenciales adversas.
+   - Londres / Frankfurt (07:00 a 16:00 UTC) para EURUSD, DAX40 e IBEX35.
+   - Wall Street (13:00 a 20:00 UTC) para SP500 y NASDAQ100.
+2. Tres Gatillos Institucionales M15 / M30:
+   - Gatillo A (Classic Liquidity Sweep): Barrido profundo de extremo previo con mecha >= 35%.
+   - Gatillo B (Ismael Sweep Reclaim): Barrido de mínimo reciente en tendencia alcista M15/M30
+     (Close > EMA20 > SMA200) con mecha de absorción >= 50% y cierre en tercio superior (CLV >= 0.80).
+   - Gatillo C (Bollinger Extreme Dip): Sobreventa extrema RSI(2) < 5.0 tocando banda 2.0σ en tendencia.
+3. Filtro de Calidad sin límite artificial de trades y con cooldown de seguridad.
 """
 from __future__ import annotations
 
@@ -56,7 +51,7 @@ class SniperScalpConfig:
 
 
 def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Calcula indicadores causales de microestructura en barras M5 o M15."""
+    """Calcula indicadores causales de microestructura en barras M5, M15 o M30."""
     out = df.copy()
     c, h, l, o = out["Close"], out["High"], out["Low"], out["Open"]
 
@@ -66,10 +61,22 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["lower_wick"] = ((np.minimum(o, c) - l) / rng).fillna(0.0)
     out["upper_wick"] = ((h - np.maximum(o, c)) / rng).fillna(0.0)
 
-    # Extremos de la última hora (12 barras en M5, 4 barras en M15) con shift causal
-    n_lookback = 12
-    out["recent_high"] = h.shift(1).rolling(n_lookback, min_periods=4).max()
-    out["recent_low"] = l.shift(1).rolling(n_lookback, min_periods=4).min()
+    # Extremos recientes con shift causal (12 barras y 8 barras)
+    out["recent_high"] = h.shift(1).rolling(12, min_periods=4).max()
+    out["recent_low"] = l.shift(1).rolling(12, min_periods=4).min()
+    out["recent_low_8"] = l.shift(1).rolling(8, min_periods=3).min()
+
+    # Indicadores de tendencia intradía y agotamiento (EMA20, SMA200, RSI2, Bollinger 2.0σ)
+    out["ema20"] = c.ewm(span=20, adjust=False).mean()
+    out["sma200"] = c.rolling(200, min_periods=40).mean()
+    sma20 = c.rolling(20, min_periods=10).mean()
+    std20 = c.rolling(20, min_periods=10).std(ddof=0)
+    out["bb_lo"] = sma20 - 2.0 * std20
+
+    delta = c.diff()
+    up = delta.clip(lower=0.0).ewm(alpha=0.5, adjust=False).mean()
+    dn = (-delta.clip(upper=0.0)).ewm(alpha=0.5, adjust=False).mean()
+    out["rsi2"] = (100.0 - 100.0 / (1.0 + up / dn.replace(0.0, np.nan))).fillna(50.0)
 
     # Horas UTC y fecha
     out["hour_utc"] = out.index.hour
@@ -80,11 +87,12 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.DataFrame:
-    """Genera señales causales (-1, 0, 1) hilando fino en las mejores oportunidades del día."""
+    """Genera señales causales (-1, 0, 1) hilando fino en las mejores oportunidades M15/M30."""
     ind = compute_sniper_indicators(df)
     n = len(ind)
     signals = np.zeros(n, dtype=int)
 
+    c = ind["Close"].to_numpy(dtype=float)
     h = ind["High"].to_numpy(dtype=float)
     l = ind["Low"].to_numpy(dtype=float)
     lower_wick = ind["lower_wick"].to_numpy(dtype=float)
@@ -92,6 +100,11 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
     clv = ind["clv"].to_numpy(dtype=float)
     recent_hi = ind["recent_high"].to_numpy(dtype=float)
     recent_lo = ind["recent_low"].to_numpy(dtype=float)
+    recent_lo8 = ind["recent_low_8"].to_numpy(dtype=float)
+    ema20 = ind["ema20"].to_numpy(dtype=float)
+    sma200 = ind["sma200"].to_numpy(dtype=float)
+    bb_lo = ind["bb_lo"].to_numpy(dtype=float)
+    rsi2 = ind["rsi2"].to_numpy(dtype=float)
     hours = ind["hour_utc"].to_numpy(dtype=int)
     dates = ind["date"].to_numpy()
 
@@ -130,9 +143,31 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
         trend_ok_long = (h1_trend[i] >= 0) if cfg.use_h1_filter else True
         trend_ok_short = (h1_trend[i] <= 0) if cfg.use_h1_filter else True
 
-        # Señal LONG: Barrido de soporte con absorción compradora
+        # 1. Gatillo Clásico: Barrido profundo de soporte con mecha de absorción
         swept_low = l[i] <= (recent_lo[i] - sweep_dist)
-        long_cond = swept_low and (lower_wick[i] >= cfg.min_rejection_wick) and (clv[i] >= 0.40) and trend_ok_long
+        classic_long = swept_low and (lower_wick[i] >= cfg.min_rejection_wick) and (clv[i] >= 0.40)
+
+        # 2. Gatillo Ismael Sweep Reclaim (ej. EURUSD 20/10 10:00 M15):
+        # Toque/barrido de mínimo reciente en tendencia alcista (Close > EMA20 > SMA200) + mecha >= 50% + cierre en máximo (CLV >= 0.80)
+        bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
+        ismael_reclaim_long = (
+            bull_structure
+            and np.isfinite(recent_lo8[i])
+            and (l[i] <= recent_lo8[i])
+            and (c[i] > ema20[i])
+            and (lower_wick[i] >= 0.50)
+            and (clv[i] >= 0.80)
+        )
+
+        # 3. Gatillo Bollinger Extreme Dip: Sobreventa extrema RSI(2) < 5.0 en banda 2.0σ
+        bb_dip_long = (
+            bull_structure
+            and np.isfinite(bb_lo[i])
+            and (rsi2[i] < 5.0)
+            and (c[i] <= bb_lo[i])
+        )
+
+        long_cond = (classic_long or ismael_reclaim_long or bb_dip_long) and trend_ok_long
 
         # Señal SHORT: Barrido de resistencia con absorción vendedora
         swept_high = h[i] >= (recent_hi[i] + sweep_dist)

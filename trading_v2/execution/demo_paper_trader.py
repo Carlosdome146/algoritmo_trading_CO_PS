@@ -226,6 +226,10 @@ class MT5Adapter:
         return getattr(self.backend, "TIMEFRAME_M15", 15)
 
     @property
+    def TIMEFRAME_M30(self) -> int:
+        return getattr(self.backend, "TIMEFRAME_M30", 30)
+
+    @property
     def TIMEFRAME_H1(self) -> int:
         return getattr(self.backend, "TIMEFRAME_H1", 16385)
 
@@ -555,8 +559,16 @@ class DemoPaperTrader:
 
         spec = get_contract_spec(symbol, broker=self.cfg.broker)
 
-        # 1. Copiar últimas 100 barras intradía CERRADAS (M5 o M15)
-        tf_code = self.adapter.TIMEFRAME_M5 if self.cfg.timeframe == "M5" else self.adapter.TIMEFRAME_M15
+        # 1. Copiar últimas barras intradía CERRADAS (M5, M15, M30 o híbrido M15_M30)
+        if self.cfg.timeframe == "M5":
+            tf_code = self.adapter.TIMEFRAME_M5
+            tf_mins = 5
+        elif self.cfg.timeframe == "M30" or (self.cfg.timeframe == "M15_M30" and symbol != "EURUSD"):
+            tf_code = self.adapter.TIMEFRAME_M30
+            tf_mins = 30
+        else:
+            tf_code = self.adapter.TIMEFRAME_M15
+            tf_mins = 15
         m15_rates = self.adapter.copy_rates_from_pos(symbol, tf_code, 1, 100)
         if m15_rates is None or len(m15_rates) < 65:
             return {"status": "INSUFFICIENT_M15_DATA", "symbol": symbol}
@@ -586,7 +598,7 @@ class DemoPaperTrader:
         self.latest_atr[symbol] = atr
 
         # Fecha de cierre de la barra M15 evaluada
-        m15_close_dt = m15_df.index[-1] + pd.to_timedelta(15, unit="m")
+        m15_close_dt = m15_df.index[-1] + pd.to_timedelta(tf_mins, unit="m")
 
         # 4. Alinear tendencia H1 de forma estrictamente causal
         h1_dir = self._compute_causal_h1_direction(m15_close_dt, h1_df)
@@ -1124,7 +1136,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         "--timeframe",
         type=str,
         default="M15",
-        choices=["M5", "M15", "D1"],
+        choices=["M5", "M15", "M30", "M15_M30", "D1"],
         help="Marco temporal de ejecución (default: M15).",
     )
     parser.add_argument(
