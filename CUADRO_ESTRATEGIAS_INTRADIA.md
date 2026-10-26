@@ -72,8 +72,24 @@ En el estudio de optimización de precisión intradía (`scripts/research_79_int
 
 ---
 
-## 🛠️ Cómo Probar Estrategias de Repositorios de GitHub
+### 🔴 Ronda 3: Evaluación TauricResearch/TradingAgents (GitHub)
+> **Fuente:** https://github.com/TauricResearch/TradingAgents  
+> **Lógica Extraída:** Confluencia Técnica del Market Analyst (EMA10 + SMA50 + SMA200 + MACD Histogram + RSI14 + Bandas de Bollinger).
 
+| Fecha | Estrategia / Fuente | Activo | TF | N | Win Rate | PF | Max DD | E[R] | Estado | Diagnóstico / Motivo del Descarte |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 2026-10-26 | TradingAgents_Technical_Confluence | GERMANY40 | M30 | 757 | **64.9%** | 0.94 | 13.72% | -0.0198 | 🔴 DESCARTADA | Win Rate 64.9% < 70.0%; Max Drawdown 13.72% > 5.0%; Profit Factor 0.94 <= 1.25 o E[R]=-0.0198 <= 0; t-stat -0.74 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | GERMANY40 | M15 | 770 | **65.1%** | 0.86 | 19.72% | -0.0465 | 🔴 DESCARTADA | Win Rate 65.1% < 70.0%; Max Drawdown 19.72% > 5.0%; Profit Factor 0.86 <= 1.25 o E[R]=-0.0465 <= 0; t-stat -1.77 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | [SP500] | M30 | 680 | **65.0%** | 0.89 | 17.63% | -0.0358 | 🔴 DESCARTADA | Win Rate 65.0% < 70.0%; Max Drawdown 17.63% > 5.0%; Profit Factor 0.89 <= 1.25 o E[R]=-0.0358 <= 0; t-stat -1.27 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | [SP500] | M15 | 690 | **65.5%** | 0.83 | 24.82% | -0.0556 | 🔴 DESCARTADA | Win Rate 65.5% < 70.0%; Max Drawdown 24.82% > 5.0%; Profit Factor 0.83 <= 1.25 o E[R]=-0.0556 <= 0; t-stat -2.04 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | US100 | M30 | 611 | **65.1%** | 0.91 | 15.97% | -0.0293 | 🔴 DESCARTADA | Win Rate 65.1% < 70.0%; Max Drawdown 15.97% > 5.0%; Profit Factor 0.91 <= 1.25 o E[R]=-0.0293 <= 0; t-stat -1.01 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | US100 | M15 | 617 | **68.1%** | 1.00 | 9.63% | -0.0004 | 🔴 DESCARTADA | Win Rate 68.1% < 70.0%; Max Drawdown 9.63% > 5.0%; Profit Factor 1.00 <= 1.25 o E[R]=-0.0004 <= 0; t-stat -0.01 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | EURUSD | M30 | 844 | **44.8%** | 0.83 | 27.63% | -0.0593 | 🔴 DESCARTADA | Win Rate 44.8% < 70.0%; Max Drawdown 27.63% > 5.0%; Profit Factor 0.83 <= 1.25 o E[R]=-0.0593 <= 0; t-stat -2.29 < 1.5 (baja significancia) |
+| 2026-10-26 | TradingAgents_Technical_Confluence | EURUSD | M15 | 801 | **39.0%** | 0.71 | 45.83% | -0.1056 | 🔴 DESCARTADA | Win Rate 39.0% < 70.0%; Max Drawdown 45.83% > 5.0%; Profit Factor 0.71 <= 1.25 o E[R]=-0.1056 <= 0; t-stat -4.06 < 1.5 (baja significancia) |
+
+---
+
+## 🛠️ Cómo Probar Estrategias de Repositorios de GitHub
 Cuando encuentres un repositorio de trading algorítmico en GitHub:
 1. **Pásame el enlace de GitHub** aquí en el chat.
 2. Yo clonaré/analizaré el código de la estrategia, la programaré en el motor causal anti-lookahead (`trading_v2/strategies/github_imports/`).
