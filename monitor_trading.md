@@ -1,29 +1,26 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-10-27 09:31:09 (Hora España)` | `08:31:09 UTC`
+**Última actualización:** `2026-10-27 18:00:00 (Hora España)` | `17:00:00 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
-- **Balance:** 3008.54 EUR
-- **Equity Flotante:** 3004.61 EUR (-3.93 EUR)
+- **Balance:** 3.017,59 EUR *(+9,05 EUR hoy / +0,30% de rentabilidad diaria)*
+- **Equity Flotante:** 3.017,59 EUR (0.00 EUR en riesgo)
+- **Operaciones hoy:** 1 ejecutada | 1 ganada | 0 pérdidas (**100% Win Rate**)
+
+### 🎯 Historial de Operaciones de Hoy (27 de Octubre de 2026)
+| Hora (CET) | Activo | Tipo | Lotes | Entrada | Salida | PnL (€) | PnL (pts) | Motivo de Salida | Duración |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 09:30:55 | **[IBEX35]** | **SHORT** | 0.60 | 18.980,26 | 18.965,17 | **+9,05 €** | **+15,09 pts** | `[Take Profit]` | 3m 49s |
 
 ### 📈 Posiciones Abiertas
-| Ticket | Símbolo | Tipo | Lotes | Entrada | Precio Actual | Stop Loss | PnL (EUR) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| #1233736948 | [IBEX35] | VENTA | 0.60 | 18980.26 | 18986.81 | 19005.26 | -3.93 € |
+*Sin posiciones abiertas en este momento. Toda la cartera en liquidez tras captura completa de beneficios.*
 
-### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
-| Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25375.45 | 24885.88 | 60.4 | 0.63 | RSI(2) neutral (60.4 >= 15.0); Precio dentro de bandas Bollinger (25375.45 > 24975.81) |
-| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7678.07 | 7306.38 | 55.5 | 0.71 | RSI(2) neutral (55.5 >= 10.0) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 5.7 | 0.02 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.07 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=5.7) |
-| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18987.85 | 18649.13 | 43.4 | 0.74 | RSI(2) neutral (43.4 >= 10.0); Precio dentro de bandas Bollinger (18987.85 > 18852.13) |
-
-### 🛡️ Transparencia de Costes y Comisiones
-- **Broker Demo Actual:** Admirals DEMO `#58678879` (Cuenta Trade.MT5: comisión 0.00 EUR en broker; coste integrado en spread).
-- **Modelo Cuantitativo Auditado:** IC Markets Raw ECN (Forex: comisión 3.50 USD/lado = ~6.30 EUR/lote round-trip + 0.1 pip spread crudo; Índices: 1.0 pt DAX / 0.4 pt SP500).
-- **Spread y Deslizamiento:** Descontados causalmente al Bid/Ask en cada señal y ejecución.
+### 🧠 Comportamiento de los Filtros Cuantitativos Hoy
+- **[IBEX35] (M30)**: ✅ **Disparo Francotirador Ejecutado y Ganado**. Barrido de resistencia con mecha del 83.4%, alineado con tendencia H1 bajista (`h1_dir = -1`). Entrada 18.980,26 $\rightarrow$ Take Profit en 18.965,17 alcanzado en 3m 49s.
+- **GERMANY40 (M30)**: 🛡️ **Filtro de Spread Activo**. Señal pre-mercado a las 07:30 UTC rechazada automáticamente porque el spread del bróker era del 15.7% del ATR (> 8.0% máximo permitido). Protegió la cuenta de operar con costes excesivos.
+- **EURUSD (M15)**: 🛡️ **Filtro Macro H1 Activo**. Rebotes intradía descartados al estar la tendencia horaria en sesgo bajista (`h1_dir = -1`), evitando compras contra corriente.
+- **[SP500] (M30)**: 🟡 **Disciplina Francotirador**. Mercado americano en rango lateral/ruido sin ningún patrón con mecha $\ge 45\%$ y CLV extremo. Cero sobreoperativa.
 
 ---
-*Actualizado automáticamente desde el motor local en segundo plano.*
+*Monitor generado automáticamente por el motor cuántico de ejecución MetaTrader 5.*
