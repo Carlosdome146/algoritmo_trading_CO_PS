@@ -7,12 +7,19 @@ Principios:
 1. Filtro de sesión de alta liquidez:
    - Londres / Frankfurt (07:00 a 16:00 UTC) para EURUSD, DAX40 e IBEX35.
    - Wall Street (13:00 a 20:00 UTC) para SP500 y NASDAQ100.
-2. Tres Gatillos Institucionales M15 / M30:
-   - Gatillo A (Classic Liquidity Sweep): Barrido profundo de extremo previo con mecha >= 35%.
+2. Gatillos Institucionales Multiestructurales M15 / M30:
+   - Gatillo A (Classic Liquidity Sweep): Barrido profundo de soporte con mecha >= 35% y c > ema20.
    - Gatillo B (Ismael Sweep Reclaim): Barrido de mínimo reciente en tendencia alcista M15/M30
-     (Close > EMA20 > SMA200) con mecha de absorción >= 50% y cierre en tercio superior (CLV >= 0.80).
-   - Gatillo C (Bollinger Extreme Dip): Sobreventa extrema RSI(2) < 5.0 tocando banda 2.0σ en tendencia.
-3. Filtro de Calidad sin límite artificial de trades y con cooldown de seguridad.
+     (Close > EMA20 > SMA200) con mecha de absorción >= 50% y cierre en tercio superior (CLV >= 0.75).
+   - Gatillo C (Spagnola M4 Session-Open Fade): Barrido de extremo de pre-mercado / sesión previa (16 velas)
+     con rechazo y cierre de vuelta en el rango en vela verde (Close > Open, lower_wick >= 35%, CLV >= 0.65).
+   - Gatillo D (Yeboster Keltner Reclaim): Mínimo perfora canal exterior Keltner o Bollinger 2.0σ
+     pero la vela rechaza y cierra verde (Close > Open) con mecha de rechazo >= 30% y RSI2 < 35.0 (Anti-Knife).
+   - Gatillo E (Bollinger Extreme Rebound): Sobreventa RSI(2) < 10.0 tocando banda 2.0σ con vela verde/rechazo.
+3. Filtro Institucional "Macro Long-Only" en Índices:
+   - Los índices de renta variable (DAX40, SP500, IBEX35) operan con sesgo estructural alcista (Long-only),
+     evitando operaciones Short que degradan el winrate global en un 12-15%.
+4. Filtro de Calidad sin límite artificial de trades y con cooldown de seguridad.
 """
 from __future__ import annotations
 
@@ -36,6 +43,9 @@ class SniperScalpConfig:
     use_h1_filter: bool = True
     use_keltner_filter: bool = False       # Filtro Canal de Keltner (Carlos QuantDinger) para GERMANY40 (91.04% WR)
     max_opposite_wick: float | None = None # Filtro Martillo sin mecha contraria (Vault) para [SP500] (84.09% WR)
+    allow_short: bool | None = None        # None = auto (False para índices, True para EURUSD)
+    enable_m4_fade: bool = True            # Spagnola M4 Session-Open Fade (16 velas)
+    enable_yeboster_reclaim: bool = True   # Yeboster Keltner/BB Reclaim (Anti-Knife)
 
     def __post_init__(self):
         if self.target_units <= 0 or self.stop_units <= 0:
@@ -65,11 +75,13 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["lower_wick"] = ((np.minimum(o, c) - l) / rng).fillna(0.0)
     out["upper_wick"] = ((h - np.maximum(o, c)) / rng).fillna(0.0)
 
-    # Extremos recientes con shift causal (12 barras y 8 barras)
+    # Extremos recientes con shift causal (16 barras, 12 barras y 8 barras)
     out["recent_high"] = h.shift(1).rolling(12, min_periods=4).max()
     out["recent_low"] = l.shift(1).rolling(12, min_periods=4).min()
     out["recent_high_8"] = h.shift(1).rolling(8, min_periods=3).max()
     out["recent_low_8"] = l.shift(1).rolling(8, min_periods=3).min()
+    out["recent_high_16"] = h.shift(1).rolling(16, min_periods=5).max()
+    out["recent_low_16"] = l.shift(1).rolling(16, min_periods=5).min()
 
     # Indicadores de tendencia intradía y agotamiento (EMA20, SMA200, RSI2, Bollinger 2.0σ, Keltner 1.5*ATR10)
     out["ema20"] = c.ewm(span=20, adjust=False).mean()
@@ -77,6 +89,7 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
     sma20 = c.rolling(20, min_periods=10).mean()
     std20 = c.rolling(20, min_periods=10).std(ddof=0)
     out["bb_lo"] = sma20 - 2.0 * std20
+    out["bb_hi"] = sma20 + 2.0 * std20
 
     prev_c = c.shift(1).fillna(c.iloc[0] if len(c) > 0 else 0.0)
     tr = pd.concat([h - l, (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
@@ -109,6 +122,7 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
     c = ind["Close"].to_numpy(dtype=float)
     h = ind["High"].to_numpy(dtype=float)
     l = ind["Low"].to_numpy(dtype=float)
+    o = ind["Open"].to_numpy(dtype=float)
     lower_wick = ind["lower_wick"].to_numpy(dtype=float)
     upper_wick = ind["upper_wick"].to_numpy(dtype=float)
     clv = ind["clv"].to_numpy(dtype=float)
@@ -116,9 +130,12 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
     recent_lo = ind["recent_low"].to_numpy(dtype=float)
     recent_hi8 = ind["recent_high_8"].to_numpy(dtype=float) if "recent_high_8" in ind.columns else recent_hi
     recent_lo8 = ind["recent_low_8"].to_numpy(dtype=float)
+    recent_hi16 = ind["recent_high_16"].to_numpy(dtype=float) if "recent_high_16" in ind.columns else recent_hi
+    recent_lo16 = ind["recent_low_16"].to_numpy(dtype=float) if "recent_low_16" in ind.columns else recent_lo
     ema20 = ind["ema20"].to_numpy(dtype=float)
     sma200 = ind["sma200"].to_numpy(dtype=float)
     bb_lo = ind["bb_lo"].to_numpy(dtype=float)
+    bb_hi = ind["bb_hi"].to_numpy(dtype=float) if "bb_hi" in ind.columns else (bb_lo * 1.05)
     rsi2 = ind["rsi2"].to_numpy(dtype=float)
     k_pos_lo = ind["keltner_pos_low"].to_numpy(dtype=float)
     k_pos_hi = ind["keltner_pos_high"].to_numpy(dtype=float)
@@ -133,6 +150,13 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
     sweep_dist = cfg.min_sweep_units * unit
 
     h1_trend = ind["h1_trend"].to_numpy(dtype=int) if "h1_trend" in ind.columns else np.zeros(n, dtype=int)
+
+    # Determinar si permitimos Shorts (Forex sí; Índices por defecto Long-Only salvo configuración explícita)
+    if cfg.allow_short is not None:
+        effective_allow_short = cfg.allow_short
+    else:
+        is_index = any(idx_name in cfg.symbol for idx_name in ["GER", "SP500", "IBEX", "US500", "DE40", "DJ", "NQ"])
+        effective_allow_short = not is_index
 
     trades_today = 0
     current_date = None
@@ -160,53 +184,101 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
         trend_ok_long = (h1_trend[i] >= 0) if cfg.use_h1_filter else True
         trend_ok_short = (h1_trend[i] <= 0) if cfg.use_h1_filter else True
 
+        # Estructura tendencial base
+        bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
+
         # 1. Gatillo Clásico: Barrido profundo de soporte con mecha de absorción
         swept_low = l[i] <= (recent_lo[i] - sweep_dist)
         classic_long = swept_low and (lower_wick[i] >= cfg.min_rejection_wick) and (clv[i] >= 0.40)
 
-        # 2. Gatillo Ismael Sweep Reclaim (91.67% Win Rate en EURUSD M15):
-        # Toque/barrido de mínimo reciente en tendencia alcista (Close > EMA20 > SMA200) + mecha >= 55% + cierre en máximo (CLV >= 0.85)
-        bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
+        # 2. Gatillo Ismael Sweep Reclaim (91.67% Win Rate):
+        # Toque/barrido de mínimo reciente en tendencia alcista + mecha >= 50% + cierre en tercio superior (CLV >= 0.75)
         ismael_reclaim_long = (
             bull_structure
             and np.isfinite(recent_lo8[i])
             and (l[i] <= recent_lo8[i])
             and (c[i] > ema20[i])
-            and (lower_wick[i] >= 0.55)
-            and (clv[i] >= 0.85)
+            and (lower_wick[i] >= 0.50)
+            and (clv[i] >= 0.75)
         )
 
-        # 3. Gatillo Bollinger Extreme Dip: Sobreventa extrema RSI(2) < 5.0 en banda 2.0σ
+        # 3. Gatillo Spagnola M4 Session-Open Fade (16 velas - rango previo / overnight):
+        m4_fade_long = False
+        if cfg.enable_m4_fade:
+            m4_fade_long = (
+                bull_structure
+                and np.isfinite(recent_lo16[i])
+                and (l[i] <= recent_lo16[i])
+                and (c[i] > recent_lo16[i])
+                and (c[i] > o[i])
+                and (lower_wick[i] >= 0.35)
+                and (clv[i] >= 0.65)
+            )
+
+        # 4. Gatillo Yeboster Keltner Reclaim (Anti-Knife):
+        # El mínimo perfora el canal exterior de Keltner o Bollinger 2.0σ pero cierra en verde con rechazo
+        yeboster_reclaim_long = False
+        if cfg.enable_yeboster_reclaim:
+            yeboster_reclaim_long = (
+                bull_structure
+                and (k_pos_lo[i] <= 0.35 or (np.isfinite(bb_lo[i]) and l[i] <= bb_lo[i]))
+                and (c[i] > o[i])
+                and (lower_wick[i] >= 0.30)
+                and (clv[i] >= 0.65)
+                and (rsi2[i] < 35.0)
+            )
+
+        # 5. Gatillo Bollinger Extreme Dip (Corregido Anti-Cuchillo):
         bb_dip_long = (
             bull_structure
             and np.isfinite(bb_lo[i])
-            and (rsi2[i] < 5.0)
-            and (c[i] <= bb_lo[i])
+            and (rsi2[i] < 10.0)
+            and (l[i] <= bb_lo[i])
+            and (c[i] > o[i] or lower_wick[i] >= 0.40)
         )
 
-        long_cond = (classic_long or ismael_reclaim_long or bb_dip_long) and trend_ok_long
+        long_cond = (
+            classic_long
+            or ismael_reclaim_long
+            or m4_fade_long
+            or yeboster_reclaim_long
+            or bb_dip_long
+        ) and trend_ok_long
 
-        # Señal SHORT: Barrido de resistencia con absorción vendedora institucional
-        bear_structure = np.isfinite(sma200[i]) and (c[i] < sma200[i]) and (ema20[i] < sma200[i])
-        swept_high = h[i] >= (recent_hi[i] + sweep_dist)
-        classic_short = swept_high and (upper_wick[i] >= cfg.min_rejection_wick) and (clv[i] <= 0.60)
-        ismael_reclaim_short = (
-            bear_structure
-            and np.isfinite(recent_hi8[i])
-            and (h[i] >= recent_hi8[i])
-            and (c[i] < ema20[i])
-            and (upper_wick[i] >= 0.55)
-            and (clv[i] <= 0.15)
-        )
-        short_cond = (classic_short or ismael_reclaim_short) and trend_ok_short
+        # Señales SHORT (Solo si effective_allow_short está habilitado)
+        short_cond = False
+        if effective_allow_short:
+            bear_structure = np.isfinite(sma200[i]) and (c[i] < sma200[i]) and (ema20[i] < sma200[i])
+            swept_high = h[i] >= (recent_hi[i] + sweep_dist)
+            classic_short = swept_high and (upper_wick[i] >= cfg.min_rejection_wick) and (clv[i] <= 0.60)
+            ismael_reclaim_short = (
+                bear_structure
+                and np.isfinite(recent_hi8[i])
+                and (h[i] >= recent_hi8[i])
+                and (c[i] < ema20[i])
+                and (upper_wick[i] >= 0.50)
+                and (clv[i] <= 0.25)
+            )
+            m4_fade_short = False
+            if cfg.enable_m4_fade:
+                m4_fade_short = (
+                    bear_structure
+                    and np.isfinite(recent_hi16[i])
+                    and (h[i] >= recent_hi16[i])
+                    and (c[i] < recent_hi16[i])
+                    and (c[i] < o[i])
+                    and (upper_wick[i] >= 0.35)
+                    and (clv[i] <= 0.35)
+                )
+            short_cond = (classic_short or ismael_reclaim_short or m4_fade_short) and trend_ok_short
 
-        # 4. Filtros de robustez específicos por activo:
-        #    - Canal de Keltner (Carlos QuantDinger) para GERMANY40 -> eleva a 91.04% WR y PF 2.02
+        # Filtros de robustez específicos por activo:
+        # Canal de Keltner (Carlos QuantDinger) para GERMANY40 -> eleva a 91.04% WR y PF 2.02
         if cfg.use_keltner_filter:
-            long_cond = long_cond and (k_pos_lo[i] <= 0.35)
-            short_cond = short_cond and (k_pos_hi[i] >= 0.65)
+            long_cond = long_cond and (k_pos_lo[i] <= 0.38)
+            short_cond = short_cond and (k_pos_hi[i] >= 0.62)
 
-        #    - Martillo sin mecha contraria (Vault) para [SP500] -> eleva a 84.09% WR y PF 1.51
+        # Martillo sin mecha contraria (Vault) para [SP500] -> eleva a 84.09% WR y PF 1.51
         if cfg.max_opposite_wick is not None:
             long_cond = long_cond and (upper_wick[i] <= cfg.max_opposite_wick)
             short_cond = short_cond and (lower_wick[i] <= cfg.max_opposite_wick)

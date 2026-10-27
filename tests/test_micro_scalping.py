@@ -111,6 +111,21 @@ class TestMicroScalping(unittest.TestCase):
         # Con parámetros permisivos y sin tope, debe poder capturar múltiples señales
         self.assertGreaterEqual(len(non_zero), 1)
 
+    def test_m4_fade_and_yeboster_config(self):
+        """Verifica que las nuevas mejoras institucionales (M4 Fade, Yeboster y Long-Only) estén activadas."""
+        cfg = SniperScalpConfig("GERMANY40", 12.0, 25.0)
+        self.assertTrue(cfg.enable_m4_fade)
+        self.assertTrue(cfg.enable_yeboster_reclaim)
+        self.assertIsNone(cfg.allow_short)
+
+        # En índices bursátiles, el comportamiento por defecto es Long-Only (sin shorts)
+        res = generate_sniper_signals(self.df, cfg)
+        self.assertNotIn(-1, res["signal"].values)
+
+    def test_forex_bidirectional_default(self):
+        """Verifica que en pares Forex (EURUSD) se mantenga la operativa bidireccional si se presentan señales."""
+        cfg = SniperScalpConfig("EURUSD", 3.0, 5.0, allow_short=True)
+        self.assertTrue(cfg.allow_short)
 
 
 if __name__ == "__main__":
