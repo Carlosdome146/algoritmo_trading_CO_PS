@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 import MetaTrader5 as mt5
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from trading_v2.research.regime_lab_v3 import wilson_lb, metrics
 
 
@@ -173,8 +177,8 @@ def scan_asset(symbol: str):
                         sign = "+" if pnl_tot > 0 else ""
                         be_str = f"{be_m:.2f}" if be_m else "None"
                         if wr >= 72.0:
-                            star = "⭐" if wr >= 75.0 and pf >= 1.2 else ("✨" if wr >= 75.0 else "")
-                            print(f"RSI<{rsi_cut:<4.0f} | {tp_m:<6.2f} | {sl_m:<6.2f} | {be_str:<6s} | {n_tr:<5d} | {wr:<8.1f}% | {pf:<6.2f} | {rm:+7.4f} | {sign}{pnl_tot:8.2f} € {star}")
+                            star = "[BEST]" if wr >= 75.0 and pf >= 1.2 else ("[STAR]" if wr >= 75.0 else "")
+                            print(f"RSI<{rsi_cut:<4.0f} | {tp_m:<6.2f} | {sl_m:<6.2f} | {be_str:<6s} | {n_tr:<5d} | {wr:<8.1f}% | {pf:<6.2f} | {rm:+7.4f} | {sign}{pnl_tot:8.2f} EUR {star}")
 
 
 def main():
