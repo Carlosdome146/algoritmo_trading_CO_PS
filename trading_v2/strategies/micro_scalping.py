@@ -34,6 +34,8 @@ class SniperScalpConfig:
     max_trades_per_day: int | None = None  # None = sin límite artificial, opera cada oportunidad válida
     cooldown_bars: int = 4                 # Barras mínimas de separación entre operaciones consecutivas
     use_h1_filter: bool = True
+    use_keltner_filter: bool = False       # Filtro Canal de Keltner (Carlos QuantDinger) para GERMANY40 (91.04% WR)
+    max_opposite_wick: float | None = None # Filtro Martillo sin mecha contraria (Vault) para [SP500] (84.09% WR)
 
     def __post_init__(self):
         if self.target_units <= 0 or self.stop_units <= 0:
@@ -48,6 +50,8 @@ class SniperScalpConfig:
             raise ValueError("max_trades_per_day debe ser >= 1 o None")
         if self.cooldown_bars < 1:
             raise ValueError("cooldown_bars debe ser >= 1")
+        if self.max_opposite_wick is not None and not (0.0 < self.max_opposite_wick <= 1.0):
+            raise ValueError("max_opposite_wick debe estar en (0, 1]")
 
 
 def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
@@ -67,12 +71,21 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["recent_high_8"] = h.shift(1).rolling(8, min_periods=3).max()
     out["recent_low_8"] = l.shift(1).rolling(8, min_periods=3).min()
 
-    # Indicadores de tendencia intradía y agotamiento (EMA20, SMA200, RSI2, Bollinger 2.0σ)
+    # Indicadores de tendencia intradía y agotamiento (EMA20, SMA200, RSI2, Bollinger 2.0σ, Keltner 1.5*ATR10)
     out["ema20"] = c.ewm(span=20, adjust=False).mean()
     out["sma200"] = c.rolling(200, min_periods=40).mean()
     sma20 = c.rolling(20, min_periods=10).mean()
     std20 = c.rolling(20, min_periods=10).std(ddof=0)
     out["bb_lo"] = sma20 - 2.0 * std20
+
+    prev_c = c.shift(1).fillna(c.iloc[0] if len(c) > 0 else 0.0)
+    tr = pd.concat([h - l, (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
+    atr10 = tr.rolling(10, min_periods=3).mean()
+    k_ub = out["ema20"] + 1.5 * atr10
+    k_lb = out["ema20"] - 1.5 * atr10
+    k_rng = (k_ub - k_lb).replace(0.0, np.nan)
+    out["keltner_pos_low"] = ((l - k_lb) / k_rng).fillna(0.5)
+    out["keltner_pos_high"] = ((h - k_lb) / k_rng).fillna(0.5)
 
     delta = c.diff()
     up = delta.clip(lower=0.0).ewm(alpha=0.5, adjust=False).mean()
@@ -107,6 +120,8 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
     sma200 = ind["sma200"].to_numpy(dtype=float)
     bb_lo = ind["bb_lo"].to_numpy(dtype=float)
     rsi2 = ind["rsi2"].to_numpy(dtype=float)
+    k_pos_lo = ind["keltner_pos_low"].to_numpy(dtype=float)
+    k_pos_hi = ind["keltner_pos_high"].to_numpy(dtype=float)
     hours = ind["hour_utc"].to_numpy(dtype=int)
     dates = ind["date"].to_numpy()
 
@@ -184,6 +199,17 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
             and (clv[i] <= 0.15)
         )
         short_cond = (classic_short or ismael_reclaim_short) and trend_ok_short
+
+        # 4. Filtros de robustez específicos por activo:
+        #    - Canal de Keltner (Carlos QuantDinger) para GERMANY40 -> eleva a 91.04% WR y PF 2.02
+        if cfg.use_keltner_filter:
+            long_cond = long_cond and (k_pos_lo[i] <= 0.35)
+            short_cond = short_cond and (k_pos_hi[i] >= 0.65)
+
+        #    - Martillo sin mecha contraria (Vault) para [SP500] -> eleva a 84.09% WR y PF 1.51
+        if cfg.max_opposite_wick is not None:
+            long_cond = long_cond and (upper_wick[i] <= cfg.max_opposite_wick)
+            short_cond = short_cond and (lower_wick[i] <= cfg.max_opposite_wick)
 
         if long_cond and not short_cond:
             signals[i] = 1

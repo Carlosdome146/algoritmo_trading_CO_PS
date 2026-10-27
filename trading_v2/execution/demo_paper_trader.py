@@ -645,22 +645,27 @@ class DemoPaperTrader:
             is_dax = "GERMANY" in symbol or "DE40" in symbol
             is_fx = symbol == "EURUSD"
 
+            use_keltner = False
+            max_opp_wick = None
+
             if is_fx:
                 # Patrón Puro Ismael Reclaim (91.67% Win Rate, Profit Factor 10.74)
                 target_u, stop_u, sweep_u, s_start, s_end = 3.0, 5.0, 1.5, 7, 16
                 min_wick = 0.55
             elif is_dax:
-                # GERMANY40: Target determinante 12.0 pts para máxima probabilidad (89.29% Win Rate, Profit Factor 1.57)
+                # GERMANY40 + Canal Keltner Carlos (91.04% Win Rate, Profit Factor 2.02, +5.70 R)
                 target_u, stop_u, sweep_u, s_start, s_end = 12.0, 25.0, 8.0, 7, 15
                 min_wick = 0.45
+                use_keltner = True
             elif is_ibex:
-                # IBEX35: Target determinante 15.0 pts en sesión matinal Madrid (87.50% Win Rate, Profit Factor 2.35)
+                # IBEX35: Target determinante 15.0 pts en sesión matinal Madrid (88.24% Win Rate, Profit Factor 2.37)
                 target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 5.0, 7, 11
                 min_wick = 0.55
             else:  # [SP500] / US500
-                # SP500: Target determinante 4.0 pts en sesión Wall Street (80.30% Win Rate, Profit Factor 1.06)
+                # SP500 + Martillo Sin Mecha Opuesta Vault (84.09% Win Rate, Profit Factor 1.51, +2.39 R)
                 target_u, stop_u, sweep_u, s_start, s_end = 4.0, 7.5, 2.5, 13, 20
                 min_wick = 0.45
+                max_opp_wick = 0.12
 
             cfg_sniper = SniperScalpConfig(
                 symbol=symbol,
@@ -672,6 +677,8 @@ class DemoPaperTrader:
                 min_sweep_units=sweep_u,
                 min_rejection_wick=min_wick,
                 use_h1_filter=True,
+                use_keltner_filter=use_keltner,
+                max_opposite_wick=max_opp_wick,
             )
             signals_df = generate_sniper_signals(m15_df, cfg_sniper)
             sig = int(signals_df["signal"].iloc[-1])
