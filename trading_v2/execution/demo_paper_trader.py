@@ -430,6 +430,14 @@ class DemoPaperTrader:
 
             self.processed_deal_tickets.add(ticket)
 
+        if registered and not initial_sync:
+            try:
+                from trading_v2.execution.trade_journal import update_and_push_trade_journal
+                res_journal = update_and_push_trade_journal(push_to_git=True)
+                self.log(f"[TradeJournal] Cuaderno HISTORICO_OPERACIONES.md actualizado y subido a GitHub: {res_journal}")
+            except Exception as err:
+                self.log(f"[TradeJournal Error]: {err}")
+
         return registered
 
     def get_eurusd_rate(self) -> float:
