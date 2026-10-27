@@ -279,8 +279,12 @@ def sync_gist_worker(gist_id: str, interval_sec: int = 60):
                 md = render_markdown(d)
                 md_path = ROOT / "monitor_trading.md"
                 md_path.write_text(md, encoding="utf-8")
+                hist_path = ROOT / "HISTORICO_OPERACIONES.md"
+                cmd = [gh_cmd, "gist", "edit", gist_id, "-f", "monitor_trading.md", str(md_path)]
+                if hist_path.exists():
+                    cmd.extend(["-f", "HISTORICO_OPERACIONES.md", str(hist_path)])
                 subprocess.run(
-                    [gh_cmd, "gist", "edit", gist_id, "-f", "monitor_trading.md", str(md_path)],
+                    cmd,
                     capture_output=True,
                     check=False,
                 )
