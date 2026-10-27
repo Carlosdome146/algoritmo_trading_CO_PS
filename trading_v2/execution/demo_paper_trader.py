@@ -11,6 +11,17 @@ Cumple estrictamente los estándares cuantitativos y de seguridad V2:
 8. FILTROS DE SESIÓN Y LIQUIDEZ: Horarios institucionales y Spread/ATR <= 8% con detector de picos.
 """
 from __future__ import annotations
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
 
 import argparse
 import math
@@ -313,7 +324,14 @@ class DemoPaperTrader:
     ):
         self.cfg = config or DemoTraderConfig()
         self.adapter = adapter if adapter is not None else MT5Adapter()
-        self.log = logger or (lambda msg: print(f"[{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')}] {msg}"))
+        def _safe_print(m: str) -> None:
+            ts = datetime.now(timezone.utc).strftime('%H:%M:%S UTC')
+            try:
+                print(f"[{ts}] {m}")
+            except Exception:
+                safe_m = m.encode("ascii", errors="replace").decode("ascii")
+                print(f"[{ts}] {safe_m}")
+        self.log = logger or _safe_print
 
         self.risk_pause: RiskPause | None = None
         self.last_m15_bar_time: dict[str, int] = {}
@@ -767,7 +785,7 @@ class DemoPaperTrader:
         # 13. Ejecución de la orden (Simulación o Live en DEMO)
         direction_str = "LONG" if sig == 1 else "SHORT"
         self.log(
-            f"🎯 [DISPARO M15 {direction_str} en {symbol}] Lotes: {lot_res.lots} | "
+            f"[DISPARO M15 {direction_str} en {symbol}] Lotes: {lot_res.lots} | "
             f"Entrada: {entry_price:.{spec.digits}f} | SL: {sl_price:.{spec.digits}f} | TP: {tp_price:.{spec.digits}f} | "
             f"Riesgo: {lot_res.actual_risk_account_ccy:.2f} {acc.currency} (Presupuesto: {lot_res.risk_budget_account_ccy:.2f} {acc.currency})"
         )

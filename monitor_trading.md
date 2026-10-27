@@ -1,22 +1,24 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-10-26 21:07:45 (Hora España)` | `20:07:45 UTC`
+**Última actualización:** `2026-10-27 09:31:09 (Hora España)` | `08:31:09 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
 - **Balance:** 3008.54 EUR
-- **Equity Flotante:** 3008.54 EUR (0.00 EUR)
+- **Equity Flotante:** 3004.61 EUR (-3.93 EUR)
 
 ### 📈 Posiciones Abiertas
-*Sin posiciones abiertas en este momento.*
+| Ticket | Símbolo | Tipo | Lotes | Entrada | Precio Actual | Stop Loss | PnL (EUR) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| #1233736948 | [IBEX35] | VENTA | 0.60 | 18980.26 | 18986.81 | 19005.26 | -3.93 € |
 
 ### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
 | Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25130.87 | 24885.62 | 18.4 | 0.33 | RSI(2) neutral (18.4 >= 15.0); Precio dentro de bandas Bollinger (25130.87 > 24970.21) |
-| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7632.83 | 7302.39 | 13.2 | 0.35 | RSI(2) neutral (13.2 >= 10.0) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 16.2 | 0.42 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.00 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=16.2) |
-| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18949.37 | 18642.68 | 26.6 | 0.73 | RSI(2) neutral (26.6 >= 10.0); Precio dentro de bandas Bollinger (18949.37 > 18821.67) |
+| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25375.45 | 24885.88 | 60.4 | 0.63 | RSI(2) neutral (60.4 >= 15.0); Precio dentro de bandas Bollinger (25375.45 > 24975.81) |
+| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7678.07 | 7306.38 | 55.5 | 0.71 | RSI(2) neutral (55.5 >= 10.0) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 5.7 | 0.02 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.07 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=5.7) |
+| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18987.85 | 18649.13 | 43.4 | 0.74 | RSI(2) neutral (43.4 >= 10.0); Precio dentro de bandas Bollinger (18987.85 > 18852.13) |
 
 ### 🛡️ Transparencia de Costes y Comisiones
 - **Broker Demo Actual:** Admirals DEMO `#58678879` (Cuenta Trade.MT5: comisión 0.00 EUR en broker; coste integrado en spread).
