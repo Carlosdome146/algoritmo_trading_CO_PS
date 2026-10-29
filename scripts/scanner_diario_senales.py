@@ -30,9 +30,11 @@ from trading_v2.research.regime_lab_v3 import add_indicators
 
 SYMBOLS_TO_SCAN = [
     ("DAX40", "GERMANY40", "idx_dax_bollinger_dip"),
-    ("SP500", "[SP500]", "idx_rsi2_dip_regime"),
-    ("EURUSD", "EURUSD", "fx_eurusd_ker_exhaustion"),
     ("IBEX35", "[IBEX35]", "idx_ibex_bollinger_dip"),
+    ("EURUSD", "EURUSD", "fx_eurusd_ker_exhaustion"),
+    ("DOW30", "[DJI30]", "idx_rsi2_dip_regime"),
+    ("ORO", "GOLD", "idx_rsi2_dip_regime"),
+    ("SP500", "[SP500]", "idx_rsi2_dip_regime"),
 ]
 
 
