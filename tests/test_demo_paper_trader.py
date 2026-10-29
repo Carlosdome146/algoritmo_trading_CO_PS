@@ -35,6 +35,7 @@ class MockMT5Adapter:
         self.sent_orders = []
         self.TIMEFRAME_M5 = 5
         self.TIMEFRAME_M15 = 15
+        self.TIMEFRAME_M30 = 30
         self.TIMEFRAME_H1 = 16385
         self.TIMEFRAME_H4 = 16388
         self.TIMEFRAME_D1 = 16408
@@ -49,6 +50,7 @@ class MockMT5Adapter:
         self.TRADE_RETCODE_DONE = 10009
 
         self.mock_rates_m15 = {}
+        self.mock_rates_m30 = {}
         self.mock_rates_h1 = {}
         self.mock_rates_d1 = {}
         self.mock_ticks = {}
@@ -67,6 +69,8 @@ class MockMT5Adapter:
     def copy_rates_from_pos(self, symbol: str, timeframe: int, start_pos: int, count: int):
         if timeframe == self.TIMEFRAME_M15:
             return self.mock_rates_m15.get(symbol)
+        elif timeframe == self.TIMEFRAME_M30:
+            return self.mock_rates_m30.get(symbol, self.mock_rates_m15.get(symbol))
         elif timeframe == self.TIMEFRAME_H1:
             return self.mock_rates_h1.get(symbol)
         elif timeframe == self.TIMEFRAME_D1:
@@ -436,6 +440,29 @@ class DemoPaperTraderTests(unittest.TestCase):
         trader = DemoPaperTrader(config=cfg, adapter=adapter)
         trader.initialize()
         self.assertEqual(trader.cfg.broker, "icmarkets")
+
+
+    def test_sniper_multi_asset_configuration(self):
+        adapter = MockMT5Adapter()
+        for sym, bp in [("[DJI30]", 43000.0), ("GOLD", 2700.0), ("US100", 20000.0), ("[IBEX35]", 11800.0), ("GERMANY40", 19500.0)]:
+            adapter.mock_rates_m15[sym] = make_synthetic_rates(260, base_price=bp, trend=0.1, step_minutes=15)
+            adapter.mock_rates_h1[sym] = make_synthetic_rates(100, base_price=bp, trend=0.5, step_minutes=60)
+            adapter.mock_ticks[sym] = SimpleNamespace(bid=bp, ask=bp + 1.0)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.08, ask=1.0801)
+
+        cfg = DemoTraderConfig(
+            symbols=["[DJI30]", "GOLD", "US100"],
+            timeframe="M15_M30",
+            strategy="institutional_sniper_scalp",
+            dry_run=True,
+            risk_fraction=0.0100,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 10, 20, 15, 0, tzinfo=timezone.utc)
+        for sym in cfg.symbols:
+            res = trader.evaluate_symbol(sym, now_valid)
+            self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED", "REJECTED_RISK_PAUSE"))
 
 
 if __name__ == "__main__":

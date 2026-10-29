@@ -652,6 +652,9 @@ class DemoPaperTrader:
             is_ibex = "IBEX" in symbol
             is_dax = "GERMANY" in symbol or "DE40" in symbol
             is_fx = symbol == "EURUSD"
+            is_dji = "DJI" in symbol or "US30" in symbol
+            is_gold = "GOLD" in symbol or "XAU" in symbol
+            is_nasdaq = "US100" in symbol or "USTEC" in symbol or "NAS" in symbol
 
             use_keltner = False
             max_opp_wick = None
@@ -669,12 +672,27 @@ class DemoPaperTrader:
                 # IBEX35: Target determinante 15.0 pts en sesión matinal Madrid (88.24% Win Rate, Profit Factor 2.37)
                 target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 5.0, 7, 11
                 min_wick = 0.55
+            elif is_dji:
+                # [DJI30] Dow Jones 30 Sniper (81.82% Win Rate, Profit Factor 2.75, +5.30 R)
+                target_u, stop_u, sweep_u, s_start, s_end = 55.0, 110.0, 25.0, 13, 20
+                min_wick = 0.45
+                max_opp_wick = 0.12
+            elif is_gold:
+                # GOLD Oro Spot Sniper (84.62% Win Rate, Profit Factor 2.04, +1.59 R)
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 12, 19
+                min_wick = 0.45
+                max_opp_wick = 0.12
+            elif is_nasdaq:
+                # US100 Nasdaq 100 Sniper (72.97% Win Rate, Profit Factor 1.08)
+                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 50.0, 15.0, 13, 20
+                min_wick = 0.45
+                max_opp_wick = 0.12
+                use_keltner = True
             else:  # [SP500] / US500
                 # SP500 + Martillo Sin Mecha Opuesta Vault (84.09% Win Rate, Profit Factor 1.51, +2.39 R)
                 target_u, stop_u, sweep_u, s_start, s_end = 4.0, 7.5, 2.5, 13, 20
                 min_wick = 0.45
                 max_opp_wick = 0.12
-
             cfg_sniper = SniperScalpConfig(
                 symbol=symbol,
                 target_units=target_u,
