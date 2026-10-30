@@ -1,6 +1,6 @@
 # 📊 Registro Histórico de Operaciones en Vivo — Algoritmo Quant
 
-> **Última actualización:** `28/10/2026 23:34:21` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
+> **Última actualización:** `30/10/2026 10:35:00` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
 
 Este documento refleja **en tiempo real y con transparencia absoluta** todas las operaciones ejecutadas en la cuenta por el bot. Cada orden se puede verificar directamente en MetaTrader 5 con su número de Ticket.
 
@@ -11,10 +11,10 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | Métrica | Valor | Estado |
 | :--- | :---: | :---: |
 | **Balance Inicial** | `3,000.00 €` | Base de capital |
-| **Balance Actual** | **`3,017.59 €`** | `+17.59 €` |
-| **Rentabilidad Acumulada** | **`+0.59%`** | 🚀 En verde |
-| **Total Operaciones Cerradas** | **`2`** | — |
-| **Operaciones Ganadoras** | **`2`** | 🟢 Aciertos |
+| **Balance Actual** | **`3,034.75 €`** | `+34.75 €` |
+| **Rentabilidad Acumulada** | **`+1.16%`** | 🚀 En verde |
+| **Total Operaciones Cerradas** | **`3`** | — |
+| **Operaciones Ganadoras** | **`3`** | 🟢 Aciertos |
 | **Operaciones Perdedoras** | **`0`** | 🔴 Fallos |
 | **Tasa de Acierto (Win Rate)** | **`100.0%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
 | **Factor de Beneficio (Profit Factor)** | **`∞ (Sin pérdidas)`** | Excelente |
@@ -27,10 +27,23 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :--- | :-: | :-: |
 | **1** | 22/10/2026 00:53 | **`US100`** | `BUY` | `0.04` | `29,597.38` | `29,847.77` | `+250.39` | `2d 15h 20m` | Regla de Salida | 🟢 **`+8.54 €`** | `3,008.54 €` |
 | **2** | 27/10/2026 12:34 | **`[IBEX35]`** | `SELL` | `0.60` | `18,980.26` | `18,965.17` | `+15.09` | `3m 49s` | Take Profit | 🟢 **`+9.05 €`** | `3,017.59 €` |
+| **3** | 30/10/2026 09:32 | **`GERMANY40`** | `BUY` | `1.20` | `25,966.97` | `25,981.27` | `+14.30` | `2m 14s` | Take Profit | 🟢 **`+17.16 €`** | `3,034.75 €` |
 
 ---
 
 ## 🔍 Fichas Técnicas Detalladas de las Últimas Operaciones
+
+### Operación #3 — `GERMANY40` (🟢 GANADORA — 1.0% RIESGO)
+- **Ticket Posición MT5:** `#1234146654` (Orden Entrada `#1234146654`, Orden Salida `#1234147131`, Deal Entrada `#1157128147`, Deal Salida `#1157128417`)
+- **Estrategia / Gatillo:** `V2_M15_LONG` (Apertura Frankfurt / Institutional Reclaim)
+- **Dirección:** `BUY` | **Volumen:** `1.20` lotes (Riesgo calibrado al 1.0%)
+- **Momento Entrada:** `30/10/2026 09:30:03` a precio `25966.97`
+- **Momento Salida:** `30/10/2026 09:32:17` a precio `25981.27`
+- **Tiempo en Mercado:** `2m 14s` (Salida relámpago)
+- **Configuración Inicial:** Stop Loss en `25942.47` (riesgo 30.00 €) | Take Profit en `25979.47`
+- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 25979.47]`, ejecutado con slippage positivo a `25981.27`)
+- **Desglose Económico:** Beneficio bruto: `+17.16 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`+17.16 €`**
 
 ### Operación #2 — `[IBEX35]` (🟢 GANADORA)
 - **Ticket Posición MT5:** `#1233736948` (Orden Entrada `#1233736948`, Orden Salida `#1233738122`)
