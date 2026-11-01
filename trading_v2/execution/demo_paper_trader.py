@@ -665,7 +665,7 @@ class DemoPaperTrader:
                 min_wick = 0.55
             elif is_dax:
                 # GERMANY40 + Canal Keltner Carlos (91.04% Win Rate, Profit Factor 2.02, +5.70 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 12.0, 25.0, 8.0, 7, 15
+                target_u, stop_u, sweep_u, s_start, s_end = 12.0, 25.0, 8.0, 7, 11
                 min_wick = 0.45
                 use_keltner = True
             elif is_ibex:
@@ -674,12 +674,12 @@ class DemoPaperTrader:
                 min_wick = 0.55
             elif is_dji:
                 # [DJI30] Dow Jones 30 Sniper (81.82% Win Rate, Profit Factor 2.75, +5.30 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 55.0, 110.0, 25.0, 13, 20
+                target_u, stop_u, sweep_u, s_start, s_end = 55.0, 110.0, 25.0, 13, 18
                 min_wick = 0.45
                 max_opp_wick = 0.12
             elif is_gold:
                 # GOLD Oro Spot Sniper (84.62% Win Rate, Profit Factor 2.04, +1.59 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 12, 19
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 12, 18
                 min_wick = 0.45
                 max_opp_wick = 0.12
             elif is_nasdaq:
@@ -702,6 +702,8 @@ class DemoPaperTrader:
                 max_holding_bars=4,
                 min_sweep_units=sweep_u,
                 min_rejection_wick=min_wick,
+                max_trades_per_day=1,
+                cooldown_bars=6,
                 use_h1_filter=True,
                 use_keltner_filter=use_keltner,
                 max_opposite_wick=max_opp_wick,
