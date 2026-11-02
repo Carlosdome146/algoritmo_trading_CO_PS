@@ -1,11 +1,11 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-01 23:13:20 (Hora España)` | `22:13:20 UTC`
+**Última actualización:** `2026-11-02 23:13:41 (Hora España)` | `22:13:41 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
-- **Balance:** 3034.75 EUR
-- **Equity Flotante:** 3034.75 EUR (0.00 EUR)
+- **Balance:** 3049.82 EUR
+- **Equity Flotante:** 3049.82 EUR (0.00 EUR)
 
 ### 📈 Posiciones Abiertas
 *Sin posiciones abiertas en este momento.*
@@ -13,12 +13,12 @@
 ### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
 | Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 26087.00 | 24895.26 | 95.6 | 0.88 | RSI(2) neutral (95.6 >= 15.0); Precio dentro de bandas Bollinger (26087.00 > 24932.48) |
-| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18862.08 | 18668.67 | 26.7 | 0.81 | RSI(2) neutral (26.7 >= 10.0); Precio dentro de bandas Bollinger (18862.08 > 18811.63) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 40.2 | 0.26 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.36 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=40.2) |
-| DOW30 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 52346.01 | 50654.70 | 31.8 | 0.27 | RSI(2) neutral (31.8 >= 10.0) |
-| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 4021.35 | 4496.33 | 25.2 | 0.25 | Precio (4021.35) < SMA200 (4496.33) [Tendencia bajista]; RSI(2) neutral (25.2 >= 10.0) |
-| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7678.63 | 7319.06 | 27.0 | 0.03 | RSI(2) neutral (27.0 >= 10.0) |
+| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25780.02 | 24901.23 | 44.4 | 0.27 | RSI(2) neutral (44.4 >= 15.0); Precio dentro de bandas Bollinger (25780.02 > 24931.91) |
+| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18548.99 | 18674.74 | 7.0 | 0.08 | Precio (18548.99) < SMA200 (18674.74) [Tendencia bajista]; RSI(2) en sobreventa (7.0 < 10.0); Precio en agotamiento inferior Bollinger 2.0σ (18548.99 <= 18694.90) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 74.9 | 0.46 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.11 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=74.9) |
+| DOW30 | `idx_rsi2_dip_regime` | 🟢 **COMPRA** | 51762.09 | 50668.47 | 8.4 | 0.23 | RSI(2) en sobreventa extrema (8.4 < 10.0) |
+| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 3875.28 | 4491.02 | 4.8 | 0.03 | Precio (3875.28) < SMA200 (4491.02) [Tendencia bajista]; RSI(2) en sobreventa extrema (4.8 < 10.0) |
+| SP500 | `idx_rsi2_dip_regime` | 🟢 **COMPRA** | 7580.52 | 7322.45 | 7.2 | 0.35 | RSI(2) en sobreventa extrema (7.2 < 10.0) |
 
 ### 🎯 Cartera Activa y Configuración en Producción (Riesgo 1.0%)
 - **Riesgo por Operación:** **1.00%** (~30.18 EUR por trade sobre balance actual).

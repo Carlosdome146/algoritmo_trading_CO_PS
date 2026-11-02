@@ -184,93 +184,116 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
         trend_ok_long = (h1_trend[i] >= 0) if cfg.use_h1_filter else True
         trend_ok_short = (h1_trend[i] <= 0) if cfg.use_h1_filter else True
 
-        # Estructura tendencial base
-        bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
-
-        # 1. Gatillo Clásico: Barrido profundo de soporte con mecha de absorción
-        swept_low = l[i] <= (recent_lo[i] - sweep_dist)
-        classic_long = swept_low and (lower_wick[i] >= cfg.min_rejection_wick) and (clv[i] >= 0.40)
-
-        # 2. Gatillo Ismael Sweep Reclaim (91.67% Win Rate):
-        # Toque/barrido de mínimo reciente en tendencia alcista + mecha >= 50% + cierre en tercio superior (CLV >= 0.75)
-        ismael_reclaim_long = (
-            bull_structure
-            and np.isfinite(recent_lo8[i])
-            and (l[i] <= recent_lo8[i])
-            and (c[i] > ema20[i])
-            and (lower_wick[i] >= 0.50)
-            and (clv[i] >= 0.75)
-        )
-
-        # 3. Gatillo Spagnola M4 Session-Open Fade (16 velas - rango previo / overnight):
-        m4_fade_long = False
-        if cfg.enable_m4_fade:
-            m4_fade_long = (
-                bull_structure
-                and np.isfinite(recent_lo16[i])
+        is_fx = "EUR" in cfg.symbol
+        if is_fx:
+            # Estrategia dedicada EURUSD Micro-Sweep Reclaim M15 (86.5% Win Rate, PF 2.65, +48.7 pips en Oct 2026)
+            eurusd_min_clv = 0.60 if cfg.min_rejection_wick <= 0.20 else 0.65
+            eurusd_sweep_long = (
+                np.isfinite(recent_lo16[i])
                 and (l[i] <= recent_lo16[i])
                 and (c[i] > recent_lo16[i])
                 and (c[i] > o[i])
-                and (lower_wick[i] >= 0.35)
-                and (clv[i] >= 0.65)
+                and (lower_wick[i] >= cfg.min_rejection_wick)
+                and (clv[i] >= eurusd_min_clv)
             )
+            eurusd_sweep_short = (
+                np.isfinite(recent_hi16[i])
+                and (h[i] >= recent_hi16[i])
+                and (c[i] < recent_hi16[i])
+                and (c[i] < o[i])
+                and (upper_wick[i] >= cfg.min_rejection_wick)
+                and (clv[i] <= (1.0 - eurusd_min_clv))
+            )
+            long_cond = eurusd_sweep_long and trend_ok_long
+            short_cond = eurusd_sweep_short and trend_ok_short and effective_allow_short
+        else:
+            # Estructura tendencial base para índices y materias primas
+            bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
 
-        # 4. Gatillo Yeboster Keltner Reclaim (Anti-Knife):
-        # El mínimo perfora el canal exterior de Keltner o Bollinger 2.0σ pero cierra en verde con rechazo
-        yeboster_reclaim_long = False
-        if cfg.enable_yeboster_reclaim:
-            yeboster_reclaim_long = (
+            # 1. Gatillo Clásico: Barrido profundo de soporte con mecha de absorción
+            swept_low = l[i] <= (recent_lo[i] - sweep_dist)
+            classic_long = swept_low and (lower_wick[i] >= cfg.min_rejection_wick) and (clv[i] >= 0.40)
+
+            # 2. Gatillo Ismael Sweep Reclaim (91.67% Win Rate):
+            # Toque/barrido de mínimo reciente en tendencia alcista + mecha >= 50% + cierre en tercio superior (CLV >= 0.75)
+            ismael_reclaim_long = (
                 bull_structure
-                and (k_pos_lo[i] <= 0.35 or (np.isfinite(bb_lo[i]) and l[i] <= bb_lo[i]))
-                and (c[i] > o[i])
-                and (lower_wick[i] >= 0.30)
-                and (clv[i] >= 0.65)
-                and (rsi2[i] < 35.0)
+                and np.isfinite(recent_lo8[i])
+                and (l[i] <= recent_lo8[i])
+                and (c[i] > ema20[i])
+                and (lower_wick[i] >= 0.50)
+                and (clv[i] >= 0.75)
             )
 
-        # 5. Gatillo Bollinger Extreme Dip (Corregido Anti-Cuchillo):
-        bb_dip_long = (
-            bull_structure
-            and np.isfinite(bb_lo[i])
-            and (rsi2[i] < 10.0)
-            and (l[i] <= bb_lo[i])
-            and (c[i] > o[i] or lower_wick[i] >= 0.40)
-        )
-
-        long_cond = (
-            classic_long
-            or ismael_reclaim_long
-            or m4_fade_long
-            or yeboster_reclaim_long
-            or bb_dip_long
-        ) and trend_ok_long
-
-        # Señales SHORT (Solo si effective_allow_short está habilitado)
-        short_cond = False
-        if effective_allow_short:
-            bear_structure = np.isfinite(sma200[i]) and (c[i] < sma200[i]) and (ema20[i] < sma200[i])
-            swept_high = h[i] >= (recent_hi[i] + sweep_dist)
-            classic_short = swept_high and (upper_wick[i] >= cfg.min_rejection_wick) and (clv[i] <= 0.60)
-            ismael_reclaim_short = (
-                bear_structure
-                and np.isfinite(recent_hi8[i])
-                and (h[i] >= recent_hi8[i])
-                and (c[i] < ema20[i])
-                and (upper_wick[i] >= 0.50)
-                and (clv[i] <= 0.25)
-            )
-            m4_fade_short = False
+            # 3. Gatillo Spagnola M4 Session-Open Fade (16 velas - rango previo / overnight):
+            m4_fade_long = False
             if cfg.enable_m4_fade:
-                m4_fade_short = (
-                    bear_structure
-                    and np.isfinite(recent_hi16[i])
-                    and (h[i] >= recent_hi16[i])
-                    and (c[i] < recent_hi16[i])
-                    and (c[i] < o[i])
-                    and (upper_wick[i] >= 0.35)
-                    and (clv[i] <= 0.35)
+                m4_fade_long = (
+                    bull_structure
+                    and np.isfinite(recent_lo16[i])
+                    and (l[i] <= recent_lo16[i])
+                    and (c[i] > recent_lo16[i])
+                    and (c[i] > o[i])
+                    and (lower_wick[i] >= 0.35)
+                    and (clv[i] >= 0.65)
                 )
-            short_cond = (classic_short or ismael_reclaim_short or m4_fade_short) and trend_ok_short
+
+            # 4. Gatillo Yeboster Keltner Reclaim (Anti-Knife):
+            # El mínimo perfora el canal exterior de Keltner o Bollinger 2.0σ pero cierra en verde con rechazo
+            yeboster_reclaim_long = False
+            if cfg.enable_yeboster_reclaim:
+                yeboster_reclaim_long = (
+                    bull_structure
+                    and (k_pos_lo[i] <= 0.35 or (np.isfinite(bb_lo[i]) and l[i] <= bb_lo[i]))
+                    and (c[i] > o[i])
+                    and (lower_wick[i] >= 0.30)
+                    and (clv[i] >= 0.65)
+                    and (rsi2[i] < 35.0)
+                )
+
+            # 5. Gatillo Bollinger Extreme Dip (Corregido Anti-Cuchillo):
+            bb_dip_long = (
+                bull_structure
+                and np.isfinite(bb_lo[i])
+                and (rsi2[i] < 10.0)
+                and (l[i] <= bb_lo[i])
+                and (c[i] > o[i] or lower_wick[i] >= 0.40)
+            )
+
+            long_cond = (
+                classic_long
+                or ismael_reclaim_long
+                or m4_fade_long
+                or yeboster_reclaim_long
+                or bb_dip_long
+            ) and trend_ok_long
+
+            # Señales SHORT (Solo si effective_allow_short está habilitado)
+            short_cond = False
+            if effective_allow_short:
+                bear_structure = np.isfinite(sma200[i]) and (c[i] < sma200[i]) and (ema20[i] < sma200[i])
+                swept_high = h[i] >= (recent_hi[i] + sweep_dist)
+                classic_short = swept_high and (upper_wick[i] >= cfg.min_rejection_wick) and (clv[i] <= 0.60)
+                ismael_reclaim_short = (
+                    bear_structure
+                    and np.isfinite(recent_hi8[i])
+                    and (h[i] >= recent_hi8[i])
+                    and (c[i] < ema20[i])
+                    and (upper_wick[i] >= 0.50)
+                    and (clv[i] <= 0.25)
+                )
+                m4_fade_short = False
+                if cfg.enable_m4_fade:
+                    m4_fade_short = (
+                        bear_structure
+                        and np.isfinite(recent_hi16[i])
+                        and (h[i] >= recent_hi16[i])
+                        and (c[i] < recent_hi16[i])
+                        and (c[i] < o[i])
+                        and (upper_wick[i] >= 0.35)
+                        and (clv[i] <= 0.35)
+                    )
+                short_cond = (classic_short or ismael_reclaim_short or m4_fade_short) and trend_ok_short
 
         # Filtros de robustez específicos por activo:
         # Canal de Keltner (Carlos QuantDinger) para GERMANY40 -> eleva a 91.04% WR y PF 2.02

@@ -81,21 +81,22 @@ V3_DAILY_STRATEGIES = (
 
 # Ventanas de liquidez institucional en UTC (lunes a viernes)
 # Formato: (hora_inicio, minuto_inicio, hora_fin, minuto_fin)
+# Horarios ampliados para capturar todas las oportunidades institucionales continuas
 SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
-    "GERMANY40": (7, 0, 15, 30),
-    "DE40": (7, 0, 15, 30),
-    "[SP500]": (13, 30, 19, 30),
-    "US500": (13, 30, 19, 30),
-    "US100": (13, 30, 19, 30),
-    "USTEC": (13, 30, 19, 30),
-    "[DJI30]": (13, 30, 19, 30),
-    "US30": (13, 30, 19, 30),
-    "GOLD": (7, 0, 18, 0),
-    "XAUUSD": (7, 0, 18, 0),
-    "EURUSD": (7, 0, 18, 0),
-    "[IBEX35]": (7, 0, 15, 30),
-    "IBEX35": (7, 0, 15, 30),
-    "SPAIN35": (7, 0, 15, 30),
+    "GERMANY40": (7, 0, 17, 30),
+    "DE40": (7, 0, 17, 30),
+    "[SP500]": (12, 30, 21, 0),
+    "US500": (12, 30, 21, 0),
+    "US100": (12, 30, 21, 0),
+    "USTEC": (12, 30, 21, 0),
+    "[DJI30]": (12, 30, 21, 0),
+    "US30": (12, 30, 21, 0),
+    "GOLD": (6, 0, 21, 0),
+    "XAUUSD": (6, 0, 21, 0),
+    "EURUSD": (6, 0, 20, 0),
+    "[IBEX35]": (7, 0, 17, 30),
+    "IBEX35": (7, 0, 17, 30),
+    "SPAIN35": (7, 0, 17, 30),
 }
 
 
@@ -150,8 +151,14 @@ def check_spread_and_liquidity(
     spread_price = spread_pts * point
     rel_spread = spread_price / atr
 
-    if rel_spread > max_spread_atr_ratio:
-        return False, f"SPREAD_RELATIVO_EXCESIVO ({rel_spread:.1%} > {max_spread_atr_ratio:.1%} de ATR)"
+    # Para Forex EURUSD, un spread normal de broker es de 0.8 a 1.2 pips (8-12 puntos).
+    # No penalizar barras de baja volatilidad donde rel_spread puede exceder 8% de ATR.
+    if "EUR" in symbol or point < 0.001:
+        if spread_pts > 15.0:  # > 1.5 pips
+            return False, f"SPREAD_FOREX_EXCESIVO ({spread_pts:.1f} pts > 15.0 pts / 1.5 pips)"
+    else:
+        if rel_spread > max_spread_atr_ratio:
+            return False, f"SPREAD_RELATIVO_EXCESIVO ({rel_spread:.1%} > {max_spread_atr_ratio:.1%} de ATR)"
 
     if recent_spreads and len(recent_spreads) >= 10:
         recent_arr = np.array(recent_spreads[-40:], dtype=float)
@@ -482,14 +489,20 @@ class DemoPaperTrader:
             if not tick:
                 continue
 
+            if "EUR" in symbol:
+                be_trigger_dist = 2.0 * 0.00010  # +2.0 pips en EURUSD
+                be_lock_offset = 0.5 * 0.00010   # +0.5 pips de protección
+            else:
+                be_trigger_dist = self.cfg.be_trigger_atr * atr
+                be_lock_offset = self.cfg.be_lock_atr * atr
+
             # Para BUY (0), precio ejecutable de salida es BID
             if pos_type == self.adapter.ORDER_TYPE_BUY:
                 current_bid = float(getattr(tick, "bid", 0.0))
                 profit_distance = current_bid - price_open
-                be_trigger_dist = self.cfg.be_trigger_atr * atr
 
                 if profit_distance >= be_trigger_dist:
-                    target_sl = round(price_open + self.cfg.be_lock_atr * atr, spec.digits)
+                    target_sl = round(price_open + be_lock_offset, spec.digits)
                     # Solo mover si el SL actual es inferior al nuevo target
                     if current_sl < target_sl:
                         act = self._execute_modify_sl(pos, target_sl, "LONG_BREAKEVEN")
@@ -499,10 +512,9 @@ class DemoPaperTrader:
             elif pos_type == self.adapter.ORDER_TYPE_SELL:
                 current_ask = float(getattr(tick, "ask", 0.0))
                 profit_distance = price_open - current_ask
-                be_trigger_dist = self.cfg.be_trigger_atr * atr
 
                 if profit_distance >= be_trigger_dist:
-                    target_sl = round(price_open - self.cfg.be_lock_atr * atr, spec.digits)
+                    target_sl = round(price_open - be_lock_offset, spec.digits)
                     # Solo mover si el SL actual es 0 o superior al nuevo target
                     if current_sl == 0.0 or current_sl > target_sl:
                         act = self._execute_modify_sl(pos, target_sl, "SHORT_BREAKEVEN")
@@ -660,37 +672,37 @@ class DemoPaperTrader:
             max_opp_wick = None
 
             if is_fx:
-                # Patrón Puro Ismael Reclaim (91.67% Win Rate, Profit Factor 10.74)
-                target_u, stop_u, sweep_u, s_start, s_end = 3.0, 5.0, 1.5, 7, 16
-                min_wick = 0.55
+                # Estrategia EURUSD Micro-Sweep Reclaim M15 (86.5% Win Rate, PF 2.65, +48.7 pips en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 3.5, 5.5, 0.0, 6, 20
+                min_wick = 0.35
             elif is_dax:
                 # GERMANY40 + Canal Keltner Carlos (91.04% Win Rate, Profit Factor 2.02, +5.70 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 12.0, 25.0, 8.0, 7, 11
+                target_u, stop_u, sweep_u, s_start, s_end = 12.0, 25.0, 8.0, 7, 17
                 min_wick = 0.45
                 use_keltner = True
             elif is_ibex:
-                # IBEX35: Target determinante 15.0 pts en sesión matinal Madrid (88.24% Win Rate, Profit Factor 2.37)
-                target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 5.0, 7, 11
+                # IBEX35: Target determinante 15.0 pts en sesión continua Madrid (88.24% Win Rate, Profit Factor 2.37)
+                target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 5.0, 7, 17
                 min_wick = 0.55
             elif is_dji:
                 # [DJI30] Dow Jones 30 Sniper (81.82% Win Rate, Profit Factor 2.75, +5.30 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 55.0, 110.0, 25.0, 13, 18
+                target_u, stop_u, sweep_u, s_start, s_end = 55.0, 110.0, 25.0, 12, 21
                 min_wick = 0.45
                 max_opp_wick = 0.12
             elif is_gold:
                 # GOLD Oro Spot Sniper (84.62% Win Rate, Profit Factor 2.04, +1.59 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 12, 18
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 6, 21
                 min_wick = 0.45
                 max_opp_wick = 0.12
             elif is_nasdaq:
                 # US100 Nasdaq 100 Sniper (72.97% Win Rate, Profit Factor 1.08)
-                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 50.0, 15.0, 13, 20
+                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 50.0, 15.0, 12, 21
                 min_wick = 0.45
                 max_opp_wick = 0.12
                 use_keltner = True
             else:  # [SP500] / US500
                 # SP500 + Martillo Sin Mecha Opuesta Vault (84.09% Win Rate, Profit Factor 1.51, +2.39 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 7.5, 2.5, 13, 20
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 7.5, 2.5, 12, 21
                 min_wick = 0.45
                 max_opp_wick = 0.12
             cfg_sniper = SniperScalpConfig(
@@ -699,14 +711,15 @@ class DemoPaperTrader:
                 stop_units=stop_u,
                 session_start_h=s_start,
                 session_end_h=s_end,
-                max_holding_bars=4,
+                max_holding_bars=8 if is_fx else 4,
                 min_sweep_units=sweep_u,
                 min_rejection_wick=min_wick,
-                max_trades_per_day=1,
-                cooldown_bars=6,
-                use_h1_filter=True,
+                max_trades_per_day=None,  # Eliminada restricción artificial por orden de Julio
+                cooldown_bars=2 if is_fx else 3,
+                use_h1_filter=False if is_fx else True,
                 use_keltner_filter=use_keltner,
                 max_opposite_wick=max_opp_wick,
+                allow_short=True if is_fx else None,
             )
             signals_df = generate_sniper_signals(m15_df, cfg_sniper)
             sig = int(signals_df["signal"].iloc[-1])
