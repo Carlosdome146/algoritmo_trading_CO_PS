@@ -225,16 +225,15 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
                 and (clv[i] >= 0.75)
             )
 
-            # 3. Gatillo Spagnola M4 Session-Open Fade (16 velas - rango previo / overnight):
+            # 3. Gatillo Spagnola M4 Session-Open Fade / 16-Bar Micro-Sweep Reclaim:
             m4_fade_long = False
             if cfg.enable_m4_fade:
                 m4_fade_long = (
-                    bull_structure
-                    and np.isfinite(recent_lo16[i])
+                    np.isfinite(recent_lo16[i])
                     and (l[i] <= recent_lo16[i])
                     and (c[i] > recent_lo16[i])
                     and (c[i] > o[i])
-                    and (lower_wick[i] >= 0.35)
+                    and (lower_wick[i] >= cfg.min_rejection_wick)
                     and (clv[i] >= 0.65)
                 )
 
@@ -285,12 +284,11 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
                 m4_fade_short = False
                 if cfg.enable_m4_fade:
                     m4_fade_short = (
-                        bear_structure
-                        and np.isfinite(recent_hi16[i])
+                        np.isfinite(recent_hi16[i])
                         and (h[i] >= recent_hi16[i])
                         and (c[i] < recent_hi16[i])
                         and (c[i] < o[i])
-                        and (upper_wick[i] >= 0.35)
+                        and (upper_wick[i] >= cfg.min_rejection_wick)
                         and (clv[i] <= 0.35)
                     )
                 short_cond = (classic_short or ismael_reclaim_short or m4_fade_short) and trend_ok_short

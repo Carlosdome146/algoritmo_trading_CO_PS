@@ -489,7 +489,7 @@ class DemoPaperTrader:
             if not tick:
                 continue
 
-            if "EUR" in symbol:
+            if "EUR" in symbol and atr < 0.005:
                 be_trigger_dist = 2.0 * 0.00010  # +2.0 pips en EURUSD
                 be_lock_offset = 0.5 * 0.00010   # +0.5 pips de protección
             else:
@@ -601,7 +601,7 @@ class DemoPaperTrader:
         if self.cfg.timeframe == "M5":
             tf_code = self.adapter.TIMEFRAME_M5
             tf_mins = 5
-        elif self.cfg.timeframe == "M30" or (self.cfg.timeframe == "M15_M30" and symbol != "EURUSD"):
+        elif self.cfg.timeframe == "M30" or (self.cfg.timeframe == "M15_M30" and symbol not in ["EURUSD", "[IBEX35]", "IBEX35"]):
             tf_code = self.adapter.TIMEFRAME_M30
             tf_mins = 30
         else:
@@ -672,54 +672,55 @@ class DemoPaperTrader:
             max_opp_wick = None
 
             if is_fx:
-                # Estrategia EURUSD Micro-Sweep Reclaim M15 (86.5% Win Rate, PF 2.65, +48.7 pips en Oct 2026)
+                # EURUSD Micro-Sweep Reclaim M15 (86.5% WR, PF 2.65, +48.7 pips en Oct 2026)
                 target_u, stop_u, sweep_u, s_start, s_end = 3.5, 5.5, 0.0, 6, 20
                 min_wick = 0.35
+                allow_s = True
             elif is_dax:
-                # GERMANY40 + Canal Keltner Carlos (91.04% Win Rate, Profit Factor 2.02, +5.70 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 12.0, 25.0, 8.0, 7, 17
-                min_wick = 0.45
-                use_keltner = True
+                # GERMANY40 Micro-Sweep Reclaim M30 (80.0% WR, PF 1.83, +124.66 EUR en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 7, 17
+                min_wick = 0.35
+                allow_s = True
             elif is_ibex:
-                # IBEX35: Target determinante 15.0 pts en sesión continua Madrid (88.24% Win Rate, Profit Factor 2.37)
-                target_u, stop_u, sweep_u, s_start, s_end = 15.0, 25.0, 5.0, 7, 17
-                min_wick = 0.55
+                # [IBEX35] Micro-Sweep Reclaim M15 (86.7% WR, PF 2.10, +114.05 EUR en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 7, 17
+                min_wick = 0.35
+                allow_s = False
             elif is_dji:
-                # [DJI30] Dow Jones 30 Sniper (81.82% Win Rate, Profit Factor 2.75, +5.30 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 55.0, 110.0, 25.0, 12, 21
-                min_wick = 0.45
-                max_opp_wick = 0.12
+                # [DJI30] Micro-Sweep Reclaim M30 (100.0% WR, PF INF, +213.58 EUR en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 40.0, 80.0, 0.0, 12, 21
+                min_wick = 0.35
+                allow_s = False
             elif is_gold:
-                # GOLD Oro Spot Sniper (84.62% Win Rate, Profit Factor 2.04, +1.59 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 6, 21
-                min_wick = 0.45
-                max_opp_wick = 0.12
+                # GOLD Micro-Sweep Reclaim M30 (92.3% WR, PF 2.34, +75.19 EUR en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 15.0, 0.0, 6, 21
+                min_wick = 0.35
+                allow_s = False
             elif is_nasdaq:
-                # US100 Nasdaq 100 Sniper (72.97% Win Rate, Profit Factor 1.08)
-                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 50.0, 15.0, 12, 21
-                min_wick = 0.45
-                max_opp_wick = 0.12
-                use_keltner = True
+                # US100 Micro-Sweep Reclaim M30 (85.7% WR, PF 1.62, +99.36 EUR en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 70.0, 0.0, 12, 21
+                min_wick = 0.35
+                allow_s = True
             else:  # [SP500] / US500
-                # SP500 + Martillo Sin Mecha Opuesta Vault (84.09% Win Rate, Profit Factor 1.51, +2.39 R)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 7.5, 2.5, 12, 21
-                min_wick = 0.45
-                max_opp_wick = 0.12
+                # SP500 Micro-Sweep Reclaim M30 (92.3% WR, PF 2.56, +88.84 EUR en Oct 2026)
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 0.0, 12, 21
+                min_wick = 0.35
+                allow_s = False
             cfg_sniper = SniperScalpConfig(
                 symbol=symbol,
                 target_units=target_u,
                 stop_units=stop_u,
                 session_start_h=s_start,
                 session_end_h=s_end,
-                max_holding_bars=8 if is_fx else 4,
+                max_holding_bars=8,
                 min_sweep_units=sweep_u,
                 min_rejection_wick=min_wick,
-                max_trades_per_day=None,  # Eliminada restricción artificial por orden de Julio
+                max_trades_per_day=None,  # Sin límite artificial de trades al día
                 cooldown_bars=2 if is_fx else 3,
-                use_h1_filter=False if is_fx else True,
-                use_keltner_filter=use_keltner,
-                max_opposite_wick=max_opp_wick,
-                allow_short=True if is_fx else None,
+                use_h1_filter=False,
+                use_keltner_filter=False,
+                max_opposite_wick=None,
+                allow_short=allow_s,
             )
             signals_df = generate_sniper_signals(m15_df, cfg_sniper)
             sig = int(signals_df["signal"].iloc[-1])
