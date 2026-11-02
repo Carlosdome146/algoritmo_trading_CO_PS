@@ -1,19 +1,29 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-02 23:25:00 (Hora España)` | `22:25:00 UTC`
+**Última actualización:** `2026-11-02 23:30:55 (Hora España)` | `22:30:55 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
-- **Balance:** 3,049.82 EUR
-- **Equity Flotante:** 3,049.82 EUR (0.00 EUR)
+- **Balance:** 3049.82 EUR
+- **Equity Flotante:** 3049.82 EUR (0.00 EUR)
 - **Historial Real:** 4 operaciones cerradas / 4 victorias (**100% Win Rate**, +49.82 EUR ganancia neta).
 
 ### 📈 Posiciones Abiertas
-*Sin posiciones abiertas en este momento. Motor escaneando 7 activos cada 15 segundos.*
+*Sin posiciones abiertas en este momento.*
+
+### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
+| Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25780.02 | 24901.23 | 44.4 | 0.27 | RSI(2) neutral (44.4 >= 15.0); Precio dentro de bandas Bollinger (25780.02 > 24931.91) |
+| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18548.99 | 18674.74 | 7.0 | 0.08 | Precio (18548.99) < SMA200 (18674.74) [Tendencia bajista]; RSI(2) en sobreventa (7.0 < 10.0); Precio en agotamiento inferior Bollinger 2.0σ (18548.99 <= 18694.90) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 74.9 | 0.46 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.11 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=74.9) |
+| DOW30 | `idx_rsi2_dip_regime` | 🟢 **COMPRA** | 51762.09 | 50668.47 | 8.4 | 0.23 | RSI(2) en sobreventa extrema (8.4 < 10.0) |
+| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 3875.28 | 4491.02 | 4.8 | 0.03 | Precio (3875.28) < SMA200 (4491.02) [Tendencia bajista]; RSI(2) en sobreventa extrema (4.8 < 10.0) |
+| SP500 | `idx_rsi2_dip_regime` | 🟢 **COMPRA** | 7580.52 | 7322.45 | 7.2 | 0.35 | RSI(2) en sobreventa extrema (7.2 < 10.0) |
 
 ### ⚡ Estrategia Universal en Producción: `institutional_sniper_scalp` (Micro-Sweep Reclaim)
 - **Timeframe:** M15 (EURUSD, [IBEX35]) / M30 (GERMANY40, US100, [DJI30], [SP500], GOLD).
-- **Riesgo por Operación:** **1.50%** (~45.75 EUR de presupuesto de riesgo por operación sobre 3,049.82 EUR).
+- **Riesgo por Operación:** **1.50%** (~45.75 EUR de presupuesto de riesgo por operación sobre balance).
 - **Beneficio Estimado por Acierto:** **+25.00 EUR a +35.00 EUR** netos.
 - **Límites de operaciones:** **SIN LÍMITE ARTIFICIAL** (`max_trades_per_day = None`). Cada oportunidad de calidad se ejecuta.
 - **Cooldown:** 2 velas (EURUSD) / 3 velas (Índices y Materias Primas).
