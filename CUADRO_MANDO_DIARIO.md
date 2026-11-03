@@ -1,5 +1,5 @@
-# 📊 Cuadro de Mando Ejecutivo y Liquidación Diaria (2026-10-22)
-**Generado:** `2026-10-22 20:27:17 UTC` | **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
+# 📊 Cuadro de Mando Ejecutivo y Liquidación Diaria (2026-11-03)
+**Generado:** `2026-11-03 17:58:06 UTC` | **Cuenta:** DEMO #58678865 (AdmiralsGroup-Demo)
 
 ---
 
@@ -12,8 +12,8 @@
 | **Comisiones Bróker** | `-0.00 €` | Coste fijo por lote cobrado por Admirals (0.00 € en Trade.MT5) |
 | **Swaps / Financiación** | `+0.00 €` | Coste o abono por mantener posiciones durante la noche |
 | **Resultado Neto Cerrado** | **`0.00 €`** 🟢 | **Beneficio/Pérdida neto realizado hoy** |
-| **Balance Actual** | **`3008.54 €`** | Capital consolidado en cuenta |
-| **Equity Flotante (En vivo)** | **`3008.54 €`** | Capital total incluyendo operaciones abiertas (+0.00 €) |
+| **Balance Actual** | **`2999.68 €`** | Capital consolidado en cuenta |
+| **Equity Flotante (En vivo)** | **`2999.68 €`** | Capital total incluyendo operaciones abiertas (+0.00 €) |
 
 ---
 
@@ -41,21 +41,39 @@ Este apartado detalla de forma pedagógica **por qué el sistema actuó o se abs
 
 ### DAX40 (`GERMANY40`) — 🟡 **ABSTENCIÓN / ESPERA**
 - **Estrategia:** `idx_dax_bollinger_dip`
-- **Valores Técnicos:** Cierre: `25609.84` | Media 200: `24887.44` | RSI(2): `81.5` | IBS: `0.77` | Régimen ATR: `0.90`
+- **Valores Técnicos:** Cierre: `25885.60` | Media 200: `24906.42` | RSI(2): `59.3` | IBS: `0.51` | Régimen ATR: `0.95`
 - **Motivo de la Decisión:**
-  • RSI(2) neutral (81.5 >= 15.0)<br>• Precio dentro de bandas Bollinger (25609.84 > 24981.35)
+  • RSI(2) neutral (59.3 >= 15.0)<br>• Precio dentro de bandas Bollinger (25885.60 > 24924.27)
 
-### SP500 (`[SP500]`) — 🟡 **ABSTENCIÓN / ESPERA**
-- **Estrategia:** `idx_rsi2_dip_regime`
-- **Valores Técnicos:** Cierre: `7759.56` | Media 200: `7295.33` | RSI(2): `79.2` | IBS: `0.80` | Régimen ATR: `0.89`
+### IBEX35 (`[IBEX35]`) — 🟡 **ABSTENCIÓN / ESPERA**
+- **Estrategia:** `idx_ibex_bollinger_dip`
+- **Valores Técnicos:** Cierre: `18935.36` | Media 200: `18682.41` | RSI(2): `67.0` | IBS: `0.82` | Régimen ATR: `1.07`
 - **Motivo de la Decisión:**
-  • RSI(2) neutral (79.2 >= 10.0)
+  • RSI(2) neutral (67.0 >= 10.0)<br>• Precio dentro de bandas Bollinger (18935.36 > 18687.32)
 
 ### EURUSD (`EURUSD`) — 🟡 **ABSTENCIÓN / ESPERA**
 - **Estrategia:** `fx_eurusd_ker_exhaustion`
-- **Valores Técnicos:** Cierre: `1.12` | Media 200: `1.16` | RSI(2): `60.1` | IBS: `0.70` | Régimen ATR: `1.15`
+- **Valores Técnicos:** Cierre: `1.12` | Media 200: `1.16` | RSI(2): `74.9` | IBS: `0.46` | Régimen ATR: `1.11`
 - **Motivo de la Decisión:**
-  • Precio (1.12) < SMA200 (1.16) [Tendencia bajista]<br>• Mercado en rango / no tendencial (KER10=0.13 < 0.42)<br>• Sin extremo de agotamiento en bandas 2.0σ (RSI2=60.1)
+  • Precio (1.12) < SMA200 (1.16) [Tendencia bajista]<br>• Mercado en rango / no tendencial (KER10=0.11 < 0.42)<br>• Sin extremo de agotamiento en bandas 2.0σ (RSI2=74.9)
+
+### DOW30 (`[DJI30]`) — 🟡 **ABSTENCIÓN / ESPERA**
+- **Estrategia:** `idx_rsi2_dip_regime`
+- **Valores Técnicos:** Cierre: `52002.70` | Media 200: `50682.31` | RSI(2): `43.0` | IBS: `0.28` | Régimen ATR: `1.03`
+- **Motivo de la Decisión:**
+  • RSI(2) neutral (43.0 >= 10.0)
+
+### ORO (`GOLD`) — 🟡 **ABSTENCIÓN / ESPERA**
+- **Estrategia:** `idx_rsi2_dip_regime`
+- **Valores Técnicos:** Cierre: `3946.36` | Media 200: `4485.82` | RSI(2): `46.7` | IBS: `0.74` | Régimen ATR: `0.71`
+- **Motivo de la Decisión:**
+  • Precio (3946.36) < SMA200 (4485.82) [Tendencia bajista]<br>• RSI(2) neutral (46.7 >= 10.0)
+
+### SP500 (`[SP500]`) — 🟢 **OPERACIÓN ACTIVA**
+- **Estrategia:** `idx_rsi2_dip_regime`
+- **Valores Técnicos:** Cierre: `7556.51` | Media 200: `7325.49` | RSI(2): `5.3` | IBS: `0.13` | Régimen ATR: `0.99`
+- **Motivo de la Decisión:**
+  • RSI(2) en sobreventa extrema (5.3 < 10.0)
 
 ---
 
