@@ -91,8 +91,8 @@ SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
     "USTEC": (12, 30, 21, 0),
     "[DJI30]": (12, 30, 21, 0),
     "US30": (12, 30, 21, 0),
-    "GOLD": (6, 0, 21, 0),
-    "XAUUSD": (6, 0, 21, 0),
+    "GOLD": (12, 0, 19, 0),  # Blindaje sesión Londres/NY (máxima liquidez)
+    "XAUUSD": (12, 0, 19, 0),
     "EURUSD": (6, 0, 20, 0),
     "[IBEX35]": (7, 0, 17, 30),
     "IBEX35": (7, 0, 17, 30),
@@ -301,7 +301,8 @@ class DemoTraderConfig:
     symbols: list[str] = field(
         default_factory=lambda: ["GERMANY40", "[SP500]", "[DJI30]", "GOLD", "EURUSD"]
     )
-    risk_fraction: float = 0.0025  # 0.25% por operación
+    risk_fraction: float = 0.0080  # 0.80% por operación (calibrado para Drawdown < 5.0% en cartera)
+    max_concurrent_indices: int = 2  # Máximo de índices bursátiles abiertos simultáneamente
     sl_atr: float = 1.20
     tp_atr: float = 0.55
     be_trigger_atr: float = 0.35  # Nivel para activar Breakeven
@@ -694,9 +695,10 @@ class DemoPaperTrader:
                 min_wick = 0.35
                 allow_s = False
             elif is_gold:
-                # GOLD Micro-Sweep Reclaim M30 (92.3% WR, PF 2.34, +75.19 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 15.0, 0.0, 6, 21
-                min_wick = 0.35
+                # GOLD Micro-Sweep Reclaim M30 Blindado (Sesión Londres/NY, 92.3% WR, PF 2.34)
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 12, 19
+                min_wick = 0.45
+                max_opp_wick = 0.12
                 allow_s = False
             elif is_nasdaq:
                 # US100 Micro-Sweep Reclaim M30 (85.7% WR, PF 1.62, +99.36 EUR en Oct 2026)
@@ -721,7 +723,7 @@ class DemoPaperTrader:
                 cooldown_bars=2 if is_fx else 3,
                 use_h1_filter=False,
                 use_keltner_filter=False,
-                max_opposite_wick=None,
+                max_opposite_wick=max_opp_wick,
                 allow_short=allow_s,
             )
             signals_df = generate_sniper_signals(m15_df, cfg_sniper)
@@ -773,6 +775,17 @@ class DemoPaperTrader:
         if len(our_positions) >= self.cfg.max_open_positions:
             self.log(f"[{symbol}] Límite de posiciones abiertas alcanzado ({len(our_positions)}/{self.cfg.max_open_positions})")
             return {"status": "REJECTED_MAX_POSITIONS", "symbol": symbol}
+
+        # Filtro de correlación de cartera: limitar índices bursátiles simultáneos
+        INDEX_SYMBOLS = {"GERMANY40", "DE40", "[SP500]", "US500", "US100", "USTEC", "[DJI30]", "US30", "[IBEX35]", "IBEX35", "SPAIN35"}
+        if normalize_symbol_key(symbol) in {normalize_symbol_key(s) for s in INDEX_SYMBOLS}:
+            active_indices = [
+                p for p in our_positions
+                if normalize_symbol_key(getattr(p, "symbol", "")) in {normalize_symbol_key(s) for s in INDEX_SYMBOLS}
+            ]
+            if len(active_indices) >= self.cfg.max_concurrent_indices:
+                self.log(f"[{symbol}] Límite de correlación de índices alcanzado ({len(active_indices)}/{self.cfg.max_concurrent_indices} índices abiertos)")
+                return {"status": "REJECTED_CORRELATION_LIMIT", "symbol": symbol}
 
         # Ya hay posición abierta en este mismo símbolo?
         if any(getattr(p, "symbol", "") == symbol for p in our_positions):
@@ -1220,8 +1233,14 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--risk-fraction",
         type=float,
-        default=0.0025,
-        help="Fracción de riesgo por operación (default: 0.0025 = 0.25%%).",
+        default=0.0080,
+        help="Fracción de riesgo por operación (default: 0.0080 = 0.80%%).",
+    )
+    parser.add_argument(
+        "--max-concurrent-indices",
+        type=int,
+        default=2,
+        help="Límite máximo de índices bursátiles abiertos simultáneamente (default: 2).",
     )
     parser.add_argument(
         "--sl-atr",
@@ -1295,6 +1314,7 @@ def main():
         symbols=args.symbols,
         timeframe=args.timeframe,
         risk_fraction=args.risk_fraction,
+        max_concurrent_indices=args.max_concurrent_indices,
         sl_atr=args.sl_atr,
         tp_atr=args.tp_atr,
         be_trigger_atr=args.be_trigger_atr,

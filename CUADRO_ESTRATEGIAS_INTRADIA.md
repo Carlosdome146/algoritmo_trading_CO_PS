@@ -120,6 +120,49 @@ En el estudio de optimización de precisión intradía (`scripts/research_79_int
 
 ---
 
+
+### 🔴 Ronda 5: Evaluación brainbrick-trades/The-Quant-Trading-Vault (GitHub)
+> **Fuente:** https://github.com/brainbrick-trades/The-Quant-Trading-Vault  
+> **Lógicas Evaluadas:**  
+> 1. `Vault_BB_VWAP_Anomaly`: Tendencia EMA50>200 + VWAP + anomalía de precio bajo Bollinger Bands (20, 2.0).  
+> 2. `Vault_Connors_RSI2_Reversal`: Connors RSI(2) < 10 con filtro SMA200 y salida dinámica por EMA9.  
+> 3. `Vault_Consecutive_Candle_Reversal`: Reversión de 3 velas bajistas con mecha de absorción a favor de EMA200.  
+
+| Fecha | Estrategia / Fuente | Activo | TF | N | Win Rate | PF | Max DD | E[R] | Estado | Diagnóstico / Motivo del Descarte |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | GERMANY40 | M30 | 1876 | **58.4%** | 0.90 | 28.94% | -0.0270 | 🔴 DESCARTADA | Win Rate 58.4% < 70.0%; Max Drawdown 28.94% > 5.0%; Profit Factor 0.90 <= 1.25 o E[R]=-0.0270 <= 0; t-stat -1.75 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | GERMANY40 | M15 | 1535 | **55.0%** | 0.92 | 30.90% | -0.0214 | 🔴 DESCARTADA | Win Rate 55.0% < 70.0%; Max Drawdown 30.90% > 5.0%; Profit Factor 0.92 <= 1.25 o E[R]=-0.0214 <= 0; t-stat -1.21 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | [SP500] | M30 | 1848 | **54.8%** | 0.79 | 56.03% | -0.0557 | 🔴 DESCARTADA | Win Rate 54.8% < 70.0%; Max Drawdown 56.03% > 5.0%; Profit Factor 0.79 <= 1.25 o E[R]=-0.0557 <= 0; t-stat -3.59 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | [SP500] | M15 | 1333 | **55.7%** | 0.80 | 37.85% | -0.0531 | 🔴 DESCARTADA | Win Rate 55.7% < 70.0%; Max Drawdown 37.85% > 5.0%; Profit Factor 0.80 <= 1.25 o E[R]=-0.0531 <= 0; t-stat -3.02 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | US100 | M30 | 1844 | **55.7%** | 0.86 | 35.09% | -0.0364 | 🔴 DESCARTADA | Win Rate 55.7% < 70.0%; Max Drawdown 35.09% > 5.0%; Profit Factor 0.86 <= 1.25 o E[R]=-0.0364 <= 0; t-stat -2.33 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | US100 | M15 | 1254 | **57.8%** | 0.91 | 16.59% | -0.0220 | 🔴 DESCARTADA | Win Rate 57.8% < 70.0%; Max Drawdown 16.59% > 5.0%; Profit Factor 0.91 <= 1.25 o E[R]=-0.0220 <= 0; t-stat -1.15 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | EURUSD | M30 | 1418 | **48.1%** | 0.68 | 73.94% | -0.1020 | 🔴 DESCARTADA | Win Rate 48.1% < 70.0%; Max Drawdown 73.94% > 5.0%; Profit Factor 0.68 <= 1.25 o E[R]=-0.1020 <= 0; t-stat -5.38 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | EURUSD | M15 | 1136 | **47.5%** | 0.61 | 66.70% | -0.1162 | 🔴 DESCARTADA | Win Rate 47.5% < 70.0%; Max Drawdown 66.70% > 5.0%; Profit Factor 0.61 <= 1.25 o E[R]=-0.1162 <= 0; t-stat -5.73 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | GOLD | M30 | 1918 | **26.8%** | 0.21 | 337.70% | -0.3519 | 🔴 DESCARTADA | Win Rate 26.8% < 70.0%; Max Drawdown 337.70% > 5.0%; Profit Factor 0.21 <= 1.25 o E[R]=-0.3519 <= 0; t-stat -26.73 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_BB_VWAP_Anomaly | GOLD | M15 | 1645 | **34.4%** | 0.32 | 236.13% | -0.2822 | 🔴 DESCARTADA | Win Rate 34.4% < 70.0%; Max Drawdown 236.13% > 5.0%; Profit Factor 0.32 <= 1.25 o E[R]=-0.2822 <= 0; t-stat -17.39 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | GERMANY40 | M30 | 875 | **55.4%** | 0.76 | 50.89% | -0.1037 | 🔴 DESCARTADA | Win Rate 55.4% < 70.0%; Max Drawdown 50.89% > 5.0%; Profit Factor 0.76 <= 1.25 o E[R]=-0.1037 <= 0; t-stat -3.51 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | GERMANY40 | M15 | 803 | **53.8%** | 0.65 | 61.19% | -0.1520 | 🔴 DESCARTADA | Win Rate 53.8% < 70.0%; Max Drawdown 61.19% > 5.0%; Profit Factor 0.65 <= 1.25 o E[R]=-0.1520 <= 0; t-stat -5.00 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | [SP500] | M30 | 655 | **57.6%** | 0.91 | 21.15% | -0.0386 | 🔴 DESCARTADA | Win Rate 57.6% < 70.0%; Max Drawdown 21.15% > 5.0%; Profit Factor 0.91 <= 1.25 o E[R]=-0.0386 <= 0; t-stat -1.04 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | [SP500] | M15 | 546 | **60.8%** | 0.92 | 12.84% | -0.0294 | 🔴 DESCARTADA | Win Rate 60.8% < 70.0%; Max Drawdown 12.84% > 5.0%; Profit Factor 0.92 <= 1.25 o E[R]=-0.0294 <= 0; t-stat -0.78 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | US100 | M30 | 680 | **56.8%** | 0.94 | 15.21% | -0.0252 | 🔴 DESCARTADA | Win Rate 56.8% < 70.0%; Max Drawdown 15.21% > 5.0%; Profit Factor 0.94 <= 1.25 o E[R]=-0.0252 <= 0; t-stat -0.68 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | US100 | M15 | 534 | **59.6%** | 0.83 | 18.12% | -0.0667 | 🔴 DESCARTADA | Win Rate 59.6% < 70.0%; Max Drawdown 18.12% > 5.0%; Profit Factor 0.83 <= 1.25 o E[R]=-0.0667 <= 0; t-stat -1.81 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | EURUSD | M30 | 680 | **45.4%** | 0.73 | 40.34% | -0.1156 | 🔴 DESCARTADA | Win Rate 45.4% < 70.0%; Max Drawdown 40.34% > 5.0%; Profit Factor 0.73 <= 1.25 o E[R]=-0.1156 <= 0; t-stat -3.43 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | EURUSD | M15 | 614 | **43.8%** | 0.54 | 65.88% | -0.2055 | 🔴 DESCARTADA | Win Rate 43.8% < 70.0%; Max Drawdown 65.88% > 5.0%; Profit Factor 0.54 <= 1.25 o E[R]=-0.2055 <= 0; t-stat -6.27 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | GOLD | M30 | 972 | **42.1%** | 0.36 | 162.23% | -0.3243 | 🔴 DESCARTADA | Win Rate 42.1% < 70.0%; Max Drawdown 162.23% > 5.0%; Profit Factor 0.36 <= 1.25 o E[R]=-0.3243 <= 0; t-stat -13.24 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Connors_RSI2_Reversal | GOLD | M15 | 926 | **43.2%** | 0.34 | 158.41% | -0.3332 | 🔴 DESCARTADA | Win Rate 43.2% < 70.0%; Max Drawdown 158.41% > 5.0%; Profit Factor 0.34 <= 1.25 o E[R]=-0.3332 <= 0; t-stat -13.67 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | GERMANY40 | M30 | 406 | **56.9%** | 0.74 | 22.97% | -0.0972 | 🔴 DESCARTADA | Win Rate 56.9% < 70.0%; Max Drawdown 22.97% > 5.0%; Profit Factor 0.74 <= 1.25 o E[R]=-0.0972 <= 0; t-stat -2.41 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | GERMANY40 | M15 | 383 | **62.7%** | 0.97 | 8.43% | -0.0097 | 🔴 DESCARTADA | Win Rate 62.7% < 70.0%; Max Drawdown 8.43% > 5.0%; Profit Factor 0.97 <= 1.25 o E[R]=-0.0097 <= 0; t-stat -0.25 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | [SP500] | M30 | 325 | **58.8%** | 0.81 | 14.44% | -0.0726 | 🔴 DESCARTADA | Win Rate 58.8% < 70.0%; Max Drawdown 14.44% > 5.0%; Profit Factor 0.81 <= 1.25 o E[R]=-0.0726 <= 0; t-stat -1.52 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | [SP500] | M15 | 267 | **64.8%** | 1.09 | 5.60% | +0.0246 | 🔴 DESCARTADA | Win Rate 64.8% < 70.0%; Max Drawdown 5.60% > 5.0%; Profit Factor 1.09 <= 1.25 o E[R]=+0.0246 <= 0; t-stat 0.48 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | US100 | M30 | 322 | **60.2%** | 0.77 | 15.45% | -0.0837 | 🔴 DESCARTADA | Win Rate 60.2% < 70.0%; Max Drawdown 15.45% > 5.0%; Profit Factor 0.77 <= 1.25 o E[R]=-0.0837 <= 0; t-stat -1.91 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | US100 | M15 | 282 | **63.1%** | 0.86 | 16.26% | -0.0468 | 🔴 DESCARTADA | Win Rate 63.1% < 70.0%; Max Drawdown 16.26% > 5.0%; Profit Factor 0.86 <= 1.25 o E[R]=-0.0468 <= 0; t-stat -1.01 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | EURUSD | M30 | 313 | **58.1%** | 0.70 | 17.68% | -0.1131 | 🔴 DESCARTADA | Win Rate 58.1% < 70.0%; Max Drawdown 17.68% > 5.0%; Profit Factor 0.70 <= 1.25 o E[R]=-0.1131 <= 0; t-stat -2.53 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | EURUSD | M15 | 294 | **51.0%** | 0.55 | 29.93% | -0.1753 | 🔴 DESCARTADA | Win Rate 51.0% < 70.0%; Max Drawdown 29.93% > 5.0%; Profit Factor 0.55 <= 1.25 o E[R]=-0.1753 <= 0; t-stat -3.42 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | GOLD | M30 | 510 | **36.3%** | 0.28 | 87.78% | -0.3349 | 🔴 DESCARTADA | Win Rate 36.3% < 70.0%; Max Drawdown 87.78% > 5.0%; Profit Factor 0.28 <= 1.25 o E[R]=-0.3349 <= 0; t-stat -11.81 < 1.5 (baja significancia) |
+| 2026-11-03 | Vault_Consecutive_Candle_Reversal | GOLD | M15 | 507 | **36.7%** | 0.31 | 79.40% | -0.3146 | 🔴 DESCARTADA | Win Rate 36.7% < 70.0%; Max Drawdown 79.40% > 5.0%; Profit Factor 0.31 <= 1.25 o E[R]=-0.3146 <= 0; t-stat -10.03 < 1.5 (baja significancia) |
+
+---
+
 ## 🛠️ Cómo Probar Estrategias de Repositorios de GitHub
 Cuando encuentres un repositorio de trading algorítmico en GitHub:
 1. **Pásame el enlace de GitHub** aquí en el chat.

@@ -465,6 +465,51 @@ class DemoPaperTraderTests(unittest.TestCase):
             self.assertIn(res["status"], ("SIMULATED_ORDER", "NO_SIGNAL", "BAR_ALREADY_PROCESSED", "REJECTED_RISK_PAUSE"))
 
 
+    def test_gold_session_blindaje(self):
+        # 09:30 UTC no debe estar activa la sesion institucional de GOLD (evita perdidas matinales)
+        dt_morning = datetime(2026, 11, 3, 9, 30, tzinfo=timezone.utc)
+        active, reason = is_session_active("GOLD", dt_morning)
+        self.assertFalse(active)
+        self.assertIn("FUERA_DE_SESION", reason)
+
+        # 15:00 UTC (sesion Londres/NY) debe estar activa
+        dt_ny = datetime(2026, 11, 3, 15, 0, tzinfo=timezone.utc)
+        active, _ = is_session_active("GOLD", dt_ny)
+        self.assertTrue(active)
+
+    def test_correlation_index_limit(self):
+        import unittest.mock as mock
+        import pandas as pd
+        adapter = MockMT5Adapter()
+        # Simular 2 posiciones de indice abiertas (GERMANY40 y US100) con el magic del bot
+        adapter.mock_positions = [
+            SimpleNamespace(ticket=101, magic=20261018, symbol="GERMANY40", type=0, volume=1.0, price_open=19000.0, sl=18950.0, tp=19050.0, price_current=19010.0),
+            SimpleNamespace(ticket=102, magic=20261018, symbol="US100", type=0, volume=0.5, price_open=20000.0, sl=19900.0, tp=20100.0, price_current=20020.0),
+        ]
+        bp = 5800.0
+        adapter.mock_rates_m15["[SP500]"] = make_synthetic_rates(260, base_price=bp, trend=0.1, step_minutes=15)
+        adapter.mock_rates_h1["[SP500]"] = make_synthetic_rates(100, base_price=bp, trend=0.5, step_minutes=60)
+        adapter.mock_ticks["[SP500]"] = SimpleNamespace(bid=bp, ask=bp + 0.5)
+
+        cfg = DemoTraderConfig(
+            symbols=["[SP500]"],
+            timeframe="M30",
+            strategy="institutional_sniper_scalp",
+            dry_run=True,
+            max_open_positions=5,
+            max_concurrent_indices=2,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 10, 20, 15, 0, tzinfo=timezone.utc)
+
+        # Mockeamos senal de compra activa para que pase a evaluar la correlacion
+        with mock.patch("trading_v2.execution.demo_paper_trader.generate_sniper_signals") as mock_sig:
+            mock_sig.return_value = pd.DataFrame({"signal": [0, 1]})
+            res = trader.evaluate_symbol("[SP500]", now_valid)
+            self.assertEqual(res["status"], "REJECTED_CORRELATION_LIMIT")
+
+
 if __name__ == "__main__":
     unittest.main()
 
