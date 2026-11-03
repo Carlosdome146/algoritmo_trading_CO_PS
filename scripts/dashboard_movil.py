@@ -81,6 +81,27 @@ def get_dashboard_data(mt5) -> dict:
     # Escaneo de señales del cerebro cuantitativo
     scan_res = scan_markets(mt5, account_equity=equity, risk_fraction=0.0075, verbose=False)
 
+    # Historial real consolidado
+    history_summary = None
+    try:
+        from trading_v2.execution.trade_journal import get_live_trade_records
+        records = get_live_trade_records(mt5)
+        if records:
+            wins = sum(1 for r in records if r["net_pnl"] > 0)
+            losses = sum(1 for r in records if r["net_pnl"] < 0)
+            total_trades = len(records)
+            win_rate = (wins / total_trades * 100) if total_trades > 0 else 0.0
+            net_pnl_total = sum(r["net_pnl"] for r in records)
+            history_summary = {
+                "total_trades": total_trades,
+                "wins": wins,
+                "losses": losses,
+                "win_rate": win_rate,
+                "net_pnl": net_pnl_total,
+            }
+    except Exception:
+        history_summary = None
+
     return {
         "connected": True,
         "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -93,6 +114,7 @@ def get_dashboard_data(mt5) -> dict:
         },
         "positions": positions,
         "signals": scan_res,
+        "history_summary": history_summary,
     }
 
 
@@ -211,6 +233,15 @@ def render_markdown(data: dict) -> str:
     local_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     utc_ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
 
+    hist = data.get("history_summary")
+    if hist and hist["total_trades"] > 0:
+        hist_str = (
+            f"- **Historial Real:** {hist['total_trades']} operaciones cerradas / "
+            f"{hist['wins']} victorias (**{hist['win_rate']:.1f}% Win Rate**, {hist['net_pnl']:+.2f} EUR ganancia neta)."
+        )
+    else:
+        hist_str = "- **Historial Real:** Monitoreando ejecuciones en vivo en MetaTrader 5."
+
     lines = [
         "# 🤖 Monitor Cuantitativo V3 (Admirals DEMO)",
         "",
@@ -220,7 +251,7 @@ def render_markdown(data: dict) -> str:
         f"- **Cuenta:** DEMO #{acc['login']} ({acc['server']})",
         f"- **Balance:** {acc['balance']:.2f} EUR",
         f"- **Equity Flotante:** {acc['equity']:.2f} EUR ({pnl_sign}{pnl:.2f} EUR)",
-        "- **Historial Real:** 4 operaciones cerradas / 4 victorias (**100% Win Rate**, +49.82 EUR ganancia neta).",
+        hist_str,
         "",
         "### 📈 Posiciones Abiertas",
     ]
@@ -287,7 +318,7 @@ def render_markdown(data: dict) -> str:
     return "\n".join(lines)
 
 
-def sync_gist_worker(gist_id: str, interval_sec: int = 60):
+def sync_gist_worker(gist_id: str, interval_sec: int = 30):
     import shutil
     import subprocess
     import time
@@ -295,21 +326,29 @@ def sync_gist_worker(gist_id: str, interval_sec: int = 60):
     while True:
         try:
             mt5 = get_mt5_module()
-            if mt5 and mt5.initialize():
+            if mt5:
+                # Si no está inicializado, inicializarlo una vez
+                mt5.initialize()
                 d = get_dashboard_data(mt5)
-                mt5.shutdown()
                 md = render_markdown(d)
                 md_path = ROOT / "monitor_trading.md"
                 md_path.write_text(md, encoding="utf-8")
                 hist_path = ROOT / "HISTORICO_OPERACIONES.md"
-                cmd = [gh_cmd, "gist", "edit", gist_id, "-f", "monitor_trading.md", str(md_path)]
-                if hist_path.exists():
-                    cmd.extend(["-f", "HISTORICO_OPERACIONES.md", str(hist_path)])
+
+                # 1. Sincronizar monitor_trading.md de forma individual
                 subprocess.run(
-                    cmd,
+                    [gh_cmd, "gist", "edit", gist_id, "-f", "monitor_trading.md", str(md_path)],
                     capture_output=True,
                     check=False,
                 )
+
+                # 2. Sincronizar HISTORICO_OPERACIONES.md de forma individual
+                if hist_path.exists():
+                    subprocess.run(
+                        [gh_cmd, "gist", "edit", gist_id, "-f", "HISTORICO_OPERACIONES.md", str(hist_path)],
+                        capture_output=True,
+                        check=False,
+                    )
         except Exception:
             pass
         time.sleep(interval_sec)

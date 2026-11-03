@@ -81,6 +81,10 @@ def get_live_trade_records(adapter: Any = None) -> list[dict]:
         if not in_deal or not out_deal:
             continue
 
+        strat_comm = str(getattr(in_deal, "comment", "") or "").lower()
+        if "test_" in strat_comm or "close_test" in strat_comm:
+            continue
+
         symbol = getattr(in_deal, "symbol", "UNKNOWN")
         side = "BUY" if getattr(in_deal, "type", 0) == 0 else "SELL"
         volume = float(getattr(in_deal, "volume", 0.0))

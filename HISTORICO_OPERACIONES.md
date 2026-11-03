@@ -1,6 +1,6 @@
 # 📊 Registro Histórico de Operaciones en Vivo — Algoritmo Quant
 
-> **Última actualización:** `03/11/2026 15:53:03` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
+> **Última actualización:** `03/11/2026 17:22:26` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
 
 Este documento refleja **en tiempo real y con transparencia absoluta** todas las operaciones ejecutadas en la cuenta por el bot. Cada orden se puede verificar directamente en MetaTrader 5 con su número de Ticket.
 
@@ -11,12 +11,12 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | Métrica | Valor | Estado |
 | :--- | :---: | :---: |
 | **Balance Inicial** | `3,000.00 €` | Base de capital |
-| **Balance Actual** | **`3,086.57 €`** | `+86.57 €` |
+| **Balance Actual** | **`3,086.66 €`** | `+86.66 €` |
 | **Rentabilidad Acumulada** | **`+2.89%`** | 🚀 En verde |
-| **Total Operaciones Cerradas** | **`9`** | — |
+| **Total Operaciones Cerradas** | **`8`** | — |
 | **Operaciones Ganadoras** | **`7`** | 🟢 Aciertos |
-| **Operaciones Perdedoras** | **`2`** | 🔴 Fallos |
-| **Tasa de Acierto (Win Rate)** | **`77.8%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
+| **Operaciones Perdedoras** | **`1`** | 🔴 Fallos |
+| **Tasa de Acierto (Win Rate)** | **`87.5%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
 | **Factor de Beneficio (Profit Factor)** | **`3.15`** | Excelente |
 
 ---
@@ -33,23 +33,10 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | **6** | 03/11/2026 13:55 | **`GERMANY40`** | `SELL` | `1.28` | `25,828.86` | `25,806.56` | `+22.30` | `24m 56s` | Take Profit | 🟢 **`+28.54 €`** | `3,038.11 €` |
 | **7** | 03/11/2026 17:02 | **`GERMANY40`** | `SELL` | `1.30` | `25,984.86` | `25,960.06` | `+24.80` | `1m 49s` | Take Profit | 🟢 **`+32.24 €`** | `3,070.35 €` |
 | **8** | 03/11/2026 17:02 | **`US100`** | `SELL` | `0.72` | `28,178.16` | `28,152.81` | `+25.35` | `2m 24s` | Take Profit | 🟢 **`+16.31 €`** | `3,086.66 €` |
-| **9** | 03/11/2026 17:48 | **`EURUSD`** | `SELL` | `0.01` | `1.12` | `1.12` | `-0.00010` | `0s` | Regla de Salida | 🔴 **`-0.09 €`** | `3,086.57 €` |
 
 ---
 
 ## 🔍 Fichas Técnicas Detalladas de las Últimas Operaciones
-
-### Operación #9 — `EURUSD` (🔴 PERDEDORA)
-- **Ticket Posición MT5:** `#1234607013` (Orden Entrada `#1234607013`, Orden Salida `#1234607014`)
-- **Estrategia / Gatillo:** `test_min`
-- **Dirección:** `SELL` | **Volumen:** `0.01` lotes
-- **Momento Entrada:** `03/11/2026 17:48:29` a precio `1.11928`
-- **Momento Salida:** `03/11/2026 17:48:29` a precio `1.11938`
-- **Tiempo en Mercado:** `0s`
-- **Configuración Inicial:** Stop Loss en `1.12028` | Take Profit en `1.11828`
-- **Motivo de Ejecución de Cierre:** `Regla de Salida` (`close_test`)
-- **Desglose Económico:** Beneficio bruto: `-0.09 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`-0.09 €`**
 
 ### Operación #8 — `US100` (🟢 GANADORA)
 - **Ticket Posición MT5:** `#1234597571` (Orden Entrada `#1234597571`, Orden Salida `#1234598109`)

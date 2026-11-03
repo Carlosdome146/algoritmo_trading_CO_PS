@@ -1,12 +1,12 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-03 15:53:24 (Hora España)` | `14:53:24 UTC`
+**Última actualización:** `2026-11-03 17:23:16 (Hora España)` | `16:23:16 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
 - **Balance:** 3086.57 EUR
 - **Equity Flotante:** 3086.57 EUR (0.00 EUR)
-- **Historial Real:** 4 operaciones cerradas / 4 victorias (**100% Win Rate**, +49.82 EUR ganancia neta).
+- **Historial Real:** 8 operaciones cerradas / 7 victorias (**87.5% Win Rate**, +86.66 EUR ganancia neta).
 
 ### 📈 Posiciones Abiertas
 *Sin posiciones abiertas en este momento.*
