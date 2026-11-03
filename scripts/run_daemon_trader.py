@@ -78,6 +78,7 @@ def git_pull() -> bool:
 def start_bot_process() -> subprocess.Popen:
     cmd = [
         sys.executable,
+        "-u",
         "-m",
         "trading_v2.execution.demo_paper_trader",
         "--live",
@@ -103,7 +104,7 @@ def start_bot_process() -> subprocess.Popen:
     log(f"Iniciando proceso del bot: {' '.join(cmd[1:])}")
     
     # Abrir log file para stdout/stderr del bot
-    f_log = open(LOG_FILE, "a", encoding="utf-8")
+    f_log = open(LOG_FILE, "a", encoding="utf-8", buffering=1)
     proc = subprocess.Popen(
         cmd,
         cwd=BASE_DIR,
