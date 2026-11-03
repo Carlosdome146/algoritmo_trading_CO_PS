@@ -47,9 +47,11 @@ def get_live_trade_records(adapter: Any = None) -> list[dict]:
 
     now = datetime.now(timezone.utc)
     start_history = now - timedelta(days=180)
+    # Margen de +1 día para cubrir cualquier diferencia horaria con el servidor del broker (ej. EET UTC+2)
+    end_history = now + timedelta(days=1)
 
-    deals = adapter.history_deals_get(start_history, now)
-    orders = adapter.history_orders_get(start_history, now)
+    deals = adapter.history_deals_get(start_history, end_history)
+    orders = adapter.history_orders_get(start_history, end_history)
     if not deals:
         return []
 

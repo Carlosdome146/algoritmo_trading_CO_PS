@@ -28,7 +28,7 @@ import math
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Callable
 
 import numpy as np
@@ -397,7 +397,9 @@ class DemoPaperTrader:
             return []
 
         start_of_day = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
-        deals = self.adapter.history_deals_get(start_of_day, now_utc)
+        # Margen de +1 día para cubrir cualquier desfase horario con el servidor del broker (ej. EET UTC+2)
+        end_history = now_utc + timedelta(days=1)
+        deals = self.adapter.history_deals_get(start_of_day, end_history)
         if not deals:
             return []
 
@@ -797,6 +799,11 @@ class DemoPaperTrader:
         assert_demo_account(acc)
         eurusd_rate = self.get_eurusd_rate()
 
+        eff_leverage = getattr(acc, "leverage", 100.0)
+        # En Forex (EURUSD) bajo regulación ESMA/Admirals, el apalancamiento máximo es 1:30
+        if spec.calc_mode == 0 or "EUR" in symbol:
+            eff_leverage = min(eff_leverage, 30.0)
+
         lot_res = calculate_lot_size(
             spec=spec,
             account_equity=acc.equity,
@@ -804,13 +811,32 @@ class DemoPaperTrader:
             stop_distance_price=stop_dist_price,
             entry_price=entry_price,
             eurusd_rate=eurusd_rate,
-            leverage=getattr(acc, "leverage", 100.0),
+            leverage=eff_leverage,
             account_currency=acc.currency,
         )
 
         if lot_res.status != "OK":
             self.log(f"[{symbol}] Rechazo de lotaje: {lot_res.reason} (lots={lot_res.lots})")
             return {"status": lot_res.status, "symbol": symbol, "reason": lot_res.reason}
+
+        # Cap adaptativo de seguridad por margen libre disponible en broker (máx 75% de margen libre)
+        margin_per_lot = (spec.contract_size * entry_price) / eff_leverage
+        if spec.profit_currency != acc.currency and eurusd_rate > 0:
+            margin_per_lot = margin_per_lot / eurusd_rate
+
+        safe_margin_budget = max(0.0, acc.margin_free * 0.75)
+        if margin_per_lot > 0:
+            max_lots_by_margin = safe_margin_budget / margin_per_lot
+            if lot_res.lots > max_lots_by_margin:
+                adjusted_lots = math.floor(max_lots_by_margin / spec.lot_step) * spec.lot_step
+                step_decimals = max(0, -int(math.floor(math.log10(spec.lot_step) + 1e-9)))
+                adjusted_lots = round(adjusted_lots, step_decimals)
+                if adjusted_lots >= spec.lot_min:
+                    self.log(
+                        f"[{symbol}] Lote adaptativo por margen: ajustado de {lot_res.lots} a {adjusted_lots} "
+                        f"para cumplir margen libre ({acc.margin_free:.2f} {acc.currency})"
+                    )
+                    lot_res.lots = adjusted_lots
 
         # 11. Cross-check con mt5.order_calc_profit()
         order_type = self.adapter.ORDER_TYPE_BUY if sig == 1 else self.adapter.ORDER_TYPE_SELL
@@ -1058,6 +1084,10 @@ class DemoPaperTrader:
         assert_demo_account(acc)
         eurusd_rate = self.get_eurusd_rate()
 
+        eff_leverage = getattr(acc, "leverage", 100.0)
+        if spec.calc_mode == 0 or "EUR" in symbol:
+            eff_leverage = min(eff_leverage, 30.0)
+
         lot_res = calculate_lot_size(
             spec=spec,
             account_equity=acc.equity,
@@ -1065,7 +1095,7 @@ class DemoPaperTrader:
             stop_distance_price=stop_dist_price,
             entry_price=entry_price,
             eurusd_rate=eurusd_rate,
-            leverage=getattr(acc, "leverage", 100.0),
+            leverage=eff_leverage,
             account_currency=acc.currency,
         )
         if lot_res.status != "OK":
