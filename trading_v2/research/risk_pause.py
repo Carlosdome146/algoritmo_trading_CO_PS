@@ -8,6 +8,16 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 
+def get_asset_family(symbol: str) -> str:
+    """Clasifica un símbolo en su familia de activo para aislamiento de riesgo."""
+    sym = symbol.replace("[", "").replace("]", "").strip().upper()
+    if any(fx in sym for fx in ("EUR", "USD", "GBP", "JPY", "CHF", "AUD", "NZD", "CAD")):
+        return "forex"
+    if any(comm in sym for comm in ("GOLD", "XAU", "OIL", "BRENT", "WTI", "SILVER")):
+        return "commodities"
+    return "indices"
+
+
 @dataclass
 class RiskPause:
     cooldown_minutes: int = 60
@@ -20,6 +30,7 @@ class RiskPause:
     halted: bool = False
     session_day: str | None = None
     reasons: list[str] = field(default_factory=list)
+    family_cooldowns: dict[str, datetime] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.cooldown_minutes < 0 or self.max_consecutive_losses < 1:
@@ -36,15 +47,22 @@ class RiskPause:
             self.daily_pnl=0.
             # STOP por pérdidas consecutivas NO se reinicia solo al cambiar de día.
 
-    def register_closed_trade(self, pnl:float, at:datetime):
+    def register_closed_trade(self, pnl:float, at:datetime, symbol: str = ""):
         self._roll_day(at)
         if self.halted:
             raise RuntimeError("Sistema bloqueado: requiere revisión y rearme manual")
         self.daily_pnl+=pnl
         if pnl<0:
             self.consecutive_losses+=1
-            self.paused_until=at+timedelta(minutes=self.cooldown_minutes)
-            self.reasons.append('POST_LOSS_COOLDOWN')
+            cooldown_dt = at + timedelta(minutes=self.cooldown_minutes)
+            if symbol:
+                fam = get_asset_family(symbol)
+                self.family_cooldowns[fam] = cooldown_dt
+                self.family_cooldowns[symbol] = cooldown_dt
+                self.reasons.append(f'POST_LOSS_COOLDOWN_{fam.upper()}')
+            else:
+                self.paused_until = cooldown_dt
+                self.reasons.append('POST_LOSS_COOLDOWN')
         elif pnl>0:
             self.consecutive_losses=0
         if self.consecutive_losses>=self.max_consecutive_losses:
@@ -54,12 +72,18 @@ class RiskPause:
             self.halted=True
             self.reasons.append('DAILY_LOSS_HALT')
 
-    def can_open_new_trade(self, at:datetime) -> tuple[bool,str]:
+    def can_open_new_trade(self, at:datetime, symbol: str = "") -> tuple[bool,str]:
         self._roll_day(at)
         if self.halted:
             return False,'HALTED_REQUIRES_MANUAL_REVIEW'
         if self.paused_until and at<self.paused_until:
             return False,'COOLDOWN'
+        if symbol:
+            fam = get_asset_family(symbol)
+            if fam in self.family_cooldowns and at < self.family_cooldowns[fam]:
+                return False, f'COOLDOWN_{fam.upper()}'
+            if symbol in self.family_cooldowns and at < self.family_cooldowns[symbol]:
+                return False, f'COOLDOWN_{symbol}'
         return True,'READY_FOR_OFFLINE_RESEARCH'
 
     def reset_halt(self, reason: str = "MANUAL_REVIEW_RESOLVED", reset_daily_pnl: bool = True):
@@ -67,6 +91,7 @@ class RiskPause:
         self.halted = False
         self.consecutive_losses = 0
         self.paused_until = None
+        self.family_cooldowns.clear()
         if reset_daily_pnl:
             self.daily_pnl = 0.0
         self.reasons.append(f"RESET_BY_OPERATOR: {reason}")

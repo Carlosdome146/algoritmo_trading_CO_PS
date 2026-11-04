@@ -68,6 +68,7 @@ class MLTests(unittest.TestCase):
         now=datetime(2026,10,17,11,tzinfo=timezone.utc)
         g.register_closed_trade(-46,now)
         self.assertFalse(g.can_open_new_trade(now+timedelta(hours=2))[0])
+
     def test_risk_pause_reset_halt(self):
         g = RiskPause()
         now = datetime(2026, 10, 17, 11, tzinfo=timezone.utc)
@@ -79,6 +80,27 @@ class MLTests(unittest.TestCase):
         self.assertEqual(g.daily_pnl, 0.0)
         self.assertEqual(g.consecutive_losses, 0)
         self.assertTrue(g.can_open_new_trade(now + timedelta(hours=2))[0])
+
+    def test_decoupled_family_cooldown(self):
+        g = RiskPause()
+        now = datetime(2026, 11, 4, 14, 54, tzinfo=timezone.utc)
+        # Pérdida en EURUSD (Forex)
+        g.register_closed_trade(-33.69, now, symbol="EURUSD")
+
+        # EURUSD debe estar en cooldown
+        can_fx, reason_fx = g.can_open_new_trade(now + timedelta(minutes=30), symbol="EURUSD")
+        self.assertFalse(can_fx)
+        self.assertIn("FOREX", reason_fx)
+
+        # GERMANY40 y US100 (Índices) deben estar libres para operar
+        can_dax, reason_dax = g.can_open_new_trade(now + timedelta(minutes=30), symbol="GERMANY40")
+        self.assertTrue(can_dax)
+        can_nq, reason_nq = g.can_open_new_trade(now + timedelta(minutes=30), symbol="US100")
+        self.assertTrue(can_nq)
+
+        # Pasado el cooldown de 60 min, EURUSD vuelve a estar libre
+        can_fx_post, _ = g.can_open_new_trade(now + timedelta(minutes=61), symbol="EURUSD")
+        self.assertTrue(can_fx_post)
 
 
 if __name__=='__main__': unittest.main()

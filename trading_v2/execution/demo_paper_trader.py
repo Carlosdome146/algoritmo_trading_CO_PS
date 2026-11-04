@@ -135,6 +135,29 @@ def is_session_active(symbol: str, dt_utc: datetime) -> tuple[bool, str]:
         return True, "SESION_INSTITUCIONAL_ACTIVA"
     return False, f"FUERA_DE_SESION ({dt_utc.strftime('%H:%M')} UTC fuera de {h_start:02d}:{m_start:02d}-{h_end:02d}:{m_end:02d} UTC)"
 
+# Ventanas horarias críticas de noticias macroeconómicas de alto impacto (UTC)
+# - Ventana US & BCE (08:30 EST / 14:30 CET): 13:15 a 13:45 UTC (14:15 a 14:45 CET)
+# - Ventana FOMC (14:00 EST / 20:00 CET): 18:45 a 19:30 UTC (19:45 a 20:30 CET)
+MACRO_BLACKOUT_WINDOWS_UTC = [
+    (13, 15, 13, 45, "NOTICIA_ALTO_IMPACTO_US_BCE (CPI/NFP/PIB 14:15-14:45 CET)"),
+    (18, 45, 19, 30, "NOTICIA_ALTO_IMPACTO_FOMC (Tipos FED 19:45-20:30 CET)"),
+]
+
+
+def is_macro_blackout(symbol: str, dt_utc: datetime) -> tuple[bool, str]:
+    """Comprueba si el instante actual coincide con ventanas de alto impacto macroeconómico."""
+    if dt_utc.tzinfo is None:
+        raise ValueError("Se requiere datetime aware en UTC")
+
+    current_minutes = dt_utc.hour * 60 + dt_utc.minute
+    for h_s, m_s, h_e, m_e, desc in MACRO_BLACKOUT_WINDOWS_UTC:
+        start_m = h_s * 60 + m_s
+        end_m = h_e * 60 + m_e
+        if start_m <= current_minutes < end_m:
+            return True, desc
+    return False, "VENTANA_MACRO_LIMPIA"
+
+
 
 def check_spread_and_liquidity(
     symbol: str,
@@ -319,6 +342,8 @@ class DemoTraderConfig:
     cooldown_minutes: int = 60
     max_consecutive_losses: int = 2
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
+    enable_macro_blackout: bool = True
+    max_shock_bar_atr_ratio: float = 2.8
     timeframe: str = "M15"  # "M5", "M15" o "D1"
     reset_risk_pause: bool = False
     enable_news_blackout: bool = True
@@ -438,7 +463,7 @@ class DemoPaperTrader:
                 deal_dt = datetime.fromtimestamp(deal_time_ts, tz=timezone.utc)
 
                 try:
-                    self.risk_pause.register_closed_trade(net_pnl, deal_dt)
+                    self.risk_pause.register_closed_trade(net_pnl, deal_dt, symbol=getattr(d, "symbol", ""))
                     registered.append({
                         "ticket": ticket,
                         "pnl": net_pnl,
@@ -812,6 +837,12 @@ class DemoPaperTrader:
                 reason_fri = f"Viernes {now_utc.strftime('%H:%M')} UTC: No se abren nuevas posiciones cerca del cierre semanal."
                 self.log(f"[{symbol}] Señal descartada: {reason_fri}")
                 return {"status": "REJECTED_FRIDAY_EVENING", "symbol": symbol, "reason": reason_fri}
+        # 6c. Filtro de vela de choque (Shock Bar Veto)
+        last_m15_range = float(m15_df["High"].iloc[-1] - m15_df["Low"].iloc[-1])
+        if atr > 0 and (last_m15_range / atr) > self.cfg.max_shock_bar_atr_ratio:
+            shock_msg = f"SHOCK_BAR_VOLATILITY ({last_m15_range / atr:.2f}x ATR > {self.cfg.max_shock_bar_atr_ratio:.1f}x)"
+            self.log(f"[{symbol}] Veto por vela de choque: {shock_msg}")
+            return {"status": "REJECTED_SHOCK_BAR", "symbol": symbol, "reason": shock_msg}
 
         spread_ok, spread_msg = check_spread_and_liquidity(
             symbol=symbol,
@@ -828,7 +859,7 @@ class DemoPaperTrader:
 
         # 7. Filtro de RiskPause
         if self.risk_pause:
-            can_trade, pause_reason = self.risk_pause.can_open_new_trade(now_utc)
+            can_trade, pause_reason = self.risk_pause.can_open_new_trade(now_utc, symbol=symbol)
             if not can_trade:
                 self.log(f"[{symbol}] Bloqueo de riesgo activo: {pause_reason}")
                 return {"status": "REJECTED_RISK_PAUSE", "symbol": symbol, "reason": pause_reason}
@@ -1140,7 +1171,7 @@ class DemoPaperTrader:
             return {"status": "REJECTED_SPREAD", "symbol": symbol, "reason": spread_msg}
 
         if self.risk_pause:
-            can_trade, pause_reason = self.risk_pause.can_open_new_trade(now_utc)
+            can_trade, pause_reason = self.risk_pause.can_open_new_trade(now_utc, symbol=symbol)
             if not can_trade:
                 return {"status": "REJECTED_RISK_PAUSE", "symbol": symbol, "reason": pause_reason}
 

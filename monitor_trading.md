@@ -1,6 +1,6 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-04 17:53:34 (Hora España)` | `16:53:34 UTC`
+**Última actualización:** `2026-11-04 23:19:54 (Hora España)` | `22:19:54 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
@@ -16,7 +16,7 @@
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25816.61 | 24911.31 | 43.9 | 0.42 | RSI(2) neutral (43.9 >= 15.0); Precio dentro de bandas Bollinger (25816.61 > 24925.97) |
 | IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18802.39 | 18688.20 | 46.4 | 0.31 | RSI(2) neutral (46.4 >= 10.0); Precio dentro de bandas Bollinger (18802.39 > 18676.57) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 78.2 | 0.52 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.22 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=78.2) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.15 | 93.8 | 0.51 | Precio (1.12) < SMA200 (1.15) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.01 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=93.8) |
 | DOW30 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 51663.00 | 50695.73 | 20.8 | 0.30 | RSI(2) neutral (20.8 >= 10.0) |
 | ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 3929.99 | 4480.43 | 38.9 | 0.46 | Precio (3929.99) < SMA200 (4480.43) [Tendencia bajista]; RSI(2) neutral (38.9 >= 10.0) |
 | SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7578.44 | 7328.49 | 36.1 | 0.79 | RSI(2) neutral (36.1 >= 10.0) |
