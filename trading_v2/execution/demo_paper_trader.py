@@ -27,7 +27,7 @@ import argparse
 import math
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone, timedelta
 from typing import Any, Callable
 
@@ -849,7 +849,7 @@ class DemoPaperTrader:
                         f"[{symbol}] Lote adaptativo por margen: ajustado de {lot_res.lots} a {adjusted_lots} "
                         f"para cumplir margen libre ({acc.margin_free:.2f} {acc.currency})"
                     )
-                    lot_res.lots = adjusted_lots
+                    lot_res = replace(lot_res, lots=adjusted_lots)
 
         # 11. Cross-check con mt5.order_calc_profit()
         order_type = self.adapter.ORDER_TYPE_BUY if sig == 1 else self.adapter.ORDER_TYPE_SELL
