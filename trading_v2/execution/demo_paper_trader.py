@@ -907,10 +907,8 @@ class DemoPaperTrader:
         assert_demo_account(acc)
         eurusd_rate = self.get_eurusd_rate()
 
-        eff_leverage = getattr(acc, "leverage", 100.0)
-        # En Forex (EURUSD) bajo regulación ESMA/Admirals, el apalancamiento máximo es 1:30
-        if spec.calc_mode == 0 or "EUR" in symbol:
-            eff_leverage = min(eff_leverage, 30.0)
+        eff_leverage = float(getattr(acc, "leverage", 100.0))
+        # Utiliza el apalancamiento real de la cuenta demo (1:100 en Admirals)
 
         lot_res = calculate_lot_size(
             spec=spec,
