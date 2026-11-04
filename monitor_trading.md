@@ -1,6 +1,6 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-03 17:23:16 (Hora España)` | `16:23:16 UTC`
+**Última actualización:** `2026-11-04 06:35:57 (Hora España)` | `05:35:57 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
@@ -14,12 +14,12 @@
 ### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
 | Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25885.60 | 24906.42 | 59.3 | 0.51 | RSI(2) neutral (59.3 >= 15.0); Precio dentro de bandas Bollinger (25885.60 > 24924.27) |
+| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25816.61 | 24911.31 | 43.9 | 0.42 | RSI(2) neutral (43.9 >= 15.0); Precio dentro de bandas Bollinger (25816.61 > 24925.97) |
 | IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18935.36 | 18682.41 | 67.0 | 0.82 | RSI(2) neutral (67.0 >= 10.0); Precio dentro de bandas Bollinger (18935.36 > 18687.32) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 74.9 | 0.46 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.11 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=74.9) |
-| DOW30 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 52002.70 | 50682.31 | 43.0 | 0.28 | RSI(2) neutral (43.0 >= 10.0) |
-| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 3946.36 | 4485.82 | 46.7 | 0.74 | Precio (3946.36) < SMA200 (4485.82) [Tendencia bajista]; RSI(2) neutral (46.7 >= 10.0) |
-| SP500 | `idx_rsi2_dip_regime` | 🟢 **COMPRA** | 7556.51 | 7325.49 | 5.3 | 0.13 | RSI(2) en sobreventa extrema (5.3 < 10.0) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.16 | 78.2 | 0.52 | Precio (1.12) < SMA200 (1.16) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.22 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=78.2) |
+| DOW30 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 51663.00 | 50695.73 | 20.8 | 0.30 | RSI(2) neutral (20.8 >= 10.0) |
+| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 3929.99 | 4480.43 | 38.9 | 0.46 | Precio (3929.99) < SMA200 (4480.43) [Tendencia bajista]; RSI(2) neutral (38.9 >= 10.0) |
+| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7578.44 | 7328.49 | 36.1 | 0.79 | RSI(2) neutral (36.1 >= 10.0) |
 
 ### ⚡ Estrategia Universal en Producción: `institutional_sniper_scalp` (Micro-Sweep Reclaim)
 - **Timeframe:** M15 (EURUSD, [IBEX35]) / M30 (GERMANY40, US100, [DJI30], [SP500], GOLD).
