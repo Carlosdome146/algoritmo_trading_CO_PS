@@ -1,17 +1,15 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-04 10:01:09 (Hora España)` | `09:01:09 UTC`
+**Última actualización:** `2026-11-04 17:53:34 (Hora España)` | `16:53:34 UTC`
 
 ### 💰 Estado de la Cuenta
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
-- **Balance:** 3086.57 EUR
-- **Equity Flotante:** 3082.28 EUR (-4.29 EUR)
-- **Historial Real:** 8 operaciones cerradas / 7 victorias (**87.5% Win Rate**, +86.66 EUR ganancia neta).
+- **Balance:** 3076.80 EUR
+- **Equity Flotante:** 3076.80 EUR (0.00 EUR)
+- **Historial Real:** 11 operaciones cerradas / 9 victorias (**81.8% Win Rate**, +76.89 EUR ganancia neta).
 
 ### 📈 Posiciones Abiertas
-| Ticket | Símbolo | Tipo | Lotes | Entrada | Precio Actual | Stop Loss | PnL (EUR) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| #1234713836 | EURUSD | VENTA | 0.69 | 1.12 | 1.12 | 1.13 | -4.29 € |
+*Sin posiciones abiertas en este momento.*
 
 ### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
 | Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
