@@ -1,6 +1,6 @@
 # 🚀 Dashboard de Estrategias Activas en el Algoritmo Quant
 
-> **Estado del Algoritmo:** EN PRODUCCIÓN (DEMO AdmiralsGroup `#58678865`)  
+> **Estado del Algoritmo:** EN PRODUCCIÓN (DEMO AdmiralsGroup `#58679494`)  
 > **Apalancamiento:** 1:100 | **Capital Base Demo:** 3.000,00 €  
 > **Estrategia Maestra:** `institutional_sniper_scalp` (Micro-Sweep Reclaim Multi-Gatillo)  
 > **Control de Riesgo:** 0.80% por trade | Máximo 2 índices bursátiles en paralelo  
@@ -12,7 +12,7 @@
 
 | Activo | Símbolo MT5 | TF | Dirección | Win Rate | Take Profit (TP) | Stop Loss (SL) | Mecha Absorción (Wix) | Mecha Opuesta | Breakeven Trigger | Drawdown Indiv. | Retorno Mensual (€) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **EUR / USD** | `EURUSD` | **M15** | Bidireccional | **81.1%** | `+3.5 pips` | `-5.5 pips` | $\ge \mathbf{35\%}$ | Libre | +45% TP (+0.45 ATR) | **2.10%** | `+142.50 €` (+4.75%) |
+| **EUR / USD** | `EURUSD` | **M15** | Bidireccional (Macro H1 + KER) | **81.1%** | `+3.5 pips` | `-5.5 pips` | $\ge \mathbf{35\%}$ | Libre | +45% TP (+0.45 ATR) | **2.10%** | `+142.50 €` (+4.75%) |
 | **IBEX 35** | `[IBEX35]` | **M15** | Long Only | **86.7%** | `+20.0 pts` | `-45.0 pts` | $\ge \mathbf{35\%}$ | Libre | +45% TP (+6.0 pts) | **2.60%** | `+60.60 €` (+2.02%) |
 | **DAX 40** | `GERMANY40` | **M30** | Bidireccional | **80.0%** | `+22.0 pts` | `-35.0 pts` | $\ge \mathbf{35\%}$ | Libre | +40% TP (+3.5 pts) | **2.90%** | `+66.50 €` (+2.21%) |
 | **Nasdaq 100** | `US100` | **M30** | Bidireccional | **85.7%** | `+25.0 pts` | `-70.0 pts` | $\ge \mathbf{35\%}$ | Libre | +40% TP (+7.0 pts) | **3.20%** | `+53.00 €` (+1.76%) |
@@ -39,8 +39,8 @@ Dentro del motor [`trading_v2/strategies/micro_scalping.py`](file:///C:/Users/Us
    - Barredura del rango de apertura o de la pre-sesión (16 barras anteriores). Si los creadores de mercado inducen una rotura en falso pero la vela cierra verde de vuelta dentro del rango (`Close > Open` y `CLV >= 0.65`), el bot compra el rebote.
 4. **Gatillo D — Yeboster Keltner Reclaim (Anti-Knife):**
    - Diseñado a partir de los hallazgos de *QuantDinger*. Si una caída perfora la banda inferior de Bollinger 2.0σ o los Canales de Keltner 1.5 ATR pero la vela no colapsa y cierra verde con mecha $\ge 30\%$ y `RSI(2) < 35.0`, el bot toma la reversión inmediata hacia la media.
-5. **Gatillo E — Forex Dynamic Micro-Sweep (EURUSD M15):**
-   - Especializado para divisas, donde la reversión a la media es bidireccional perfecta tanto en compras como en ventas dentro de la sesión Londres-NY.
+5. **Gatillo E — Forex Dynamic Micro-Sweep Blindado (EURUSD M15):**
+   - Especializado para divisas, opera reversión de liquidez pero blindado por **Filtro Macro H1** (prohibidas ventas si H1 está en tendencia alcista) y **Filtro KER (Kaufman Efficiency Ratio > 0.45)** para vetar contratendencias en estampidas direccionales.
 
 ---
 
@@ -49,7 +49,8 @@ Dentro del motor [`trading_v2/strategies/micro_scalping.py`](file:///C:/Users/Us
 1. **Riesgo del 0.80%:** Cada operación arriesga exactamente `0.0080 × Balance` (aprox. 24,00 € en cuenta de 3.000 €). Esto blinda el Drawdown total de la cartera al **4.82%** (< 5.0%).
 2. **Filtro de Correlación de Índices:** Máximo **2 índices bursátiles** abiertos simultáneamente (`GERMANY40`, `US100`, `[SP500]`, `[DJI30]`, `[IBEX35]`). Si ya hay dos abiertos, cualquier señal en otro índice es rechazada (`REJECTED_CORRELATION_LIMIT`).
 3. **Breakeven Automático Causal:** Al alcanzar entre el 35% y el 45% del camino hacia el Take Profit, el Stop Loss se traslada automáticamente a `Precio Entrada + Spread`, garantizando cero pérdidas en esa operación.
-4. **RiskPause:** Pausa automática de 60 minutos si ocurren 2 pérdidas consecutivas, y veto total de operativa durante el resto del día si se alcanza una pérdida del -1.50%.
+4. **Filtro Anti-Estampida KER (Kaufman Efficiency Ratio):** Si el ratio de eficiencia de 10 barras supera 0.45 en una dirección, se bloquean inmediatamente las operaciones en contra de esa estampida.
+5. **RiskPause:** Pausa automática de 60 minutos si ocurren 2 pérdidas consecutivas, y veto total de operativa durante el resto del día si se alcanza una pérdida del -1.50%. Incluye mecanismo de rearme seguro tras revisión técnica manual del operador.
 
 ---
 
