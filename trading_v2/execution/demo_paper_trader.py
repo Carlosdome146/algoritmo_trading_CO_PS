@@ -319,6 +319,7 @@ class DemoTraderConfig:
     max_consecutive_losses: int = 2
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
     timeframe: str = "M15"  # "M5", "M15" o "D1"
+    reset_risk_pause: bool = False
 
 
 class DemoPaperTrader:
@@ -390,6 +391,10 @@ class DemoPaperTrader:
 
         # Cargar historial de deals de hoy para reconstruir estado si hubo reinicio
         self._sync_deals_history(datetime.now(timezone.utc), initial_sync=True)
+
+        if self.cfg.reset_risk_pause and self.risk_pause and self.risk_pause.halted:
+            self.risk_pause.reset_halt(reason="OPERATOR_MANUAL_REVIEW_EURUSD_BLINDED", reset_daily_pnl=True)
+            self.log("[RiskPause] Sistema rearmado manualmente tras revisión técnica (--reset-risk-pause).")
         return True
 
     def _sync_deals_history(self, now_utc: datetime, initial_sync: bool = False) -> list[dict]:
@@ -721,8 +726,10 @@ class DemoPaperTrader:
                 min_rejection_wick=min_wick,
                 max_trades_per_day=None,  # Sin límite artificial de trades al día
                 cooldown_bars=2 if is_fx else 3,
-                use_h1_filter=False,
+                use_h1_filter=True,
                 use_keltner_filter=False,
+                use_ker_filter=True,
+                max_ker_trend=0.45,
                 max_opposite_wick=max_opp_wick,
                 allow_short=allow_s,
             )
@@ -1305,6 +1312,12 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         default=False,
         help="Ejecuta un único ciclo de evaluación y termina (útil para auditorías y tests).",
     )
+    parser.add_argument(
+        "--reset-risk-pause",
+        action="store_true",
+        default=False,
+        help="Rearma el sistema RiskPause tras revisión manual del operador.",
+    )
     return parser.parse_args(args)
 
 
@@ -1324,6 +1337,7 @@ def main():
         poll_seconds=args.poll_seconds,
         max_open_positions=args.max_positions,
         dry_run=not args.live,
+        reset_risk_pause=args.reset_risk_pause,
     )
 
     trader = DemoPaperTrader(config=config)

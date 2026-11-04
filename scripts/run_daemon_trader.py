@@ -100,6 +100,7 @@ def start_bot_process() -> subprocess.Popen:
         "2",
         "--poll-seconds",
         "15.0",
+        "--reset-risk-pause",
     ]
     log(f"Iniciando proceso del bot: {' '.join(cmd[1:])}")
     

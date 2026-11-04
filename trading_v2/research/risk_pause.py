@@ -61,3 +61,12 @@ class RiskPause:
         if self.paused_until and at<self.paused_until:
             return False,'COOLDOWN'
         return True,'READY_FOR_OFFLINE_RESEARCH'
+
+    def reset_halt(self, reason: str = "MANUAL_REVIEW_RESOLVED", reset_daily_pnl: bool = True):
+        """Rearme manual del sistema tras investigación y resolución técnica por un operador."""
+        self.halted = False
+        self.consecutive_losses = 0
+        self.paused_until = None
+        if reset_daily_pnl:
+            self.daily_pnl = 0.0
+        self.reasons.append(f"RESET_BY_OPERATOR: {reason}")

@@ -42,6 +42,8 @@ class SniperScalpConfig:
     cooldown_bars: int = 4                 # Barras mínimas de separación entre operaciones consecutivas
     use_h1_filter: bool = True
     use_keltner_filter: bool = False       # Filtro Canal de Keltner (Carlos QuantDinger) para GERMANY40 (91.04% WR)
+    use_ker_filter: bool = True            # Filtro Kaufman Efficiency Ratio Anti-Estampida (QuantDinger)
+    max_ker_trend: float = 0.45            # Umbral de eficiencia direccional para veto de contratendencia
     max_opposite_wick: float | None = None # Filtro Martillo sin mecha contraria (Vault) para [SP500] (84.09% WR)
     allow_short: bool | None = None        # None = auto (False para índices, True para EURUSD)
     enable_m4_fade: bool = True            # Spagnola M4 Session-Open Fade (16 velas)
@@ -60,6 +62,8 @@ class SniperScalpConfig:
             raise ValueError("max_trades_per_day debe ser >= 1 o None")
         if self.cooldown_bars < 1:
             raise ValueError("cooldown_bars debe ser >= 1")
+        if not (0.0 < self.max_ker_trend <= 1.0):
+            raise ValueError("max_ker_trend debe estar en (0, 1]")
         if self.max_opposite_wick is not None and not (0.0 < self.max_opposite_wick <= 1.0):
             raise ValueError("max_opposite_wick debe estar en (0, 1]")
 
@@ -105,6 +109,12 @@ def compute_sniper_indicators(df: pd.DataFrame) -> pd.DataFrame:
     dn = (-delta.clip(upper=0.0)).ewm(alpha=0.5, adjust=False).mean()
     out["rsi2"] = (100.0 - 100.0 / (1.0 + up / dn.replace(0.0, np.nan))).fillna(50.0)
 
+    # Kaufman Efficiency Ratio (KER) de 10 periodos: |c_t - c_{t-10}| / sum(|c_i - c_{i-1}|)
+    direction_10 = (c - c.shift(10)).abs()
+    volatility_10 = c.diff().abs().rolling(10, min_periods=4).sum()
+    out["ker_10"] = (direction_10 / volatility_10.replace(0.0, np.nan)).fillna(0.0)
+    out["ker_direction"] = np.sign((c - c.shift(10)).fillna(0.0))
+
     # Horas UTC y fecha
     out["hour_utc"] = out.index.hour
     out["minute_utc"] = out.index.minute
@@ -139,6 +149,8 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
     rsi2 = ind["rsi2"].to_numpy(dtype=float)
     k_pos_lo = ind["keltner_pos_low"].to_numpy(dtype=float)
     k_pos_hi = ind["keltner_pos_high"].to_numpy(dtype=float)
+    ker_10 = ind["ker_10"].to_numpy(dtype=float) if "ker_10" in ind.columns else np.zeros(n, dtype=float)
+    ker_dir = ind["ker_direction"].to_numpy(dtype=float) if "ker_direction" in ind.columns else np.zeros(n, dtype=float)
     hours = ind["hour_utc"].to_numpy(dtype=int)
     dates = ind["date"].to_numpy()
 
@@ -184,6 +196,10 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
         trend_ok_long = (h1_trend[i] >= 0) if cfg.use_h1_filter else True
         trend_ok_short = (h1_trend[i] <= 0) if cfg.use_h1_filter else True
 
+        # Estructura tendencial base para índices y materias primas
+        bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
+        bear_structure = np.isfinite(sma200[i]) and (c[i] < sma200[i]) and (ema20[i] < sma200[i])
+
         is_fx = "EUR" in cfg.symbol
         if is_fx:
             # Estrategia dedicada EURUSD Micro-Sweep Reclaim M15 (86.5% Win Rate, PF 2.65, +48.7 pips en Oct 2026)
@@ -204,11 +220,13 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
                 and (upper_wick[i] >= cfg.min_rejection_wick)
                 and (clv[i] <= (1.0 - eurusd_min_clv))
             )
-            long_cond = eurusd_sweep_long and trend_ok_long
-            short_cond = eurusd_sweep_short and trend_ok_short and effective_allow_short
+            # En EURUSD no se opera en contratendencia frontal contra la estructura M15 (bull/bear structure)
+            eurusd_trend_ok_long = trend_ok_long and not bear_structure
+            eurusd_trend_ok_short = trend_ok_short and not bull_structure
+
+            long_cond = eurusd_sweep_long and eurusd_trend_ok_long
+            short_cond = eurusd_sweep_short and eurusd_trend_ok_short and effective_allow_short
         else:
-            # Estructura tendencial base para índices y materias primas
-            bull_structure = np.isfinite(sma200[i]) and (c[i] > sma200[i]) and (ema20[i] > sma200[i])
 
             # 1. Gatillo Clásico: Barrido profundo de soporte con mecha de absorción
             swept_low = l[i] <= (recent_lo[i] - sweep_dist)
@@ -303,6 +321,16 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
         if cfg.max_opposite_wick is not None:
             long_cond = long_cond and (upper_wick[i] <= cfg.max_opposite_wick)
             short_cond = short_cond and (lower_wick[i] <= cfg.max_opposite_wick)
+
+        # Filtro Kaufman Efficiency Ratio Anti-Estampida (QuantDinger):
+        # Si KER > max_ker_trend (0.45) y la dirección es alcista, se veta SHORT.
+        # Si KER > max_ker_trend (0.45) y la dirección es bajista, se veta LONG.
+        if cfg.use_ker_filter and np.isfinite(ker_10[i]):
+            if ker_10[i] > cfg.max_ker_trend:
+                if ker_dir[i] > 0:
+                    short_cond = False
+                elif ker_dir[i] < 0:
+                    long_cond = False
 
         if long_cond and not short_cond:
             signals[i] = 1

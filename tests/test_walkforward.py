@@ -68,5 +68,17 @@ class MLTests(unittest.TestCase):
         now=datetime(2026,10,17,11,tzinfo=timezone.utc)
         g.register_closed_trade(-46,now)
         self.assertFalse(g.can_open_new_trade(now+timedelta(hours=2))[0])
+    def test_risk_pause_reset_halt(self):
+        g = RiskPause()
+        now = datetime(2026, 10, 17, 11, tzinfo=timezone.utc)
+        g.register_closed_trade(-46, now)
+        self.assertFalse(g.can_open_new_trade(now + timedelta(hours=2))[0])
+
+        g.reset_halt(reason="MANUAL_REVIEW_RESOLVED", reset_daily_pnl=True)
+        self.assertFalse(g.halted)
+        self.assertEqual(g.daily_pnl, 0.0)
+        self.assertEqual(g.consecutive_losses, 0)
+        self.assertTrue(g.can_open_new_trade(now + timedelta(hours=2))[0])
+
 
 if __name__=='__main__': unittest.main()

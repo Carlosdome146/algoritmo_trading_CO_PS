@@ -126,6 +126,24 @@ class TestMicroScalping(unittest.TestCase):
         """Verifica que en pares Forex (EURUSD) se mantenga la operativa bidireccional si se presentan señales."""
         cfg = SniperScalpConfig("EURUSD", 3.0, 5.0, allow_short=True)
         self.assertTrue(cfg.allow_short)
+    def test_ker_anti_stampede_filter(self):
+        """Verifica que el filtro KER bloquee ventas en estampidas alcistas (KER > 0.45)."""
+        cfg = SniperScalpConfig("EURUSD", 2.0, 4.0, use_ker_filter=True, max_ker_trend=0.45, allow_short=True, use_h1_filter=False)
+        self.assertTrue(cfg.use_ker_filter)
+        self.assertEqual(cfg.max_ker_trend, 0.45)
+
+        ind = compute_sniper_indicators(self.df)
+        self.assertIn("ker_10", ind.columns)
+        self.assertIn("ker_direction", ind.columns)
+
+    def test_eurusd_h1_and_structure_blocks_counter_trend(self):
+        """Verifica que EURUSD no abra cortos cuando H1 es alcista (h1_trend == 1)."""
+        df_copy = self.df.copy()
+        df_copy["h1_trend"] = 1  # Macro alcista
+        cfg = SniperScalpConfig("EURUSD", 2.0, 4.0, use_h1_filter=True, allow_short=True)
+        res = generate_sniper_signals(df_copy, cfg)
+        self.assertNotIn(-1, res["signal"].values, "No deben generarse ventas EURUSD con H1 alcista")
+
 
 
 if __name__ == "__main__":
