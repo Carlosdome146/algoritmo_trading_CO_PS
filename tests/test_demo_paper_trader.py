@@ -508,6 +508,55 @@ class DemoPaperTraderTests(unittest.TestCase):
             mock_sig.return_value = pd.DataFrame({"signal": [0, 1]})
             res = trader.evaluate_symbol("[SP500]", now_valid)
             self.assertEqual(res["status"], "REJECTED_CORRELATION_LIMIT")
+    def test_friday_auto_square_closes_positions(self):
+        """Verifica que el viernes a las 20:35 UTC se cierren forzosamente las posiciones abiertas."""
+        adapter = MockMT5Adapter()
+        adapter.mock_positions = [
+            SimpleNamespace(ticket=501, magic=20261018, symbol="EURUSD", type=0, volume=0.5, price_open=1.1200),
+        ]
+        cfg = DemoTraderConfig(enable_friday_auto_square=True, friday_cutoff_hour=20, friday_cutoff_minute=30, dry_run=True)
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+
+        # Viernes 20:35 UTC -> debe cerrar la posición
+        friday_night = datetime(2026, 11, 6, 20, 35, tzinfo=timezone.utc)
+        actions = trader._check_friday_auto_square(friday_night)
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["status"], "DRY_RUN_CLOSED")
+        self.assertEqual(actions[0]["reason"], "FRIDAY_WEEKEND_AUTO_SQUARE")
+
+        # Jueves 20:35 UTC -> no debe cerrar nada
+        thursday_night = datetime(2026, 11, 5, 20, 35, tzinfo=timezone.utc)
+        actions_thu = trader._check_friday_auto_square(thursday_night)
+        self.assertEqual(len(actions_thu), 0)
+
+    def test_news_blackout_in_evaluate_symbol(self):
+        """Verifica que evaluate_symbol rechace operaciones dentro de la ventana de noticias macro."""
+        import unittest.mock as mock
+        import pandas as pd
+        adapter = MockMT5Adapter()
+        bp = 1.1200
+        adapter.mock_rates_m15["EURUSD"] = make_synthetic_rates(100, base_price=bp, trend=0.0001, step_minutes=15)
+        adapter.mock_rates_h1["EURUSD"] = make_synthetic_rates(60, base_price=bp, trend=0.0005, step_minutes=60)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=bp, ask=bp + 0.0001)
+
+        cfg = DemoTraderConfig(symbols=["EURUSD"], strategy="institutional_sniper_scalp", enable_news_blackout=True, news_blackout_before_m=15)
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+
+        # Configurar evento a las 15:00 UTC
+        from trading_v2.execution.macro_news_filter import MacroEvent
+        trader.news_filter.add_custom_event(
+            MacroEvent(name="US ISM Services", currency="USD", time_utc=datetime(2026, 11, 4, 15, 0, tzinfo=timezone.utc))
+        )
+
+        # Evaluar a las 14:50 UTC (a 10 min de la noticia)
+        t_inside = datetime(2026, 11, 4, 14, 50, tzinfo=timezone.utc)
+        with mock.patch("trading_v2.execution.demo_paper_trader.generate_sniper_signals") as mock_sig:
+            mock_sig.return_value = pd.DataFrame({"signal": [0, 1]})
+            res = trader.evaluate_symbol("EURUSD", t_inside)
+            self.assertEqual(res["status"], "REJECTED_NEWS_BLACKOUT")
+            self.assertIn("US ISM Services", res["reason"])
+
 
 
 if __name__ == "__main__":

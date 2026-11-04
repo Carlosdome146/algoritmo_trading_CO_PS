@@ -51,6 +51,8 @@ Dentro del motor [`trading_v2/strategies/micro_scalping.py`](file:///C:/Users/Us
 3. **Breakeven Automático Causal:** Al alcanzar entre el 35% y el 45% del camino hacia el Take Profit, el Stop Loss se traslada automáticamente a `Precio Entrada + Spread`, garantizando cero pérdidas en esa operación.
 4. **Filtro Anti-Estampida KER (Kaufman Efficiency Ratio):** Si el ratio de eficiencia de 10 barras supera 0.45 en una dirección, se bloquean inmediatamente las operaciones en contra de esa estampida.
 5. **RiskPause:** Pausa automática de 60 minutos si ocurren 2 pérdidas consecutivas, y veto total de operativa durante el resto del día si se alcanza una pérdida del -1.50%. Incluye mecanismo de rearme seguro tras revisión técnica manual del operador.
+6. **Macro News Blackout (Filtro Noticias Tier-1):** Veto estricto de nuevas entradas $\pm 15$ minutos alrededor de publicaciones macroeconómicas de alto impacto (NFP, IPC, Decisiones FOMC/BCE, ISM).
+7. **Friday Weekend Auto-Square:** A las 20:30 UTC del viernes se cierran forzosamente a mercado todas las posiciones abiertas y se vetan nuevas entradas, blindando el capital frente al riesgo de gaps de fin de semana.
 
 ---
 

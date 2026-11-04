@@ -55,6 +55,7 @@ from trading_v2.research.regime_lab_v3 import (
     canonical_strategies,
     entry_exit_signals,
 )
+from trading_v2.execution.macro_news_filter import MacroNewsFilter
 from trading_v2.research.risk_pause import RiskPause
 from trading_v2.strategies.candidates import STRATEGIES, generate_signals
 from trading_v2.strategies.precision_microstructure import (
@@ -320,6 +321,12 @@ class DemoTraderConfig:
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
     timeframe: str = "M15"  # "M5", "M15" o "D1"
     reset_risk_pause: bool = False
+    enable_news_blackout: bool = True
+    news_blackout_before_m: int = 15
+    news_blackout_after_m: int = 15
+    enable_friday_auto_square: bool = True
+    friday_cutoff_hour: int = 20
+    friday_cutoff_minute: int = 30
 
 
 class DemoPaperTrader:
@@ -344,6 +351,10 @@ class DemoPaperTrader:
 
         self.risk_pause: RiskPause | None = None
         self.last_m15_bar_time: dict[str, int] = {}
+        self.news_filter = MacroNewsFilter(
+            blackout_before_m=self.cfg.news_blackout_before_m,
+            blackout_after_m=self.cfg.news_blackout_after_m,
+        )
         self.recent_spreads: dict[str, list[float]] = {s: [] for s in self.cfg.symbols}
         self.latest_atr: dict[str, float] = {}
         self.processed_deal_tickets: set[int] = set()
@@ -461,6 +472,36 @@ class DemoPaperTrader:
         if tick and getattr(tick, "bid", 0.0) > 0:
             return float(tick.bid)
         return 1.12  # Fallback seguro para auditoría offline
+
+    def _check_friday_auto_square(self, now_utc: datetime) -> list[dict]:
+        """Cierra forzosamente cualquier posición abierta el viernes después de las 20:30 UTC para evitar Weekend Gaps."""
+        if not self.cfg.enable_friday_auto_square:
+            return []
+        if now_utc.weekday() != 4:  # 4 = Viernes
+            return []
+        if (now_utc.hour < self.cfg.friday_cutoff_hour) or (
+            now_utc.hour == self.cfg.friday_cutoff_hour and now_utc.minute < self.cfg.friday_cutoff_minute
+        ):
+            return []
+
+        positions = self.adapter.positions_get()
+        if not positions:
+            return []
+
+        actions = []
+        for pos in positions:
+            magic = getattr(pos, "magic", 0)
+            if magic != self.cfg.magic_number:
+                continue
+            ticket = getattr(pos, "ticket", 0)
+            symbol = getattr(pos, "symbol", "")
+            self.log(
+                f"[FRIDAY AUTO-SQUARE] Viernes {now_utc.strftime('%H:%M')} UTC: cerrando posición #{ticket} "
+                f"en {symbol} para blindar contra riesgo de Weekend Gap."
+            )
+            act = self._close_position(pos, reason="FRIDAY_WEEKEND_AUTO_SQUARE")
+            actions.append(act)
+        return actions
 
     def check_and_apply_causal_breakeven(self) -> list[dict]:
         """Aplica Breakeven Causal a posiciones abiertas:
@@ -755,6 +796,22 @@ class DemoPaperTrader:
         if not session_ok:
             self.log(f"[{symbol}] Señal descartada: {session_msg}")
             return {"status": "REJECTED_SESSION", "symbol": symbol, "reason": session_msg}
+
+        # 6a. Filtro de Noticias Macro de Alto Impacto (Blackout Tier-1)
+        if self.cfg.enable_news_blackout:
+            news_blocked, news_reason = self.news_filter.is_blackout_active(symbol, now_utc)
+            if news_blocked:
+                self.log(f"[{symbol}] Señal descartada por evento macro: {news_reason}")
+                return {"status": "REJECTED_NEWS_BLACKOUT", "symbol": symbol, "reason": news_reason}
+
+        # 6b. Filtro de Cierre de Viernes (No abrir cerca del cierre semanal)
+        if self.cfg.enable_friday_auto_square and now_utc.weekday() == 4:
+            if (now_utc.hour > self.cfg.friday_cutoff_hour) or (
+                now_utc.hour == self.cfg.friday_cutoff_hour and now_utc.minute >= (self.cfg.friday_cutoff_minute - 30)
+            ):
+                reason_fri = f"Viernes {now_utc.strftime('%H:%M')} UTC: No se abren nuevas posiciones cerca del cierre semanal."
+                self.log(f"[{symbol}] Señal descartada: {reason_fri}")
+                return {"status": "REJECTED_FRIDAY_EVENING", "symbol": symbol, "reason": reason_fri}
 
         spread_ok, spread_msg = check_spread_and_liquidity(
             symbol=symbol,
@@ -1189,6 +1246,7 @@ class DemoPaperTrader:
         """Ejecuta un ciclo completo de escaneo: sincronización deals, breakeven y evaluación."""
         now_utc = datetime.now(timezone.utc)
         deals_closed = self._sync_deals_history(now_utc)
+        friday_actions = self._check_friday_auto_square(now_utc)
         be_actions = self.check_and_apply_causal_breakeven()
 
         evaluations = {}
@@ -1198,6 +1256,7 @@ class DemoPaperTrader:
         return {
             "timestamp": now_utc.isoformat(),
             "deals_closed": deals_closed,
+            "friday_auto_square": friday_actions,
             "breakeven_actions": be_actions,
             "evaluations": evaluations,
         }
@@ -1318,6 +1377,30 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         default=False,
         help="Rearma el sistema RiskPause tras revisión manual del operador.",
     )
+    parser.add_argument(
+        "--disable-news-blackout",
+        action="store_true",
+        default=False,
+        help="Deshabilita el filtro de noticias macroeconómicas Tier-1.",
+    )
+    parser.add_argument(
+        "--news-blackout-before-m",
+        type=int,
+        default=15,
+        help="Minutos previos a una noticia de alto impacto para bloquear entradas (default: 15).",
+    )
+    parser.add_argument(
+        "--news-blackout-after-m",
+        type=int,
+        default=15,
+        help="Minutos posteriores a una noticia de alto impacto para bloquear entradas (default: 15).",
+    )
+    parser.add_argument(
+        "--disable-friday-auto-square",
+        action="store_true",
+        default=False,
+        help="Deshabilita el cierre forzoso de fin de semana los viernes a las 20:30 UTC.",
+    )
     return parser.parse_args(args)
 
 
@@ -1338,6 +1421,10 @@ def main():
         max_open_positions=args.max_positions,
         dry_run=not args.live,
         reset_risk_pause=args.reset_risk_pause,
+        enable_news_blackout=not args.disable_news_blackout,
+        news_blackout_before_m=args.news_blackout_before_m,
+        news_blackout_after_m=args.news_blackout_after_m,
+        enable_friday_auto_square=not args.disable_friday_auto_square,
     )
 
     trader = DemoPaperTrader(config=config)
