@@ -380,6 +380,9 @@ class DemoPaperTrader:
             blackout_before_m=self.cfg.news_blackout_before_m,
             blackout_after_m=self.cfg.news_blackout_after_m,
         )
+        self.last_traded_bar_time: dict[str, int] = {}
+        self.last_trade_time: dict[str, datetime] = {}
+        self._load_state()
         self.recent_spreads: dict[str, list[float]] = {s: [] for s in self.cfg.symbols}
         self.latest_atr: dict[str, float] = {}
         self.processed_deal_tickets: set[int] = set()
@@ -627,6 +630,34 @@ class DemoPaperTrader:
             self.log(f"[BREAKEVEN ERROR] Fallo al actualizar SL en ticket #{ticket}: {err} (retcode={retcode})")
             return {"status": "FAILED", "ticket": ticket, "error": err}
 
+    def _save_state(self) -> None:
+        try:
+            state_file = Path("data/trader_state.json")
+            state_file.parent.mkdir(parents=True, exist_ok=True)
+            data = {
+                "last_traded_bar_time": self.last_traded_bar_time,
+                "last_trade_time": {k: v.isoformat() for k, v in self.last_trade_time.items()},
+            }
+            with open(state_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
+
+    def _load_state(self) -> None:
+        try:
+            state_file = Path("data/trader_state.json")
+            if state_file.exists():
+                with open(state_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                self.last_traded_bar_time = data.get("last_traded_bar_time", {})
+                raw_times = data.get("last_trade_time", {})
+                self.last_trade_time = {
+                    k: datetime.fromisoformat(v) for k, v in raw_times.items()
+                }
+        except Exception:
+            self.last_traded_bar_time = {}
+            self.last_trade_time = {}
+
     def _build_dataframe_from_rates(self, rates: np.ndarray) -> pd.DataFrame:
         """Convierte array de rates de MT5 a DataFrame indexado en UTC."""
         df = pd.DataFrame(rates)
@@ -689,6 +720,22 @@ class DemoPaperTrader:
         if self.last_m15_bar_time.get(symbol) == last_bar_time:
             # Esta barra cerrada ya fue procesada, esperar la siguiente vela
             return {"status": "BAR_ALREADY_PROCESSED", "symbol": symbol}
+
+        # Garantía Anti-Sobreoperativa: Si esta barra cerrada ya disparó una orden ejecutada, no repetir
+        if last_bar_time <= self.last_traded_bar_time.get(symbol, 0):
+            return {"status": "BAR_ALREADY_TRADED", "symbol": symbol}
+
+        # Cooldown temporal mínimo obligatorio entre operaciones del mismo símbolo
+        last_trade_dt = self.last_trade_time.get(symbol)
+        if last_trade_dt is not None:
+            min_cooldown = timedelta(minutes=tf_mins)
+            if (now_utc - last_trade_dt) < min_cooldown:
+                remaining_s = int((min_cooldown - (now_utc - last_trade_dt)).total_seconds())
+                return {
+                    "status": "REJECTED_COOLDOWN_ACTIVE",
+                    "symbol": symbol,
+                    "reason": f"Cooldown activo ({remaining_s}s restantes)",
+                }
 
         # 2. Copiar últimas 60 barras H1 CERRADAS para el filtro macro
         h1_rates = self.adapter.copy_rates_from_pos(symbol, self.adapter.TIMEFRAME_H1, 1, 60)
@@ -796,6 +843,9 @@ class DemoPaperTrader:
                 use_keltner_filter=False,
                 use_ker_filter=True,
                 max_ker_trend=0.45,
+                use_climax_filter=True,
+                max_rsi2_long=82.0,
+                min_rsi2_short=18.0,
                 max_opposite_wick=max_opp_wick,
                 allow_short=allow_s,
             )
@@ -972,6 +1022,9 @@ class DemoPaperTrader:
         )
 
         if self.cfg.dry_run:
+            self.last_traded_bar_time[symbol] = last_bar_time
+            self.last_trade_time[symbol] = now_utc
+            self._save_state()
             self.log(f"[DRY-RUN] Orden simulada registrada con éxito para {symbol}.")
             return {
                 "status": "SIMULATED_ORDER",
@@ -1014,6 +1067,9 @@ class DemoPaperTrader:
         retcode = getattr(order_res, "retcode", None)
         if retcode == self.adapter.TRADE_RETCODE_DONE:
             order_ticket = getattr(order_res, "order", getattr(order_res, "deal", 0))
+            self.last_traded_bar_time[symbol] = last_bar_time
+            self.last_trade_time[symbol] = now_utc
+            self._save_state()
             self.log(f"[ORDEN EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
             return {
                 "status": "LIVE_ORDER_EXECUTED",

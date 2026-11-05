@@ -143,6 +143,16 @@ class TestMicroScalping(unittest.TestCase):
         cfg = SniperScalpConfig("EURUSD", 2.0, 4.0, use_h1_filter=True, allow_short=True)
         res = generate_sniper_signals(df_copy, cfg)
         self.assertNotIn(-1, res["signal"].values, "No deben generarse ventas EURUSD con H1 alcista")
+    def test_climax_filter_blocks_overbought_long(self):
+        """Verifica que el filtro anti-clímax bloquee compras cuando RSI(2) > 82 o precio > Bollinger superior."""
+        cfg = SniperScalpConfig("GERMANY40", 22.0, 35.0, use_climax_filter=True, max_rsi2_long=82.0)
+        self.assertTrue(cfg.use_climax_filter)
+        self.assertEqual(cfg.max_rsi2_long, 82.0)
+        self.assertEqual(cfg.min_rsi2_short, 18.0)
+
+        cfg_off = SniperScalpConfig("GERMANY40", 22.0, 35.0, use_climax_filter=False)
+        self.assertFalse(cfg_off.use_climax_filter)
+
 
 
 

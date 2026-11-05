@@ -155,13 +155,27 @@ def main():
                 remote_head = get_commit_hash("origin/main")
                 
                 if local_head and remote_head and local_head != remote_head:
-                    log(f"NUEVA ACTUALIZACIÓN DETECTADA EN GITHUB ({local_head[:7]} -> {remote_head[:7]}).")
-                    stop_bot_process(proc)
-                    if git_pull():
-                        log("Código actualizado con éxito. Reiniciando bot con la nueva versión...")
+                    # Comprobar si hay cambios en archivos ejecutables de código (.py, .bat)
+                    diff_res = subprocess.run(
+                        ["git", "diff", "--name-only", local_head, remote_head],
+                        cwd=BASE_DIR,
+                        capture_output=True,
+                        text=True,
+                    )
+                    changed_files = diff_res.stdout.splitlines()
+                    code_changed = any(f.endswith(".py") or f.endswith(".bat") for f in changed_files)
+
+                    if code_changed:
+                        log(f"NUEVA ACTUALIZACIÓN DE CÓDIGO DETECTADA ({local_head[:7]} -> {remote_head[:7]}). Reiniciando bot...")
+                        stop_bot_process(proc)
+                        if git_pull():
+                            log("Código actualizado con éxito. Reiniciando bot con la nueva versión...")
+                        else:
+                            log("Fallo al actualizar código. Reiniciando con versión actual...")
+                        proc = start_bot_process()
                     else:
-                        log("Fallo al actualizar código. Reiniciando con versión actual...")
-                    proc = start_bot_process()
+                        log(f"Actualización de documentación/logs ({local_head[:7]} -> {remote_head[:7]}). Sincronizando sin reiniciar el bot...")
+                        git_pull()
                 else:
                     log(f"El bot está al día con GitHub (Commit: {local_head[:7]}).")
 

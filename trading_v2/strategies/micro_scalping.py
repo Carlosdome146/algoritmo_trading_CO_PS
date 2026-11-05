@@ -44,6 +44,9 @@ class SniperScalpConfig:
     use_keltner_filter: bool = False       # Filtro Canal de Keltner (Carlos QuantDinger) para GERMANY40 (91.04% WR)
     use_ker_filter: bool = True            # Filtro Kaufman Efficiency Ratio Anti-Estampida (QuantDinger)
     max_ker_trend: float = 0.45            # Umbral de eficiencia direccional para veto de contratendencia
+    use_climax_filter: bool = True         # Filtro Anti-Clímax de Agotamiento Extremo (RSI2/Bollinger)
+    max_rsi2_long: float = 82.0            # Techo RSI(2) para compras (evita comprar en techos sobrecomprados)
+    min_rsi2_short: float = 18.0           # Suelo RSI(2) para ventas (evita vender en suelos sobrevendidos)
     max_opposite_wick: float | None = None # Filtro Martillo sin mecha contraria (Vault) para [SP500] (84.09% WR)
     allow_short: bool | None = None        # None = auto (False para índices, True para EURUSD)
     enable_m4_fade: bool = True            # Spagnola M4 Session-Open Fade (16 velas)
@@ -64,6 +67,10 @@ class SniperScalpConfig:
             raise ValueError("cooldown_bars debe ser >= 1")
         if not (0.0 < self.max_ker_trend <= 1.0):
             raise ValueError("max_ker_trend debe estar en (0, 1]")
+        if not (50.0 <= self.max_rsi2_long <= 100.0):
+            raise ValueError("max_rsi2_long debe estar en [50, 100]")
+        if not (0.0 <= self.min_rsi2_short <= 50.0):
+            raise ValueError("min_rsi2_short debe estar en [0, 50]")
         if self.max_opposite_wick is not None and not (0.0 < self.max_opposite_wick <= 1.0):
             raise ValueError("max_opposite_wick debe estar en (0, 1]")
 
@@ -331,6 +338,15 @@ def generate_sniper_signals(df: pd.DataFrame, cfg: SniperScalpConfig) -> pd.Data
                     short_cond = False
                 elif ker_dir[i] < 0:
                     long_cond = False
+
+        # Filtro Anti-Clímax de Agotamiento Extremo (Anti-Buying/Selling Climax):
+        # Prohíbe comprar en el techo si RSI(2) > 82 o el cierre está perforando la banda superior de Bollinger 2.0σ.
+        # Prohíbe vender en el suelo si RSI(2) < 18 o el cierre está perforando la banda inferior de Bollinger 2.0σ.
+        if cfg.use_climax_filter and np.isfinite(rsi2[i]):
+            if (rsi2[i] > cfg.max_rsi2_long) or (np.isfinite(bb_hi[i]) and c[i] > bb_hi[i]):
+                long_cond = False
+            elif (rsi2[i] < cfg.min_rsi2_short) or (np.isfinite(bb_lo[i]) and c[i] < bb_lo[i]):
+                short_cond = False
 
         if long_cond and not short_cond:
             signals[i] = 1
