@@ -1,6 +1,6 @@
 # 📊 Registro Histórico de Operaciones en Vivo — Algoritmo Quant
 
-> **Última actualización:** `05/11/2026 09:32:03` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
+> **Última actualización:** `05/11/2026 09:36:47` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
 
 Este documento refleja **en tiempo real y con transparencia absoluta** todas las operaciones ejecutadas en la cuenta por el bot. Cada orden se puede verificar directamente en MetaTrader 5 con su número de Ticket.
 
@@ -11,13 +11,13 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | Métrica | Valor | Estado |
 | :--- | :---: | :---: |
 | **Balance Inicial** | `3,000.00 €` | Base de capital |
-| **Balance Actual** | **`3,106.76 €`** | `+106.76 €` |
-| **Rentabilidad Acumulada** | **`+3.56%`** | 🚀 En verde |
-| **Total Operaciones Cerradas** | **`12`** | — |
-| **Operaciones Ganadoras** | **`10`** | 🟢 Aciertos |
+| **Balance Actual** | **`2,991.22 €`** | `-8.78 €` |
+| **Rentabilidad Acumulada** | **`-0.29%`** | 🚀 En verde |
+| **Total Operaciones Cerradas** | **`5`** | — |
+| **Operaciones Ganadoras** | **`3`** | 🟢 Aciertos |
 | **Operaciones Perdedoras** | **`2`** | 🔴 Fallos |
-| **Tasa de Acierto (Win Rate)** | **`83.3%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
-| **Factor de Beneficio (Profit Factor)** | **`2.44`** | Excelente |
+| **Tasa de Acierto (Win Rate)** | **`60.0%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
+| **Factor de Beneficio (Profit Factor)** | **`0.83`** | Excelente |
 
 ---
 
@@ -25,166 +25,75 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 
 | # | Fecha (España) | Activo | Tipo | Lotes | Entrada | Salida | Puntos | Duración | Motivo Cierre | Resultado Neto (€) | Balance |
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :--- | :-: | :-: |
-| **1** | 22/10/2026 00:53 | **`US100`** | `BUY` | `0.04` | `29,597.38` | `29,847.77` | `+250.39` | `2d 15h 20m` | Regla de Salida | 🟢 **`+8.54 €`** | `3,008.54 €` |
-| **2** | 27/10/2026 12:34 | **`[IBEX35]`** | `SELL` | `0.60` | `18,980.26` | `18,965.17` | `+15.09` | `3m 49s` | Take Profit | 🟢 **`+9.05 €`** | `3,017.59 €` |
-| **3** | 30/10/2026 12:32 | **`GERMANY40`** | `BUY` | `1.20` | `25,966.97` | `25,981.27` | `+14.30` | `2m 14s` | Take Profit | 🟢 **`+17.16 €`** | `3,034.75 €` |
-| **4** | 02/11/2026 17:27 | **`US100`** | `SELL` | `0.68` | `28,617.93` | `28,593.08` | `+24.85` | `27m 30s` | Take Profit | 🟢 **`+15.07 €`** | `3,049.82 €` |
-| **5** | 03/11/2026 11:49 | **`GOLD`** | `BUY` | `0.03` | `3,913.70` | `3,898.68` | `-15.02` | `1h 19m 5s` | Stop Loss | 🔴 **`-40.25 €`** | `3,009.57 €` |
-| **6** | 03/11/2026 13:55 | **`GERMANY40`** | `SELL` | `1.28` | `25,828.86` | `25,806.56` | `+22.30` | `24m 56s` | Take Profit | 🟢 **`+28.54 €`** | `3,038.11 €` |
-| **7** | 03/11/2026 17:02 | **`GERMANY40`** | `SELL` | `1.30` | `25,984.86` | `25,960.06` | `+24.80` | `1m 49s` | Take Profit | 🟢 **`+32.24 €`** | `3,070.35 €` |
-| **8** | 03/11/2026 17:02 | **`US100`** | `SELL` | `0.72` | `28,178.16` | `28,152.81` | `+25.35` | `2m 24s` | Take Profit | 🟢 **`+16.31 €`** | `3,086.66 €` |
-| **9** | 04/11/2026 12:07 | **`EURUSD`** | `SELL` | `0.69` | `1.12` | `1.12` | `+0.00005` | `6m 57s` | Stop Loss | 🟢 **`+3.07 €`** | `3,089.73 €` |
-| **10** | 04/11/2026 13:30 | **`EURUSD`** | `SELL` | `0.69` | `1.13` | `1.12` | `+0.00034` | `30s` | Take Profit | 🟢 **`+20.85 €`** | `3,110.58 €` |
-| **11** | 04/11/2026 15:54 | **`EURUSD`** | `SELL` | `0.69` | `1.13` | `1.13` | `-0.00055` | `9m 8s` | Stop Loss | 🔴 **`-33.69 €`** | `3,076.89 €` |
-| **12** | 05/11/2026 11:31 | **`GERMANY40`** | `BUY` | `1.31` | `26,583.09` | `26,605.89` | `+22.80` | `1m 54s` | Take Profit | 🟢 **`+29.87 €`** | `3,106.76 €` |
+| **1** | 04/11/2026 12:15 | **`EURUSD`** | `SELL` | `0.49` | `1.12` | `1.13` | `-0.00063` | `15m 40s` | Stop Loss | 🔴 **`-27.44 €`** | `2,972.56 €` |
+| **2** | 04/11/2026 16:00 | **`EURUSD`** | `SELL` | `0.48` | `1.13` | `1.13` | `-0.00055` | `15m 43s` | Stop Loss | 🔴 **`-23.44 €`** | `2,949.12 €` |
+| **3** | 04/11/2026 18:31 | **`US100`** | `SELL` | `0.37` | `28,677.85` | `28,647.56` | `+30.29` | `1m 31s` | Take Profit | 🟢 **`+9.98 €`** | `2,959.10 €` |
+| **4** | 05/11/2026 11:33 | **`GERMANY40`** | `BUY` | `0.67` | `26,587.09` | `26,611.89` | `+24.80` | `3m 44s` | Take Profit | 🟢 **`+16.62 €`** | `2,975.72 €` |
+| **5** | 05/11/2026 11:36 | **`GERMANY40`** | `BUY` | `0.68` | `26,595.59` | `26,618.39` | `+22.80` | `1m 30s` | Take Profit | 🟢 **`+15.50 €`** | `2,991.22 €` |
 
 ---
 
 ## 🔍 Fichas Técnicas Detalladas de las Últimas Operaciones
 
-### Operación #12 — `GERMANY40` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234796588` (Orden Entrada `#1234796588`, Orden Salida `#1234796790`)
+### Operación #5 — `GERMANY40` (🟢 GANADORA)
+- **Ticket Posición MT5:** `#1234797298` (Orden Entrada `#1234797298`, Orden Salida `#1234797465`)
 - **Estrategia / Gatillo:** `V2_M15_LONG`
-- **Dirección:** `BUY` | **Volumen:** `1.31` lotes
-- **Momento Entrada:** `05/11/2026 11:30:03` a precio `26583.09`
-- **Momento Salida:** `05/11/2026 11:31:57` a precio `26605.89`
-- **Tiempo en Mercado:** `1m 54s`
-- **Configuración Inicial:** Stop Loss en `26548.59` | Take Profit en `26605.59`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 26605.59]`)
-- **Desglose Económico:** Beneficio bruto: `+29.87 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+29.87 €`**
+- **Dirección:** `BUY` | **Volumen:** `0.68` lotes
+- **Momento Entrada:** `05/11/2026 11:35:02` a precio `26595.59`
+- **Momento Salida:** `05/11/2026 11:36:32` a precio `26618.39`
+- **Tiempo en Mercado:** `1m 30s`
+- **Configuración Inicial:** Stop Loss en `26560.59` | Take Profit en `26617.59`
+- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 26617.59]`)
+- **Desglose Económico:** Beneficio bruto: `+15.50 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`+15.50 €`**
 
-### Operación #11 — `EURUSD` (🔴 PERDEDORA)
-- **Ticket Posición MT5:** `#1234737540` (Orden Entrada `#1234737540`, Orden Salida `#1234738239`)
-- **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `0.69` lotes
-- **Momento Entrada:** `04/11/2026 15:45:07` a precio `1.12597`
-- **Momento Salida:** `04/11/2026 15:54:15` a precio `1.12652`
-- **Tiempo en Mercado:** `9m 8s`
-- **Configuración Inicial:** Stop Loss en `1.12652` | Take Profit en `1.12562`
-- **Motivo de Ejecución de Cierre:** `Stop Loss` (`[sl 1.12652]`)
-- **Desglose Económico:** Beneficio bruto: `-33.69 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`-33.69 €`**
-
-### Operación #10 — `EURUSD` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234725286` (Orden Entrada `#1234725286`, Orden Salida `#1234725424`)
-- **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `0.69` lotes
-- **Momento Entrada:** `04/11/2026 13:30:03` a precio `1.12531`
-- **Momento Salida:** `04/11/2026 13:30:33` a precio `1.12497`
-- **Tiempo en Mercado:** `30s`
-- **Configuración Inicial:** Stop Loss en `1.12587` | Take Profit en `1.12497`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 1.12497]`)
-- **Desglose Económico:** Beneficio bruto: `+20.85 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+20.85 €`**
-
-### Operación #9 — `EURUSD` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234713836` (Orden Entrada `#1234713836`, Orden Salida `#1234714967`)
-- **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `0.69` lotes
-- **Momento Entrada:** `04/11/2026 12:00:58` a precio `1.12471`
-- **Momento Salida:** `04/11/2026 12:07:55` a precio `1.12466`
-- **Tiempo en Mercado:** `6m 57s`
-- **Configuración Inicial:** Stop Loss en `1.12526` | Take Profit en `1.12436`
-- **Motivo de Ejecución de Cierre:** `Stop Loss` (`[sl 1.12466]`)
-- **Desglose Económico:** Beneficio bruto: `+3.07 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+3.07 €`**
-
-### Operación #8 — `US100` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234597571` (Orden Entrada `#1234597571`, Orden Salida `#1234598109`)
-- **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `0.72` lotes
-- **Momento Entrada:** `03/11/2026 17:00:11` a precio `28178.16`
-- **Momento Salida:** `03/11/2026 17:02:35` a precio `28152.81`
-- **Tiempo en Mercado:** `2m 24s`
-- **Configuración Inicial:** Stop Loss en `28247.97` | Take Profit en `28152.97`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 28152.97]`)
-- **Desglose Económico:** Beneficio bruto: `+16.31 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+16.31 €`**
-
-### Operación #7 — `GERMANY40` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234597569` (Orden Entrada `#1234597569`, Orden Salida `#1234597976`)
-- **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `1.30` lotes
-- **Momento Entrada:** `03/11/2026 17:00:11` a precio `25984.86`
-- **Momento Salida:** `03/11/2026 17:02:00` a precio `25960.06`
-- **Tiempo en Mercado:** `1m 49s`
-- **Configuración Inicial:** Stop Loss en `26018.36` | Take Profit en `25961.36`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 25961.36]`)
-- **Desglose Económico:** Beneficio bruto: `+32.24 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+32.24 €`**
-
-### Operación #6 — `GERMANY40` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234507870` (Orden Entrada `#1234507870`, Orden Salida `#1234523489`)
-- **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `1.28` lotes
-- **Momento Entrada:** `03/11/2026 13:30:04` a precio `25828.86`
-- **Momento Salida:** `03/11/2026 13:55:00` a precio `25806.56`
-- **Tiempo en Mercado:** `24m 56s`
-- **Configuración Inicial:** Stop Loss en `25863.86` | Take Profit en `25806.86`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 25806.86]`)
-- **Desglose Económico:** Beneficio bruto: `+28.54 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+28.54 €`**
-
-### Operación #5 — `GOLD` (🔴 PERDEDORA)
-- **Ticket Posición MT5:** `#1234375785` (Orden Entrada `#1234375785`, Orden Salida `#1234433946`)
+### Operación #4 — `GERMANY40` (🟢 GANADORA)
+- **Ticket Posición MT5:** `#1234796603` (Orden Entrada `#1234796603`, Orden Salida `#1234797043`)
 - **Estrategia / Gatillo:** `V2_M15_LONG`
-- **Dirección:** `BUY` | **Volumen:** `0.03` lotes
-- **Momento Entrada:** `03/11/2026 10:30:01` a precio `3913.7`
-- **Momento Salida:** `03/11/2026 11:49:06` a precio `3898.68`
-- **Tiempo en Mercado:** `1h 19m 5s`
-- **Configuración Inicial:** Stop Loss en `3898.69` | Take Profit en `3917.69`
-- **Motivo de Ejecución de Cierre:** `Stop Loss` (`[sl 3898.69]`)
-- **Desglose Económico:** Beneficio bruto: `-40.25 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`-40.25 €`**
+- **Dirección:** `BUY` | **Volumen:** `0.67` lotes
+- **Momento Entrada:** `05/11/2026 11:30:13` a precio `26587.09`
+- **Momento Salida:** `05/11/2026 11:33:57` a precio `26611.89`
+- **Tiempo en Mercado:** `3m 44s`
+- **Configuración Inicial:** Stop Loss en `26552.09` | Take Profit en `26609.09`
+- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 26609.09]`)
+- **Desglose Económico:** Beneficio bruto: `+16.62 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`+16.62 €`**
 
-### Operación #4 — `US100` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234289982` (Orden Entrada `#1234289982`, Orden Salida `#1234303500`)
+### Operación #3 — `US100` (🟢 GANADORA)
+- **Ticket Posición MT5:** `#1234754696` (Orden Entrada `#1234754696`, Orden Salida `#1234754765`)
 - **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `0.68` lotes
-- **Momento Entrada:** `02/11/2026 17:00:10` a precio `28617.93`
-- **Momento Salida:** `02/11/2026 17:27:40` a precio `28593.08`
-- **Tiempo en Mercado:** `27m 30s`
-- **Configuración Inicial:** Stop Loss en `28669.12` | Take Profit en `28594.12`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 28594.12]`)
-- **Desglose Económico:** Beneficio bruto: `+15.07 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+15.07 €`**
+- **Dirección:** `SELL` | **Volumen:** `0.37` lotes
+- **Momento Entrada:** `04/11/2026 18:30:15` a precio `28677.85`
+- **Momento Salida:** `04/11/2026 18:31:46` a precio `28647.56`
+- **Tiempo en Mercado:** `1m 31s`
+- **Configuración Inicial:** Stop Loss en `28747.29` | Take Profit en `28652.29`
+- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 28652.29]`)
+- **Desglose Económico:** Beneficio bruto: `+9.98 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`+9.98 €`**
 
-### Operación #3 — `GERMANY40` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1234146654` (Orden Entrada `#1234146654`, Orden Salida `#1234147131`)
-- **Estrategia / Gatillo:** `V2_M15_LONG`
-- **Dirección:** `BUY` | **Volumen:** `1.20` lotes
-- **Momento Entrada:** `30/10/2026 12:30:03` a precio `25966.97`
-- **Momento Salida:** `30/10/2026 12:32:17` a precio `25981.27`
-- **Tiempo en Mercado:** `2m 14s`
-- **Configuración Inicial:** Stop Loss en `25942.47` | Take Profit en `25979.47`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 25979.47]`)
-- **Desglose Económico:** Beneficio bruto: `+17.16 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+17.16 €`**
-
-### Operación #2 — `[IBEX35]` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1233736948` (Orden Entrada `#1233736948`, Orden Salida `#1233738122`)
+### Operación #2 — `EURUSD` (🔴 PERDEDORA)
+- **Ticket Posición MT5:** `#1234737539` (Orden Entrada `#1234737539`, Orden Salida `#1234738823`)
 - **Estrategia / Gatillo:** `V2_M15_SHORT`
-- **Dirección:** `SELL` | **Volumen:** `0.60` lotes
-- **Momento Entrada:** `27/10/2026 12:30:55` a precio `18980.26`
-- **Momento Salida:** `27/10/2026 12:34:44` a precio `18965.17`
-- **Tiempo en Mercado:** `3m 49s`
-- **Configuración Inicial:** Stop Loss en `19005.26` | Take Profit en `18965.26`
-- **Motivo de Ejecución de Cierre:** `Take Profit` (`[tp 18965.26]`)
-- **Desglose Económico:** Beneficio bruto: `+9.05 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+9.05 €`**
+- **Dirección:** `SELL` | **Volumen:** `0.48` lotes
+- **Momento Entrada:** `04/11/2026 15:45:03` a precio `1.12599`
+- **Momento Salida:** `04/11/2026 16:00:46` a precio `1.12654`
+- **Tiempo en Mercado:** `15m 43s`
+- **Configuración Inicial:** Stop Loss en `1.12654` | Take Profit en `1.12564`
+- **Motivo de Ejecución de Cierre:** `Stop Loss` (`[sl 1.12654]`)
+- **Desglose Económico:** Beneficio bruto: `-23.44 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`-23.44 €`**
 
-### Operación #1 — `US100` (🟢 GANADORA)
-- **Ticket Posición MT5:** `#1233248789` (Orden Entrada `#1233248789`, Orden Salida `#1233520232`)
-- **Estrategia / Gatillo:** `V3_D1_LONG`
-- **Dirección:** `BUY` | **Volumen:** `0.04` lotes
-- **Momento Entrada:** `19/10/2026 09:32:23` a precio `29597.38`
-- **Momento Salida:** `22/10/2026 00:53:15` a precio `29847.77`
-- **Tiempo en Mercado:** `2d 15h 20m`
-- **Configuración Inicial:** Stop Loss en `28986.09` | Take Profit en `0.0`
-- **Motivo de Ejecución de Cierre:** `Regla de Salida` (`Close DAILY_RULE_EXIT_SMA5`)
-- **Desglose Económico:** Beneficio bruto: `+8.92 €` | Swap: `-0.38 €` | Comisión: `+0.00 €`
-- **Beneficio Neto:** **`+8.54 €`**
+### Operación #1 — `EURUSD` (🔴 PERDEDORA)
+- **Ticket Posición MT5:** `#1234713649` (Orden Entrada `#1234713649`, Orden Salida `#1234716448`)
+- **Estrategia / Gatillo:** `V2_M15_SHORT`
+- **Dirección:** `SELL` | **Volumen:** `0.49` lotes
+- **Momento Entrada:** `04/11/2026 12:00:03` a precio `1.1246`
+- **Momento Salida:** `04/11/2026 12:15:43` a precio `1.12523`
+- **Tiempo en Mercado:** `15m 40s`
+- **Configuración Inicial:** Stop Loss en `1.12521` | Take Profit en `1.12431`
+- **Motivo de Ejecución de Cierre:** `Stop Loss` (`[sl 1.12521]`)
+- **Desglose Económico:** Beneficio bruto: `-27.44 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`-27.44 €`**
 
 ---
 
