@@ -339,7 +339,7 @@ class DemoTraderConfig:
     max_open_positions: int = 2
     magic_number: int = 20261018
     dry_run: bool = True
-    cooldown_minutes: int = 60
+    cooldown_minutes: int = 90  # 90 min de enfriamiento dinámico tras 2 fallos consecutivos antes de reevaluar
     max_consecutive_losses: int = 2
     max_daily_loss_fraction: float = 0.015  # -1.5% de pérdida diaria máxima
     enable_macro_blackout: bool = True
@@ -838,7 +838,7 @@ class DemoPaperTrader:
                 min_sweep_units=sweep_u,
                 min_rejection_wick=min_wick,
                 max_trades_per_day=None,  # Sin límite artificial de trades al día
-                cooldown_bars=2 if is_fx else 3,
+                cooldown_bars=2,  # Calibrado forense: 2 barras (60 min en índices M30, 30 min en Forex M15)
                 use_h1_filter=True,
                 use_keltner_filter=False,
                 use_ker_filter=True,
