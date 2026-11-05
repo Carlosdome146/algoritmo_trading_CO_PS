@@ -53,6 +53,9 @@ Dentro del motor [`trading_v2/strategies/micro_scalping.py`](file:///C:/Users/Us
 5. **RiskPause:** Pausa automática de 60 minutos si ocurren 2 pérdidas consecutivas, y veto total de operativa durante el resto del día si se alcanza una pérdida del -1.50%. Incluye mecanismo de rearme seguro tras revisión técnica manual del operador.
 6. **Macro News Blackout (Filtro Noticias Tier-1):** Veto estricto de nuevas entradas $\pm 15$ minutos alrededor de publicaciones macroeconómicas de alto impacto (NFP, IPC, Decisiones FOMC/BCE, ISM).
 7. **Friday Weekend Auto-Square:** A las 20:30 UTC del viernes se cierran forzosamente a mercado todas las posiciones abiertas y se vetan nuevas entradas, blindando el capital frente al riesgo de gaps de fin de semana.
+8. **Filtro Anti-Clímax de Agotamiento:** Veto riguroso a compras LONG si el RSI(2) > 82.0 o el cierre perfora la banda superior de Bollinger 2.0σ, y veto a ventas SHORT si RSI(2) < 18.0 o Close < BB_Lo. Elimina la compra en techos impulsivos sobrecomprados.
+9. **Garantía Persistente de 1 Operación por Vela (Bar-Lock en Disco):** Registro en data/trader_state.json del timestamp de la última barra operada por activo. Bloquea reentradas en la misma vela (BAR_ALREADY_TRADED) con persistencia a prueba de reinicios de proceso.
+10. **Cooldown Temporal y Supervisor con Diff Inteligente:** Enfriamiento forzoso de 15 a 30 minutos entre operaciones del mismo símbolo. El supervisor de procesos solo reinicia el bot si hay cambios de código fuente (.py, .bat), previniendo reinicios espurios provocados por la actualización automática de bitácoras.
 
 ---
 
