@@ -56,6 +56,7 @@ Dentro del motor [`trading_v2/strategies/micro_scalping.py`](file:///C:/Users/Us
 8. **Filtro Anti-Clímax de Agotamiento:** Veto riguroso a compras LONG si el RSI(2) > 82.0 o el cierre perfora la banda superior de Bollinger 2.0σ, y veto a ventas SHORT si RSI(2) < 18.0 o Close < BB_Lo. Elimina la compra en techos impulsivos sobrecomprados.
 9. **Garantía Persistente de 1 Operación por Vela (Bar-Lock en Disco):** Registro en data/trader_state.json del timestamp de la última barra operada por activo. Bloquea reentradas en la misma vela (BAR_ALREADY_TRADED) con persistencia a prueba de reinicios de proceso.
 10. **Cooldown Temporal y Supervisor con Diff Inteligente:** Enfriamiento forzoso de 15 a 30 minutos entre operaciones del mismo símbolo. El supervisor de procesos solo reinicia el bot si hay cambios de código fuente (.py, .bat), previniendo reinicios espurios provocados por la actualización automática de bitácoras.
+11. **Filtro Anti Pre-Apertura Europea (Apertura al Contado Xetra/Madrid a las 09:00 CET):** Se retrasa el inicio de sesión de GERMANY40 y [IBEX35] a las 08:00 UTC (09:00 hora española). Se veta la operativa entre las 08:00 y 09:00 CET para evitar latigazos traicioneros y falta de profundidad en la subasta de pre-mercado.
 
 ---
 
