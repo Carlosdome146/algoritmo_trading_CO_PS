@@ -9,6 +9,7 @@ import numpy as np
 
 from trading_v2.execution.demo_paper_trader import (
     DemoPaperTrader,
+    is_opening_bell_active,
     DemoTraderConfig,
     assert_demo_account,
     check_spread_and_liquidity,
@@ -150,6 +151,35 @@ class DemoPaperTraderTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             assert_demo_account(None)
 
+    def test_opening_bell_filter_option_a1(self):
+        # 1. GERMANY40 a las 07:02 UTC (08:02 CET): Primeros 5 min de futuros -> VETADO
+        t_dax_bell = datetime(2026, 10, 20, 7, 2, tzinfo=timezone.utc)
+        blocked, reason = is_opening_bell_active("GERMANY40", t_dax_bell)
+        self.assertTrue(blocked)
+        self.assertIn("CAMPANA_APERTURA_FUTUROS_EUROPA", reason)
+
+        # 2. GERMANY40 a las 07:15 UTC: Fuera de campana (subasta asentada) -> PERMITIDO
+        t_dax_clear = datetime(2026, 10, 20, 7, 15, tzinfo=timezone.utc)
+        blocked_clear, _ = is_opening_bell_active("GERMANY40", t_dax_clear)
+        self.assertFalse(blocked_clear)
+
+        # 3. GERMANY40 a las 08:02 UTC (09:02 CET): Primeros 5 min de contado Xetra -> VETADO
+        t_xetra_bell = datetime(2026, 10, 20, 8, 2, tzinfo=timezone.utc)
+        blocked_xetra, reason_xetra = is_opening_bell_active("GERMANY40", t_xetra_bell)
+        self.assertTrue(blocked_xetra)
+        self.assertIn("CAMPANA_APERTURA_CONTADO_XETRA", reason_xetra)
+
+        # 4. [SP500] a las 13:32 UTC (14:32 CET / 09:32 EST): Primeros 5 min Wall Street -> VETADO
+        t_us_bell = datetime(2026, 10, 20, 13, 32, tzinfo=timezone.utc)
+        blocked_us, reason_us = is_opening_bell_active("[SP500]", t_us_bell)
+        self.assertTrue(blocked_us)
+        self.assertIn("CAMPANA_APERTURA_WALL_STREET", reason_us)
+
+        # 5. [SP500] a las 14:00 UTC: Mercado fluido y profundo -> PERMITIDO
+        t_us_clear = datetime(2026, 10, 20, 14, 0, tzinfo=timezone.utc)
+        blocked_us_clear, _ = is_opening_bell_active("[SP500]", t_us_clear)
+        self.assertFalse(blocked_us_clear)
+
     def test_is_session_active_weekdays_and_hours(self):
         # Martes a las 09:00 UTC -> DAX activo
         t_dax_open = datetime(2026, 10, 20, 9, 0, tzinfo=timezone.utc)
@@ -163,14 +193,14 @@ class DemoPaperTraderTests(unittest.TestCase):
         self.assertFalse(active)
         self.assertIn("FUERA_DE_SESION", msg)
 
-        # Pre-apertura 07:15 UTC (08:15 Espana) -> DAX e IBEX inactivos (bloqueo pre-apertura)
-        t_premarket = datetime(2026, 10, 20, 7, 15, tzinfo=timezone.utc)
-        active_dax_pre, msg_pre = is_session_active("GERMANY40", t_premarket)
-        self.assertFalse(active_dax_pre)
-        self.assertIn("FUERA_DE_SESION", msg_pre)
+        # Sesión europea 07:15 UTC (08:15 España) -> DAX e IBEX activos (sesión 07:00 a 17:30 UTC)
+        t_morn = datetime(2026, 10, 20, 7, 15, tzinfo=timezone.utc)
+        active_dax_morn, msg_morn = is_session_active("GERMANY40", t_morn)
+        self.assertTrue(active_dax_morn)
+        self.assertEqual(msg_morn, "SESION_INSTITUCIONAL_ACTIVA")
 
-        active_ibex_pre, _ = is_session_active("[IBEX35]", t_premarket)
-        self.assertFalse(active_ibex_pre)
+        active_ibex_morn, _ = is_session_active("[IBEX35]", t_morn)
+        self.assertTrue(active_ibex_morn)
 
         # Martes a las 10:00 UTC -> SP500 inactivo (abre a las 13:30 UTC)
         active, msg = is_session_active("[SP500]", t_dax_open)

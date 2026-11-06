@@ -84,8 +84,8 @@ V3_DAILY_STRATEGIES = (
 # Formato: (hora_inicio, minuto_inicio, hora_fin, minuto_fin)
 # Horarios ampliados para capturar todas las oportunidades institucionales continuas
 SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
-    "GERMANY40": (8, 0, 17, 30),
-    "DE40": (8, 0, 17, 30),
+    "GERMANY40": (7, 0, 17, 30),
+    "DE40": (7, 0, 17, 30),
     "[SP500]": (12, 30, 21, 0),
     "US500": (12, 30, 21, 0),
     "US100": (12, 30, 21, 0),
@@ -95,10 +95,83 @@ SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
     "GOLD": (12, 0, 19, 0),  # Blindaje sesión Londres/NY (máxima liquidez)
     "XAUUSD": (12, 0, 19, 0),
     "EURUSD": (6, 0, 20, 0),
-    "[IBEX35]": (8, 0, 17, 30),
-    "IBEX35": (8, 0, 17, 30),
-    "SPAIN35": (8, 0, 17, 30),
+    "[IBEX35]": (7, 0, 17, 30),
+    "IBEX35": (7, 0, 17, 30),
+    "SPAIN35": (7, 0, 17, 30),
 }
+
+
+# Ventanas de campana de apertura (Opción A1): Veto de 5 minutos al toque de campana
+# para evitar entrar en subastas iniciales, spreads ensanchados y latigazos de apertura.
+OPENING_BELL_WINDOWS_UTC: dict[str, list[tuple[int, int, int, int, str]]] = {
+    "GERMANY40": [
+        (7, 0, 7, 5, "CAMPANA_APERTURA_FUTUROS_EUROPA (08:00-08:05 CET)"),
+        (8, 0, 8, 5, "CAMPANA_APERTURA_CONTADO_XETRA (09:00-09:05 CET)"),
+    ],
+    "DE40": [
+        (7, 0, 7, 5, "CAMPANA_APERTURA_FUTUROS_EUROPA (08:00-08:05 CET)"),
+        (8, 0, 8, 5, "CAMPANA_APERTURA_CONTADO_XETRA (09:00-09:05 CET)"),
+    ],
+    "[IBEX35]": [
+        (7, 0, 7, 5, "CAMPANA_APERTURA_FUTUROS_EUROPA (08:00-08:05 CET)"),
+        (8, 0, 8, 5, "CAMPANA_APERTURA_CONTADO_MADRID (09:00-09:05 CET)"),
+    ],
+    "IBEX35": [
+        (7, 0, 7, 5, "CAMPANA_APERTURA_FUTUROS_EUROPA (08:00-08:05 CET)"),
+        (8, 0, 8, 5, "CAMPANA_APERTURA_CONTADO_MADRID (09:00-09:05 CET)"),
+    ],
+    "SPAIN35": [
+        (7, 0, 7, 5, "CAMPANA_APERTURA_FUTUROS_EUROPA (08:00-08:05 CET)"),
+        (8, 0, 8, 5, "CAMPANA_APERTURA_CONTADO_MADRID (09:00-09:05 CET)"),
+    ],
+    "[SP500]": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "US500": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "US100": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "USTEC": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "[DJI30]": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "US30": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "GOLD": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "XAUUSD": [
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+    "EURUSD": [
+        (7, 0, 7, 5, "CAMPANA_APERTURA_LONDRES (08:00-08:05 CET)"),
+        (13, 30, 13, 35, "CAMPANA_APERTURA_WALL_STREET (14:30-14:35 CET)"),
+    ],
+}
+
+
+def is_opening_bell_active(symbol: str, dt_utc: datetime) -> tuple[bool, str | None]:
+    """Verifica si el instante actual coincide con los 5 minutos posteriores a un toque de campana (Opción A1)."""
+    if dt_utc.tzinfo is None:
+        raise ValueError("Se requiere datetime aware en UTC")
+    sym_clean = normalize_symbol_key(symbol)
+    windows = None
+    for k, w_list in OPENING_BELL_WINDOWS_UTC.items():
+        if normalize_symbol_key(k) == sym_clean:
+            windows = w_list
+            break
+    if not windows:
+        return False, None
+    curr_m = dt_utc.hour * 60 + dt_utc.minute
+    for h_s, m_s, h_e, m_e, reason in windows:
+        if (h_s * 60 + m_s) <= curr_m < (h_e * 60 + m_e):
+            return True, f"VETO_CAMPANA_APERTURA ({reason})"
+    return False, None
 
 
 def normalize_symbol_key(symbol: str) -> str:
@@ -353,6 +426,7 @@ class DemoTraderConfig:
     timeframe: str = "M15"  # "M5", "M15" o "D1"
     reset_risk_pause: bool = False
     enable_news_blackout: bool = True
+    enable_opening_bell_filter: bool = True  # Opción A1: Veto 5 min post-campana
     news_blackout_before_m: int = 15
     news_blackout_after_m: int = 15
     enable_friday_auto_square: bool = True
@@ -805,12 +879,12 @@ class DemoPaperTrader:
                 allow_s = True
             elif is_dax:
                 # GERMANY40 Micro-Sweep Reclaim M30 (80.0% WR, PF 1.83, +124.66 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 8, 17
+                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 7, 17
                 min_wick = 0.35
                 allow_s = True
             elif is_ibex:
                 # [IBEX35] Micro-Sweep Reclaim M15 (86.7% WR, PF 2.10, +114.05 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 8, 17
+                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 7, 17
                 min_wick = 0.35
                 allow_s = False
             elif is_dji:
@@ -884,6 +958,13 @@ class DemoPaperTrader:
             if news_blocked:
                 self.log(f"[{symbol}] Señal descartada por evento macro: {news_reason}")
                 return {"status": "REJECTED_NEWS_BLACKOUT", "symbol": symbol, "reason": news_reason}
+
+        # 6a-1. Filtro de Campana de Apertura (Opción A1: Veto quirúrgico 5 min en toque de campana)
+        if self.cfg.enable_opening_bell_filter:
+            bell_blocked, bell_reason = is_opening_bell_active(symbol, now_utc)
+            if bell_blocked:
+                self.log(f"[{symbol}] Señal descartada: {bell_reason}")
+                return {"status": "REJECTED_OPENING_BELL", "symbol": symbol, "reason": bell_reason}
 
         # 6b. Filtro de Cierre de Viernes (No abrir cerca del cierre semanal)
         if self.cfg.enable_friday_auto_square and now_utc.weekday() == 4:
@@ -1390,7 +1471,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--risk-fraction",
         type=float,
-        default=0.0080,
+        default=0.0100,
         help="Fracción de riesgo por operación (default: 0.0080 = 0.80%%).",
     )
     parser.add_argument(
