@@ -331,7 +331,7 @@ class DemoTraderConfig:
     symbols: list[str] = field(
         default_factory=lambda: ["GERMANY40", "[SP500]", "[DJI30]", "GOLD", "EURUSD"]
     )
-    risk_fraction: float = 0.0080  # 0.80% por operación (calibrado para Drawdown < 5.0% en cartera)
+    risk_fraction: float = 0.0100  # 1.00% por operación (calibrado para control estricto de drawdown)
     max_concurrent_indices: int = 2  # Máximo de índices bursátiles abiertos simultáneamente
     sl_atr: float = 1.20
     tp_atr: float = 0.55

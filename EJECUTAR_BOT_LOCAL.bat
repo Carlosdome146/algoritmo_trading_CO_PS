@@ -19,7 +19,7 @@ echo ======================================================================
 echo.
 
 cd /d "%~dp0"
-python -m trading_v2.execution.demo_paper_trader --live --strategy institutional_sniper_scalp --timeframe M15_M30 --symbols GERMANY40 US100 [SP500] [DJI30] [IBEX35] GOLD EURUSD --risk-fraction 0.0080 --max-concurrent-indices 2 --poll-seconds 15.0
+python -m trading_v2.execution.demo_paper_trader --live --strategy institutional_sniper_scalp --timeframe M15_M30 --symbols GERMANY40 US100 [SP500] [DJI30] [IBEX35] GOLD EURUSD --risk-fraction 0.0100 --max-concurrent-indices 2 --poll-seconds 15.0
 
 echo.
 echo El bot se ha detenido.

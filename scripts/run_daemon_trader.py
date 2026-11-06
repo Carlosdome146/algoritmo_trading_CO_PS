@@ -95,7 +95,7 @@ def start_bot_process() -> subprocess.Popen:
         "GOLD",
         "EURUSD",
         "--risk-fraction",
-        "0.0080",
+        "0.0100",
         "--max-concurrent-indices",
         "2",
         "--poll-seconds",

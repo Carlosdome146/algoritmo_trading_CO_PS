@@ -13,7 +13,7 @@ start "Monitor Movil V3" /min python scripts/dashboard_movil.py --port 8080 --gi
 timeout /t 3 /nobreak > nul
 
 echo [2/2] Iniciando Ejecutor en MetaTrader 5 DEMO (Modo Live Seguro)...
-start "Ejecutor MT5 DEMO" python -m trading_v2.execution.demo_paper_trader --live --strategy institutional_sniper_scalp --timeframe M15_M30 --symbols GERMANY40 US100 [SP500] [DJI30] [IBEX35] GOLD EURUSD --risk-fraction 0.0080 --max-concurrent-indices 2 --poll-seconds 15.0
+start "Ejecutor MT5 DEMO" python -m trading_v2.execution.demo_paper_trader --live --strategy institutional_sniper_scalp --timeframe M15_M30 --symbols GERMANY40 US100 [SP500] [DJI30] [IBEX35] GOLD EURUSD --risk-fraction 0.0100 --max-concurrent-indices 2 --poll-seconds 15.0
 
 echo.
 echo ======================================================================
