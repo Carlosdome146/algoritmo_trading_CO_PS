@@ -86,14 +86,14 @@ V3_DAILY_STRATEGIES = (
 SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
     "GERMANY40": (7, 0, 17, 30),
     "DE40": (7, 0, 17, 30),
-    "[SP500]": (12, 30, 21, 0),
-    "US500": (12, 30, 21, 0),
-    "US100": (12, 30, 21, 0),
-    "USTEC": (12, 30, 21, 0),
-    "[DJI30]": (12, 30, 21, 0),
-    "US30": (12, 30, 21, 0),
-    "GOLD": (12, 0, 19, 0),  # Blindaje sesión Londres/NY (máxima liquidez)
-    "XAUUSD": (12, 0, 19, 0),
+    "[SP500]": (13, 30, 21, 0),
+    "US500": (13, 30, 21, 0),
+    "US100": (13, 30, 21, 0),
+    "USTEC": (13, 30, 21, 0),
+    "[DJI30]": (13, 30, 21, 0),
+    "US30": (13, 30, 21, 0),
+    "GOLD": (13, 0, 19, 0),  # Blindaje sesión Londres/NY (13:00 a 19:00 UTC, 82.6% WR)
+    "XAUUSD": (13, 0, 19, 0),
     "EURUSD": (6, 0, 20, 0),
     "[IBEX35]": (7, 0, 17, 30),
     "IBEX35": (7, 0, 17, 30),
@@ -889,23 +889,23 @@ class DemoPaperTrader:
                 allow_s = False
             elif is_dji:
                 # [DJI30] Micro-Sweep Reclaim M30 (100.0% WR, PF INF, +213.58 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 40.0, 80.0, 0.0, 12, 21
+                target_u, stop_u, sweep_u, s_start, s_end = 40.0, 80.0, 0.0, 13, 21
                 min_wick = 0.35
                 allow_s = False
             elif is_gold:
                 # GOLD Micro-Sweep Reclaim M30 Blindado (Sesión Londres/NY, 92.3% WR, PF 2.34)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 12, 19
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 2.0, 13, 19
                 min_wick = 0.45
                 max_opp_wick = 0.12
                 allow_s = False
             elif is_nasdaq:
                 # US100 Micro-Sweep Reclaim M30 (85.7% WR, PF 1.62, +99.36 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 70.0, 0.0, 12, 21
+                target_u, stop_u, sweep_u, s_start, s_end = 25.0, 70.0, 0.0, 13, 21
                 min_wick = 0.35
                 allow_s = True
             else:  # [SP500] / US500
                 # SP500 Micro-Sweep Reclaim M30 (92.3% WR, PF 2.56, +88.84 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 0.0, 12, 21
+                target_u, stop_u, sweep_u, s_start, s_end = 4.0, 12.0, 0.0, 13, 21
                 min_wick = 0.35
                 allow_s = False
             cfg_sniper = SniperScalpConfig(
