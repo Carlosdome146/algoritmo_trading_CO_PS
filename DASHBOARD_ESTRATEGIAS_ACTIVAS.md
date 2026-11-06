@@ -57,6 +57,7 @@ Dentro del motor [`trading_v2/strategies/micro_scalping.py`](file:///C:/Users/Us
 9. **Garantía Persistente de 1 Operación por Vela (Bar-Lock en Disco):** Registro en data/trader_state.json del timestamp de la última barra operada por activo. Bloquea reentradas en la misma vela (BAR_ALREADY_TRADED) con persistencia a prueba de reinicios de proceso.
 10. **Cooldown Temporal y Supervisor con Diff Inteligente:** Enfriamiento forzoso de 15 a 30 minutos entre operaciones del mismo símbolo. El supervisor de procesos solo reinicia el bot si hay cambios de código fuente (.py, .bat), previniendo reinicios espurios provocados por la actualización automática de bitácoras.
 11. **Filtro Anti Pre-Apertura Europea (Apertura al Contado Xetra/Madrid a las 09:00 CET):** Se retrasa el inicio de sesión de GERMANY40 y [IBEX35] a las 08:00 UTC (09:00 hora española). Se veta la operativa entre las 08:00 y 09:00 CET para evitar latigazos traicioneros y falta de profundidad en la subasta de pre-mercado.
+12. **Filtro de Spread Adaptativo por Activo:** Calibrado al 8.0% de ATR en activos ultra-líquidos (DAX, Nasdaq, S&P 500, Dow Jones) y ampliado al 12.0% de ATR en [IBEX35] y GOLD (para adecuarse al spread nativo de Admirals de ~3.5 pts y ~0.45$ sin estrangular operaciones de alta probabilidad).
 
 ---
 
