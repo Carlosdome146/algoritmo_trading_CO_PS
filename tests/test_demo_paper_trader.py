@@ -157,11 +157,20 @@ class DemoPaperTraderTests(unittest.TestCase):
         self.assertTrue(active)
         self.assertEqual(msg, "SESION_INSTITUCIONAL_ACTIVA")
 
-        # Martes a las 05:00 UTC -> DAX inactivo (antes de 07:00 UTC)
+        # Martes a las 05:00 UTC -> DAX inactivo (antes de 08:00 UTC)
         t_dax_early = datetime(2026, 10, 20, 5, 0, tzinfo=timezone.utc)
         active, msg = is_session_active("GERMANY40", t_dax_early)
         self.assertFalse(active)
         self.assertIn("FUERA_DE_SESION", msg)
+
+        # Pre-apertura 07:15 UTC (08:15 Espana) -> DAX e IBEX inactivos (bloqueo pre-apertura)
+        t_premarket = datetime(2026, 10, 20, 7, 15, tzinfo=timezone.utc)
+        active_dax_pre, msg_pre = is_session_active("GERMANY40", t_premarket)
+        self.assertFalse(active_dax_pre)
+        self.assertIn("FUERA_DE_SESION", msg_pre)
+
+        active_ibex_pre, _ = is_session_active("[IBEX35]", t_premarket)
+        self.assertFalse(active_ibex_pre)
 
         # Martes a las 10:00 UTC -> SP500 inactivo (abre a las 13:30 UTC)
         active, msg = is_session_active("[SP500]", t_dax_open)

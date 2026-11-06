@@ -84,8 +84,8 @@ V3_DAILY_STRATEGIES = (
 # Formato: (hora_inicio, minuto_inicio, hora_fin, minuto_fin)
 # Horarios ampliados para capturar todas las oportunidades institucionales continuas
 SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
-    "GERMANY40": (7, 0, 17, 30),
-    "DE40": (7, 0, 17, 30),
+    "GERMANY40": (8, 0, 17, 30),
+    "DE40": (8, 0, 17, 30),
     "[SP500]": (12, 30, 21, 0),
     "US500": (12, 30, 21, 0),
     "US100": (12, 30, 21, 0),
@@ -95,9 +95,9 @@ SESSION_WINDOWS_UTC: dict[str, tuple[int, int, int, int]] = {
     "GOLD": (12, 0, 19, 0),  # Blindaje sesión Londres/NY (máxima liquidez)
     "XAUUSD": (12, 0, 19, 0),
     "EURUSD": (6, 0, 20, 0),
-    "[IBEX35]": (7, 0, 17, 30),
-    "IBEX35": (7, 0, 17, 30),
-    "SPAIN35": (7, 0, 17, 30),
+    "[IBEX35]": (8, 0, 17, 30),
+    "IBEX35": (8, 0, 17, 30),
+    "SPAIN35": (8, 0, 17, 30),
 }
 
 
@@ -799,12 +799,12 @@ class DemoPaperTrader:
                 allow_s = True
             elif is_dax:
                 # GERMANY40 Micro-Sweep Reclaim M30 (80.0% WR, PF 1.83, +124.66 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 7, 17
+                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 8, 17
                 min_wick = 0.35
                 allow_s = True
             elif is_ibex:
                 # [IBEX35] Micro-Sweep Reclaim M15 (86.7% WR, PF 2.10, +114.05 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 7, 17
+                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 8, 17
                 min_wick = 0.35
                 allow_s = False
             elif is_dji:
