@@ -181,8 +181,14 @@ def check_spread_and_liquidity(
         if spread_pts > 15.0:  # > 1.5 pips
             return False, f"SPREAD_FOREX_EXCESIVO ({spread_pts:.1f} pts > 15.0 pts / 1.5 pips)"
     else:
-        if rel_spread > max_spread_atr_ratio:
-            return False, f"SPREAD_RELATIVO_EXCESIVO ({rel_spread:.1%} > {max_spread_atr_ratio:.1%} de ATR)"
+        # En Admirals, IBEX35 y GOLD tienen spreads nativos de ~3.5 pts y ~0.45$ (8.5% a 11.0% de su ATR).
+        # Calibramos su techo relativo al 12.0% para no vetar operaciones ganadoras por decimales.
+        effective_max_ratio = max_spread_atr_ratio
+        if any(k in symbol.upper() for k in ["IBEX", "SPAIN", "GOLD", "XAU"]):
+            effective_max_ratio = max(max_spread_atr_ratio, 0.12)
+
+        if rel_spread > effective_max_ratio:
+            return False, f"SPREAD_RELATIVO_EXCESIVO ({rel_spread:.1%} > {effective_max_ratio:.1%} de ATR)"
 
     if recent_spreads and len(recent_spreads) >= 10:
         recent_arr = np.array(recent_spreads[-40:], dtype=float)

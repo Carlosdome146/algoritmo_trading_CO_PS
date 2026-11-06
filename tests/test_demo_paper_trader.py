@@ -227,6 +227,32 @@ class DemoPaperTraderTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("PICO_DE_SPREAD_DETECTADO", msg)
 
+        # IBEX35: spread 350 pts (3.5 pts) con ATR=40.0 -> rel_spread = 3.5 / 40.0 = 8.75% <= 12% -> Aceptado
+        ok_ibex, msg_ibex = check_spread_and_liquidity(
+            symbol="[IBEX35]",
+            spread_pts=350.0,
+            atr=40.0,
+            point=0.01,
+            recent_spreads=[350.0] * 30,
+            max_spread_atr_ratio=0.08,
+            max_spread_median_ratio=2.0,
+        )
+        self.assertTrue(ok_ibex)
+        self.assertEqual(msg_ibex, "SPREAD_ACEPTABLE")
+
+        # IBEX35: spread 600 pts (6.0 pts) con ATR=40.0 -> rel_spread = 6.0 / 40.0 = 15.0% > 12% -> Rechazado
+        ok_ibex_hi, msg_ibex_hi = check_spread_and_liquidity(
+            symbol="[IBEX35]",
+            spread_pts=600.0,
+            atr=40.0,
+            point=0.01,
+            recent_spreads=[350.0] * 30,
+            max_spread_atr_ratio=0.08,
+            max_spread_median_ratio=2.0,
+        )
+        self.assertFalse(ok_ibex_hi)
+        self.assertIn("SPREAD_RELATIVO_EXCESIVO", msg_ibex_hi)
+
     def test_causal_breakeven_long_and_short(self):
         adapter = MockMT5Adapter()
         trader = DemoPaperTrader(config=DemoTraderConfig(dry_run=True, magic_number=123), adapter=adapter)
