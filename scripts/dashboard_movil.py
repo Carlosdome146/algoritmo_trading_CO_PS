@@ -92,15 +92,29 @@ def get_dashboard_data(mt5) -> dict:
             total_trades = len(records)
             win_rate = (wins / total_trades * 100) if total_trades > 0 else 0.0
             net_pnl_total = sum(r["net_pnl"] for r in records)
+            gross_win = sum(r["net_pnl"] for r in records if r["net_pnl"] > 0)
+            gross_loss = abs(sum(r["net_pnl"] for r in records if r["net_pnl"] < 0))
+            pf = (gross_win / gross_loss) if gross_loss > 0 else (99.0 if gross_win > 0 else 0.0)
             history_summary = {
                 "total_trades": total_trades,
                 "wins": wins,
                 "losses": losses,
                 "win_rate": win_rate,
                 "net_pnl": net_pnl_total,
+                "profit_factor": pf,
             }
     except Exception:
         history_summary = None
+
+    # Cargar estado del Operador Fantasma (Modelo B - Híbrido 70/30)
+    ghost_summary = None
+    try:
+        ghost_file = ROOT / "data" / "ghost_trader_state.json"
+        if ghost_file.exists():
+            with open(ghost_file, "r", encoding="utf-8") as f:
+                ghost_summary = json.load(f)
+    except Exception:
+        ghost_summary = None
 
     return {
         "connected": True,
@@ -115,6 +129,7 @@ def get_dashboard_data(mt5) -> dict:
         "positions": positions,
         "signals": scan_res,
         "history_summary": history_summary,
+        "ghost": ghost_summary,
     }
 
 
@@ -127,7 +142,7 @@ def render_html(data: dict) -> str:
     pnl_color = "#10b981" if pnl >= 0 else "#ef4444"
     pnl_sign = "+" if pnl > 0 else ""
 
-    # Tarjetas de posiciones
+    # Tarjetas de posiciones reales
     pos_html = ""
     if data["positions"]:
         for p in data["positions"]:
@@ -146,6 +161,79 @@ def render_html(data: dict) -> str:
             """
     else:
         pos_html = "<div style='background:#1f2937;border-radius:10px;padding:16px;color:#9ca3af;text-align:center;'>Sin posiciones abiertas en este momento.</div>"
+
+    # Datos A/B
+    hist = data.get("history_summary") or {}
+    live_trades = hist.get("total_trades", 0)
+    live_wins = hist.get("wins", 0)
+    live_losses = hist.get("losses", 0)
+    live_wr = hist.get("win_rate", 0.0)
+    live_pnl = hist.get("net_pnl", 0.0)
+
+    ghost = data.get("ghost") or {}
+    ghost_balance = ghost.get("virtual_balance", 3000.0)
+    ghost_equity = ghost.get("virtual_equity", 3000.0)
+    ghost_pnl = ghost.get("net_pnl_eur", 0.0)
+    ghost_wr = ghost.get("win_rate", 0.0)
+    ghost_trades = ghost.get("total_trades", 0)
+    ghost_wins = ghost.get("wins", 0)
+    ghost_losses = ghost.get("losses", 0)
+    ghost_positions = ghost.get("open_positions", [])
+
+    diff_pnl = ghost_pnl - live_pnl
+    diff_pnl_col = "#10b981" if diff_pnl >= 0 else "#ef4444"
+    diff_pnl_sign = "+" if diff_pnl > 0 else ""
+
+    ab_html = f"""
+    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+            <span style="font-weight:bold; font-size:15px; color:#c7d2fe;">⚔️ BATALLA DE MODELOS A/B EN VIVO</span>
+            <span style="font-size:11px; background:#312e81; color:#a5b4fc; padding:2px 8px; border-radius:10px; font-weight:bold;">PARALELO</span>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background:#111827; border-radius:8px; padding:12px; border-top: 3px solid #3b82f6;">
+                <div style="font-size:12px; font-weight:bold; color:#60a5fa;">MODELO A (LIVE DEMO)</div>
+                <div style="font-size:10px; color:#9ca3af; margin-bottom:8px;">100% Scalp M15/M30</div>
+                <div style="font-size:14px; font-weight:bold; color:{'#10b981' if live_pnl>=0 else '#ef4444'};">{live_pnl:+.2f} €</div>
+                <div style="font-size:11px; color:#d1d5db; margin-top:4px;">WR: <b>{live_wr:.1f}%</b> ({live_wins}W/{live_losses}L)</div>
+                <div style="font-size:11px; color:#9ca3af; margin-top:2px;">Trades: {live_trades} | Open: {len(data['positions'])}</div>
+            </div>
+            <div style="background:#111827; border-radius:8px; padding:12px; border-top: 3px solid #8b5cf6;">
+                <div style="font-size:12px; font-weight:bold; color:#a78bfa;">MODELO B (FANTASMA)</div>
+                <div style="font-size:10px; color:#9ca3af; margin-bottom:8px;">Híbrido 70/30 + H1 Forex</div>
+                <div style="font-size:14px; font-weight:bold; color:{'#10b981' if ghost_pnl>=0 else '#ef4444'};">{ghost_pnl:+.2f} €</div>
+                <div style="font-size:11px; color:#d1d5db; margin-top:4px;">WR: <b>{ghost_wr:.1f}%</b> ({ghost_wins}W/{ghost_losses}L)</div>
+                <div style="font-size:11px; color:#9ca3af; margin-top:2px;">Trades: {ghost_trades} | Open: {len(ghost_positions)}</div>
+            </div>
+        </div>
+        <div style="margin-top:12px; padding-top:10px; border-top: 1px solid #312e81; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:#9ca3af;">Diferencial Modelo B vs A:</span>
+            <span style="font-size:13px; font-weight:bold; color:{diff_pnl_col};">{diff_pnl_sign}{diff_pnl:.2f} EUR</span>
+        </div>
+    </div>
+    """
+
+    # Tarjetas de posiciones del Fantasma
+    ghost_pos_html = ""
+    if ghost_positions:
+        for gp in ghost_positions:
+            g_col = "#10b981" if gp.get("current_floating_pnl_eur", 0.0) >= 0 else "#ef4444"
+            dir_str = "COMPRA" if gp.get("direction", 1) == 1 else "VENTA"
+            status_badge = "30% RUNNER" if gp.get("status") == "TRAILING_RUNNER" else "ACTIVO 70/30"
+            ghost_pos_html += f"""
+            <div style="background:#1f2937;border-radius:10px;padding:14px;margin-bottom:10px;border-left:4px solid #8b5cf6;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-weight:bold;font-size:15px;">👻 {gp['symbol']} ({dir_str}) <small style="background:#4c1d95; color:#ddd6fe; padding:2px 6px; border-radius:4px; font-size:10px;">{status_badge}</small></span>
+                    <span style="font-size:15px;font-weight:bold;color:{g_col};">{gp.get('current_floating_pnl_eur', 0.0):+.2f} EUR</span>
+                </div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                    Lotes: {gp.get('lots_total', 0.0):.2f} (70%: {gp.get('lots_70', 0.0):.2f} | 30%: {gp.get('lots_30', 0.0):.2f})<br>
+                    Entrada: {gp.get('entry_price', 0.0):.4f} | TP Fijo: {gp.get('fixed_tp', 0.0):.4f} | SL Trailing: {gp.get('current_sl', 0.0):.4f}
+                </div>
+            </div>
+            """
+    else:
+        ghost_pos_html = "<div style='background:#1f2937;border-radius:10px;padding:12px;color:#9ca3af;text-align:center;font-size:13px;'>Sin posiciones en sombra actualmente.</div>"
 
     # Tarjetas de señales / cerebro
     sig_html = ""
@@ -186,7 +274,7 @@ def render_html(data: dict) -> str:
         .stat-box {{ background: #111827; padding: 10px; border-radius: 8px; text-align: center; }}
         .stat-label {{ font-size: 11px; color: #9ca3af; text-transform: uppercase; }}
         .stat-val {{ font-size: 17px; font-weight: bold; margin-top: 4px; }}
-        h2 {{ font-size: 15px; text-transform: uppercase; color: #9ca3af; margin: 18px 0 8px 4px; letter-spacing: 0.5px; }}
+        h2 {{ font-size: 14px; text-transform: uppercase; color: #9ca3af; margin: 18px 0 8px 4px; letter-spacing: 0.5px; }}
         .footer {{ font-size: 11px; color: #6b7280; text-align: center; margin-top: 24px; padding-bottom: 16px; }}
     </style>
 </head>
@@ -210,8 +298,13 @@ def render_html(data: dict) -> str:
         </div>
     </div>
 
-    <h2>Posiciones en Mercado</h2>
+    {ab_html}
+
+    <h2>Posiciones en Mercado Real (Modelo A)</h2>
     {pos_html}
+
+    <h2>Posiciones en Sombra (Modelo B - Fantasma 70/30)</h2>
+    {ghost_pos_html}
 
     <h2>Cerebro Cuantitativo (Semáforo de Índices)</h2>
     {sig_html}
@@ -233,27 +326,54 @@ def render_markdown(data: dict) -> str:
     local_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     utc_ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
 
-    hist = data.get("history_summary")
-    if hist and hist["total_trades"] > 0:
-        hist_str = (
-            f"- **Historial Real:** {hist['total_trades']} operaciones cerradas / "
-            f"{hist['wins']} victorias (**{hist['win_rate']:.1f}% Win Rate**, {hist['net_pnl']:+.2f} EUR ganancia neta)."
-        )
-    else:
-        hist_str = "- **Historial Real:** Monitoreando ejecuciones en vivo en MetaTrader 5."
+    hist = data.get("history_summary") or {}
+    live_trades = hist.get("total_trades", 0)
+    live_wins = hist.get("wins", 0)
+    live_losses = hist.get("losses", 0)
+    live_wr = hist.get("win_rate", 0.0)
+    live_pnl = hist.get("net_pnl", 0.0)
+
+    ghost = data.get("ghost") or {}
+    ghost_balance = ghost.get("virtual_balance", 3000.0)
+    ghost_equity = ghost.get("virtual_equity", 3000.0)
+    ghost_pnl = ghost.get("net_pnl_eur", 0.0)
+    ghost_wr = ghost.get("win_rate", 0.0)
+    ghost_trades = ghost.get("total_trades", 0)
+    ghost_wins = ghost.get("wins", 0)
+    ghost_losses = ghost.get("losses", 0)
+    ghost_positions = ghost.get("open_positions", [])
+
+    diff_pnl = ghost_pnl - live_pnl
+    diff_sign = "+" if diff_pnl > 0 else ""
 
     lines = [
         "# 🤖 Monitor Cuantitativo V3 (Admirals DEMO)",
         "",
         f"**Última actualización:** `{local_ts} (Hora España)` | `{utc_ts}`",
         "",
-        "### 💰 Estado de la Cuenta",
+        "### 💰 Estado de la Cuenta DEMO",
         f"- **Cuenta:** DEMO #{acc['login']} ({acc['server']})",
         f"- **Balance:** {acc['balance']:.2f} EUR",
         f"- **Equity Flotante:** {acc['equity']:.2f} EUR ({pnl_sign}{pnl:.2f} EUR)",
-        hist_str,
+        f"- **Historial Real:** {live_trades} operaciones cerradas / {live_wins} victorias (**{live_wr:.1f}% Win Rate**, {live_pnl:+.2f} EUR ganancia neta).",
         "",
-        "### 📈 Posiciones Abiertas",
+        "### ⚔️ Batalla de Modelos A/B en Vivo (Cuenta Real DEMO vs Operador Fantasma)",
+        "",
+        "| Métrica / Parámetro | Modelo A (En Vivo DEMO) | Modelo B (Fantasma Híbrido 70/30) | Diferencial (B vs A) |",
+        "| :--- | :---: | :---: | :---: |",
+        "| **Arquitectura de Salida** | 100% Scalp (M15/M30) | 70% TP rápido + 30% Runner Trailing EMA20 | Runner dinámico de tendencia |",
+        "| **Estrategia Forex (EURUSD)** | M15 Scalp | H1 Mean Reversion (+40 pips / -35 pips) | Sin fricción de spread |",
+        "| **Riesgo por Operación** | **1.00%** (~30.58 €) | **1.00%** (~30.00 €) | Idéntico |",
+        "| **Filtro Macro / Campana A1** | ✅ Activo (DE, ES, EU, US) | ✅ Activo (DE, ES, EU, US) | Idéntico |",
+        f"| **Balance Acumulado** | **{acc['balance']:.2f} €** | **{ghost_balance:.2f} €** | **{ghost_balance - acc['balance']:+.2f} €** |",
+        f"| **Equity Flotante** | **{acc['equity']:.2f} €** | **{ghost_equity:.2f} €** | **{ghost_equity - acc['equity']:+.2f} €** |",
+        f"| **Operaciones Cerradas** | {live_trades} | {ghost_trades} | - |",
+        f"| **Aciertos / Fallos** | {live_wins}W / {live_losses}L | {ghost_wins}W / {ghost_losses}L | - |",
+        f"| **Tasa de Acierto (Win Rate)** | **{live_wr:.1f}%** | **{ghost_wr:.1f}%** | **{ghost_wr - live_wr:+.1f}%** |",
+        f"| **PnL Neto Acumulado** | **{live_pnl:+.2f} €** | **{ghost_pnl:+.2f} €** | **{diff_sign}{diff_pnl:.2f} €** |",
+        f"| **Posiciones Abiertas** | {len(data['positions'])} | {len(ghost_positions)} | - |",
+        "",
+        "### 📈 Posiciones Abiertas en Mercado Real (Modelo A)",
     ]
     if data["positions"]:
         lines.append("| Ticket | Símbolo | Tipo | Lotes | Entrada | Precio Actual | Stop Loss | PnL (EUR) |")
@@ -265,6 +385,20 @@ def render_markdown(data: dict) -> str:
             )
     else:
         lines.append("*Sin posiciones abiertas en este momento.*")
+
+    if ghost_positions:
+        lines.extend([
+            "",
+            "### 👻 Posiciones Abiertas en Sombra (Modelo B - Fantasma 70/30)",
+            "| Ticket | Símbolo | Dirección | Lotes (70%/30%) | Entrada | TP Fijo (70%) | Stop Trailing | Estado | PnL Flotante |",
+            "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
+        ])
+        for gp in ghost_positions:
+            dir_str = "COMPRA" if gp.get("direction", 1) == 1 else "VENTA"
+            lines.append(
+                f"| #{gp['ticket']} | {gp['symbol']} | {dir_str} | {gp['lots_total']:.2f} ({gp['lots_70']:.2f}/{gp['lots_30']:.2f}) | "
+                f"{gp['entry_price']:.4f} | {gp['fixed_tp']:.4f} | {gp['current_sl']:.4f} | `{gp['status']}` | {gp.get('current_floating_pnl_eur', 0.0):+.2f} € |"
+            )
 
     lines.extend([
         "",
@@ -286,31 +420,12 @@ def render_markdown(data: dict) -> str:
 
     lines.extend([
         "",
-        "### ⚡ Estrategia Universal en Producción: `institutional_sniper_scalp` (Micro-Sweep Reclaim)",
-        "- **Timeframe:** M15 (EURUSD, [IBEX35]) / M30 (GERMANY40, US100, [DJI30], [SP500], GOLD).",
-        "- **Riesgo por Operación:** **1.50%** (~45.75 EUR de presupuesto de riesgo por operación sobre balance).",
-        "- **Beneficio Estimado por Acierto:** **+25.00 EUR a +35.00 EUR** netos.",
-        "- **Límites de operaciones:** **SIN LÍMITE ARTIFICIAL** (`max_trades_per_day = None`). Cada oportunidad de calidad se ejecuta.",
-        "- **Cooldown:** 2 velas (EURUSD) / 3 velas (Índices y Materias Primas).",
-        "",
-        "### 📊 Desglose de Extrapolación de Cartera (Backtesting Octubre 2026 en MT5 Real)",
-        "*Rendimiento conjunto de los 7 activos con spread real de broker y Breakeven Causal:*",
-        "",
-        "| Activo | Símbolo MT5 | TF | Dirección | Trades Oct-26 | Win Rate | Profit Factor | PnL Neto Octubre (1.5% Riesgo) | Retorno R | Salida (TP / SL) |",
-        "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
-        "| **EUR / USD** | `EURUSD` | M15 | **Bidireccional** | 41 | **80.5%** | 1.72 | **+299.70 EUR** | +6.20 R | TP: 3.5 pips / SL: 5.5 pips |",
-        "| **Dow Jones 30** | `[DJI30]` | M30 | Long Only | 8 | **100.0%** | INF | **+213.58 EUR** | +3.85 R | TP: 40.0 pts / SL: 80.0 pts |",
-        "| **DAX 40** | `GERMANY40` | M30 | **Bidireccional** | 15 | **80.0%** | 1.83 | **+124.66 EUR** | +2.53 R | TP: 22.0 pts / SL: 35.0 pts |",
-        "| **IBEX 35** | `[IBEX35]` | M15 | Long Only | 15 | **86.7%** | 2.10 | **+114.05 EUR** | +2.32 R | TP: 20.0 pts / SL: 45.0 pts |",
-        "| **Nasdaq 100** | `US100` | M30 | **Bidireccional** | 21 | **85.7%** | 1.62 | **+99.36 EUR** | +1.87 R | TP: 25.0 pts / SL: 70.0 pts |",
-        "| **S&P 500** | `[SP500]` | M30 | Long Only | 13 | **92.3%** | 2.56 | **+88.84 EUR** | +1.60 R | TP: 4.0 pts / SL: 12.0 pts |",
-        "| **Oro Spot** | `GOLD` | M30 | Long Only | 13 | **92.3%** | 2.34 | **+75.19 EUR** | +1.35 R | TP: 4.0 $ / SL: 15.0 $ |",
-        "| **TOTAL CARTERA** | **7 ACTIVOS** | - | - | **126** | **85.71%** | **2.05** | **+1,015.37 EUR (+33.85%)** | **+19.72 R** | **DD Máx: 8.90%** |",
-        "",
-        "### 🛡️ Salvaguardas y Control de Riesgo",
-        "- **Broker Conectado:** Admirals DEMO `#58678879` (Cuenta Trade.MT5).",
-        "- **RiskPause:** Pausa de 60 min tras 2 pérdidas consecutivas; veto diario tras -1.5% sin reinicio automático.",
-        "- **Gestión Dinámica:** Breakeven Causal se activa al 35-45% del TP para proteger el capital.",
+        "### ⚡ Configuración y Salvaguardas en Producción",
+        "- **Timeframe Principal:** M30 (GERMANY40, US100, [DJI30], [SP500], GOLD) / M15 ([IBEX35]) / H1 (EURUSD en Fantasma).",
+        "- **Riesgo por Operación:** **1.00%** (~30.58 EUR sobre balance en cuenta DEMO).",
+        "- **Filtro Macro:** Blindaje multi-país (DE, ES, EU, US) contra noticias de alto impacto Tier-1.",
+        "- **Filtro de Apertura (Opción A1):** Veto de 5 minutos post-campana Frankfurt (07:00 UTC), Madrid (08:00 UTC) y Wall Street (13:30 UTC).",
+        "- **Salvaguarda RiskPause:** Pausa de 60 min tras 2 pérdidas consecutivas; veto diario tras -1.5% sin reinicio.",
         "",
         "---",
         "*Actualizado automáticamente desde el motor local en segundo plano.*",

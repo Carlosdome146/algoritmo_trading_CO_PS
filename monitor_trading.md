@@ -1,51 +1,48 @@
 # 🤖 Monitor Cuantitativo V3 (Admirals DEMO)
 
-**Última actualización:** `2026-11-04 23:19:54 (Hora España)` | `22:19:54 UTC`
+**Última actualización:** `2026-11-07 01:02:01 (Hora España)` | `00:02:01 UTC`
 
-### 💰 Estado de la Cuenta
+### 💰 Estado de la Cuenta DEMO
 - **Cuenta:** DEMO #58678879 (AdmiralsGroup-Demo)
-- **Balance:** 3076.80 EUR
-- **Equity Flotante:** 3076.80 EUR (0.00 EUR)
-- **Historial Real:** 11 operaciones cerradas / 9 victorias (**81.8% Win Rate**, +76.89 EUR ganancia neta).
+- **Balance:** 3058.12 EUR
+- **Equity Flotante:** 3058.12 EUR (0.00 EUR)
+- **Historial Real:** 13 operaciones cerradas / 10 victorias (**76.9% Win Rate**, +58.21 EUR ganancia neta).
 
-### 📈 Posiciones Abiertas
+### ⚔️ Batalla de Modelos A/B en Vivo (Cuenta Real DEMO vs Operador Fantasma)
+
+| Métrica / Parámetro | Modelo A (En Vivo DEMO) | Modelo B (Fantasma Híbrido 70/30) | Diferencial (B vs A) |
+| :--- | :---: | :---: | :---: |
+| **Arquitectura de Salida** | 100% Scalp (M15/M30) | 70% TP rápido + 30% Runner Trailing EMA20 | Runner dinámico de tendencia |
+| **Estrategia Forex (EURUSD)** | M15 Scalp | H1 Mean Reversion (+40 pips / -35 pips) | Sin fricción de spread |
+| **Riesgo por Operación** | **1.00%** (~30.58 €) | **1.00%** (~30.00 €) | Idéntico |
+| **Filtro Macro / Campana A1** | ✅ Activo (DE, ES, EU, US) | ✅ Activo (DE, ES, EU, US) | Idéntico |
+| **Balance Acumulado** | **3058.12 €** | **3000.00 €** | **-58.12 €** |
+| **Equity Flotante** | **3058.12 €** | **3000.00 €** | **-58.12 €** |
+| **Operaciones Cerradas** | 13 | 0 | - |
+| **Aciertos / Fallos** | 10W / 3L | 0W / 0L | - |
+| **Tasa de Acierto (Win Rate)** | **76.9%** | **0.0%** | **-76.9%** |
+| **PnL Neto Acumulado** | **+58.21 €** | **+0.00 €** | **-58.21 €** |
+| **Posiciones Abiertas** | 0 | 0 | - |
+
+### 📈 Posiciones Abiertas en Mercado Real (Modelo A)
 *Sin posiciones abiertas en este momento.*
 
 ### 🧠 Semáforo del Cerebro Cuantitativo (Decisiones de los Algoritmos)
 | Mercado | Estrategia | Estado | Cierre | SMA200 | RSI(2) | IBS | Criterio / Motivo |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 25816.61 | 24911.31 | 43.9 | 0.42 | RSI(2) neutral (43.9 >= 15.0); Precio dentro de bandas Bollinger (25816.61 > 24925.97) |
-| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 18802.39 | 18688.20 | 46.4 | 0.31 | RSI(2) neutral (46.4 >= 10.0); Precio dentro de bandas Bollinger (18802.39 > 18676.57) |
-| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.15 | 93.8 | 0.51 | Precio (1.12) < SMA200 (1.15) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.01 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=93.8) |
-| DOW30 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 51663.00 | 50695.73 | 20.8 | 0.30 | RSI(2) neutral (20.8 >= 10.0) |
-| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 3929.99 | 4480.43 | 38.9 | 0.46 | Precio (3929.99) < SMA200 (4480.43) [Tendencia bajista]; RSI(2) neutral (38.9 >= 10.0) |
-| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7578.44 | 7328.49 | 36.1 | 0.79 | RSI(2) neutral (36.1 >= 10.0) |
+| DAX40 | `idx_dax_bollinger_dip` | 🟡 *ESPERA* | 26200.64 | 24926.27 | 48.4 | 0.02 | RSI(2) neutral (48.4 >= 15.0); Precio dentro de bandas Bollinger (26200.64 > 24898.29) |
+| IBEX35 | `idx_ibex_bollinger_dip` | 🟡 *ESPERA* | 19388.47 | 18706.23 | 72.4 | 0.14 | RSI(2) neutral (72.4 >= 10.0); Precio dentro de bandas Bollinger (19388.47 > 18637.24) |
+| EURUSD | `fx_eurusd_ker_exhaustion` | 🟡 *ESPERA* | 1.12 | 1.15 | 67.6 | 0.24 | Precio (1.12) < SMA200 (1.15) [Tendencia bajista]; Mercado en rango / no tendencial (KER10=0.01 < 0.42); Sin extremo de agotamiento en bandas 2.0σ (RSI2=67.6) |
+| DOW30 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 51237.61 | 50729.42 | 28.4 | 0.00 | RSI(2) neutral (28.4 >= 10.0) |
+| ORO | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 4088.78 | 4468.18 | 87.4 | 0.35 | Precio (4088.78) < SMA200 (4468.18) [Tendencia bajista]; RSI(2) neutral (87.4 >= 10.0) |
+| SP500 | `idx_rsi2_dip_regime` | 🟡 *ESPERA* | 7329.53 | 7333.90 | 15.3 | 0.01 | Precio (7329.53) < SMA200 (7333.90) [Tendencia bajista]; RSI(2) neutral (15.3 >= 10.0) |
 
-### ⚡ Estrategia Universal en Producción: `institutional_sniper_scalp` (Micro-Sweep Reclaim)
-- **Timeframe:** M15 (EURUSD, [IBEX35]) / M30 (GERMANY40, US100, [DJI30], [SP500], GOLD).
-- **Riesgo por Operación:** **1.50%** (~45.75 EUR de presupuesto de riesgo por operación sobre balance).
-- **Beneficio Estimado por Acierto:** **+25.00 EUR a +35.00 EUR** netos.
-- **Límites de operaciones:** **SIN LÍMITE ARTIFICIAL** (`max_trades_per_day = None`). Cada oportunidad de calidad se ejecuta.
-- **Cooldown:** 2 velas (EURUSD) / 3 velas (Índices y Materias Primas).
-
-### 📊 Desglose de Extrapolación de Cartera (Backtesting Octubre 2026 en MT5 Real)
-*Rendimiento conjunto de los 7 activos con spread real de broker y Breakeven Causal:*
-
-| Activo | Símbolo MT5 | TF | Dirección | Trades Oct-26 | Win Rate | Profit Factor | PnL Neto Octubre (1.5% Riesgo) | Retorno R | Salida (TP / SL) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **EUR / USD** | `EURUSD` | M15 | **Bidireccional** | 41 | **80.5%** | 1.72 | **+299.70 EUR** | +6.20 R | TP: 3.5 pips / SL: 5.5 pips |
-| **Dow Jones 30** | `[DJI30]` | M30 | Long Only | 8 | **100.0%** | INF | **+213.58 EUR** | +3.85 R | TP: 40.0 pts / SL: 80.0 pts |
-| **DAX 40** | `GERMANY40` | M30 | **Bidireccional** | 15 | **80.0%** | 1.83 | **+124.66 EUR** | +2.53 R | TP: 22.0 pts / SL: 35.0 pts |
-| **IBEX 35** | `[IBEX35]` | M15 | Long Only | 15 | **86.7%** | 2.10 | **+114.05 EUR** | +2.32 R | TP: 20.0 pts / SL: 45.0 pts |
-| **Nasdaq 100** | `US100` | M30 | **Bidireccional** | 21 | **85.7%** | 1.62 | **+99.36 EUR** | +1.87 R | TP: 25.0 pts / SL: 70.0 pts |
-| **S&P 500** | `[SP500]` | M30 | Long Only | 13 | **92.3%** | 2.56 | **+88.84 EUR** | +1.60 R | TP: 4.0 pts / SL: 12.0 pts |
-| **Oro Spot** | `GOLD` | M30 | Long Only | 13 | **92.3%** | 2.34 | **+75.19 EUR** | +1.35 R | TP: 4.0 $ / SL: 15.0 $ |
-| **TOTAL CARTERA** | **7 ACTIVOS** | - | - | **126** | **85.71%** | **2.05** | **+1,015.37 EUR (+33.85%)** | **+19.72 R** | **DD Máx: 8.90%** |
-
-### 🛡️ Salvaguardas y Control de Riesgo
-- **Broker Conectado:** Admirals DEMO `#58678879` (Cuenta Trade.MT5).
-- **RiskPause:** Pausa de 60 min tras 2 pérdidas consecutivas; veto diario tras -1.5% sin reinicio automático.
-- **Gestión Dinámica:** Breakeven Causal se activa al 35-45% del TP para proteger el capital.
+### ⚡ Configuración y Salvaguardas en Producción
+- **Timeframe Principal:** M30 (GERMANY40, US100, [DJI30], [SP500], GOLD) / M15 ([IBEX35]) / H1 (EURUSD en Fantasma).
+- **Riesgo por Operación:** **1.00%** (~30.58 EUR sobre balance en cuenta DEMO).
+- **Filtro Macro:** Blindaje multi-país (DE, ES, EU, US) contra noticias de alto impacto Tier-1.
+- **Filtro de Apertura (Opción A1):** Veto de 5 minutos post-campana Frankfurt (07:00 UTC), Madrid (08:00 UTC) y Wall Street (13:30 UTC).
+- **Salvaguarda RiskPause:** Pausa de 60 min tras 2 pérdidas consecutivas; veto diario tras -1.5% sin reinicio.
 
 ---
 *Actualizado automáticamente desde el motor local en segundo plano.*

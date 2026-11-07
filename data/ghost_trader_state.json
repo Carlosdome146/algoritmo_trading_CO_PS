@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "strategy_name": "hybrid_runner_70_30_and_h1_forex",
+  "updated_at": "2026-11-07T00:02:07.771023+00:00",
+  "virtual_initial_capital": 3000.0,
+  "virtual_balance": 3000.0,
+  "virtual_equity": 3000.0,
+  "total_trades": 0,
+  "wins": 0,
+  "losses": 0,
+  "win_rate": 0.0,
+  "profit_factor": 0.0,
+  "net_pnl_eur": 0.0,
+  "open_positions": [],
+  "closed_trades": [],
+  "last_traded_bar_time": {},
+  "next_ticket": 9000001
+}
