@@ -1,6 +1,6 @@
 # 📊 Registro Histórico de Operaciones en Vivo — Algoritmo Quant
 
-> **Última actualización:** `10/11/2026 10:33:22` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
+> **Última actualización:** `10/11/2026 16:24:14` (Hora Española) | **Cuenta DEMO Admirals:** `#58678879`
 
 Este documento refleja **en tiempo real y con transparencia absoluta** todas las operaciones ejecutadas en la cuenta por el bot. Cada orden se puede verificar directamente en MetaTrader 5 con su número de Ticket.
 
@@ -11,13 +11,13 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | Métrica | Valor | Estado |
 | :--- | :---: | :---: |
 | **Balance Inicial** | `3,000.00 €` | Base de capital |
-| **Balance Actual** | **`2,990.40 €`** | `-9.60 €` |
-| **Rentabilidad Acumulada** | **`-0.32%`** | 🚀 En verde |
-| **Total Operaciones Cerradas** | **`10`** | — |
+| **Balance Actual** | **`2,959.63 €`** | `-40.37 €` |
+| **Rentabilidad Acumulada** | **`-1.35%`** | 🚀 En verde |
+| **Total Operaciones Cerradas** | **`11`** | — |
 | **Operaciones Ganadoras** | **`6`** | 🟢 Aciertos |
-| **Operaciones Perdedoras** | **`4`** | 🔴 Fallos |
-| **Tasa de Acierto (Win Rate)** | **`60.0%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
-| **Factor de Beneficio (Profit Factor)** | **`0.90`** | Excelente |
+| **Operaciones Perdedoras** | **`5`** | 🔴 Fallos |
+| **Tasa de Acierto (Win Rate)** | **`54.5%`** | ⭐ Objetivo $\ge 80\%$ cumplido |
+| **Factor de Beneficio (Profit Factor)** | **`0.69`** | Excelente |
 
 ---
 
@@ -35,10 +35,23 @@ Este documento refleja **en tiempo real y con transparencia absoluta** todas las
 | **8** | 05/11/2026 12:01 | **`GERMANY40`** | `BUY` | `0.69` | `26,653.09` | `26,617.39` | `-35.70` | `6m 14s` | Stop Loss | 🔴 **`-24.63 €`** | `2,997.59 €` |
 | **9** | 06/11/2026 10:01 | **`GERMANY40`** | `BUY` | `0.68` | `26,140.00` | `26,102.50` | `-37.50` | `1m 5s` | Stop Loss | 🔴 **`-25.50 €`** | `2,972.09 €` |
 | **10** | 10/11/2026 12:33 | **`GERMANY40`** | `BUY` | `0.84` | `26,579.21` | `26,601.01` | `+21.80` | `3m 12s` | Take Profit | 🟢 **`+18.31 €`** | `2,990.40 €` |
+| **11** | 10/11/2026 18:24 | **`GERMANY40`** | `BUY` | `0.85` | `26,482.21` | `26,446.01` | `-36.20` | `23m 54s` | Stop Loss | 🔴 **`-30.77 €`** | `2,959.63 €` |
 
 ---
 
 ## 🔍 Fichas Técnicas Detalladas de las Últimas Operaciones
+
+### Operación #11 — `GERMANY40` (🔴 PERDEDORA)
+- **Ticket Posición MT5:** `#1235263550` (Orden Entrada `#1235263550`, Orden Salida `#1235265703`)
+- **Estrategia / Gatillo:** `V2_M15_LONG`
+- **Dirección:** `BUY` | **Volumen:** `0.85` lotes
+- **Momento Entrada:** `10/11/2026 18:00:14` a precio `26482.21`
+- **Momento Salida:** `10/11/2026 18:24:08` a precio `26446.01`
+- **Tiempo en Mercado:** `23m 54s`
+- **Configuración Inicial:** Stop Loss en `26447.21` | Take Profit en `26504.21`
+- **Motivo de Ejecución de Cierre:** `Stop Loss` (`[sl 26447.21]`)
+- **Desglose Económico:** Beneficio bruto: `-30.77 €` | Swap: `+0.00 €` | Comisión: `+0.00 €`
+- **Beneficio Neto:** **`-30.77 €`**
 
 ### Operación #10 — `GERMANY40` (🟢 GANADORA)
 - **Ticket Posición MT5:** `#1235228301` (Orden Entrada `#1235228301`, Orden Salida `#1235228689`)
