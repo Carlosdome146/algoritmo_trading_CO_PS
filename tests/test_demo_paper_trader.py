@@ -622,6 +622,124 @@ class DemoPaperTraderTests(unittest.TestCase):
             self.assertEqual(res["status"], "REJECTED_NEWS_BLACKOUT")
             self.assertIn("US ISM Services", res["reason"])
 
+    def test_hybrid_70_30_order_split_and_runner_tracking(self):
+        """Verifica que en cuenta live el disparo sniper divida la orden en 70% TP y 30% Runner."""
+        import unittest.mock as mock
+        import pandas as pd
+        adapter = MockMT5Adapter()
+        bp = 26500.0
+        adapter.mock_rates_m15["GERMANY40"] = make_synthetic_rates(160, base_price=bp, trend=0.5, step_minutes=30)
+        adapter.mock_rates_h1["GERMANY40"] = make_synthetic_rates(80, base_price=bp, trend=1.0, step_minutes=60)
+        adapter.mock_ticks["GERMANY40"] = SimpleNamespace(bid=bp, ask=bp + 1.0)
+        adapter.mock_ticks["EURUSD"] = SimpleNamespace(bid=1.12, ask=1.1201)
+
+        cfg = DemoTraderConfig(
+            symbols=["GERMANY40"],
+            strategy="institutional_sniper_scalp",
+            timeframe="M30",
+            dry_run=False,
+            enable_runner_trailing=True,
+            enable_news_blackout=False,
+            risk_fraction=0.0100,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+
+        now_valid = datetime(2026, 11, 10, 10, 0, tzinfo=timezone.utc)
+        with mock.patch("trading_v2.execution.demo_paper_trader.generate_sniper_signals") as mock_sig:
+            mock_sig.return_value = pd.DataFrame({"signal": [0, 1]})
+            res = trader.evaluate_symbol("GERMANY40", now_valid)
+
+            self.assertEqual(res["status"], "LIVE_ORDER_EXECUTED")
+            self.assertIn("ticket_70", res)
+            self.assertIn("ticket_30", res)
+            self.assertGreater(res["lots_70"], 0)
+            self.assertGreater(res["lots_30"], 0)
+            # El 30% runner debe estar registrado en active_runners
+            self.assertIn(str(res["ticket_30"]), trader.active_runners)
+            runner_info = trader.active_runners[str(res["ticket_30"])]
+            self.assertEqual(runner_info["symbol"], "GERMANY40")
+            self.assertEqual(runner_info["order_70_ticket"], res["ticket_70"])
+
+    def test_runner_breakeven_and_ema20_trailing(self):
+        """Verifica que el runner se mueva a Breakeven al cerrar el 70% y luego haga trailing con EMA20."""
+        adapter = MockMT5Adapter()
+        cfg = DemoTraderConfig(dry_run=False, magic_number=20261018)
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        trader.latest_atr["GERMANY40"] = 40.0
+
+        runner_ticket = 8888
+        trader.active_runners[str(runner_ticket)] = {
+            "order_70_ticket": 7777,
+            "entry_price": 26500.0,
+            "symbol": "GERMANY40",
+            "sig": 1,
+            "be_moved": False,
+            "target_tp": 26522.0,
+            "digits": 2,
+        }
+
+        # Simular que el ticket 7777 (70%) ya cerró y solo queda el runner 8888
+        pos_runner = SimpleNamespace(
+            ticket=runner_ticket,
+            symbol="GERMANY40",
+            type=adapter.ORDER_TYPE_BUY,
+            price_open=26500.0,
+            sl=26465.0,  # SL inicial
+            tp=0.0,
+            magic=20261018,
+        )
+        adapter.mock_positions = [pos_runner]
+        adapter.mock_ticks["GERMANY40"] = SimpleNamespace(bid=26525.0, ask=26526.0)
+
+        now_utc = datetime(2026, 11, 10, 11, 0, tzinfo=timezone.utc)
+        actions = trader.check_and_apply_runner_trailing(now_utc)
+
+        # Debe haberse movido a Breakeven
+        self.assertTrue(trader.active_runners[str(runner_ticket)]["be_moved"])
+        self.assertGreaterEqual(len(actions), 1)
+        self.assertGreaterEqual(actions[0]["new_sl"], 26500.0)
+
+        # Ahora simular velas cerradas con EMA20 subiendo a 26515.0
+        adapter.mock_rates_m15["GERMANY40"] = make_synthetic_rates(60, base_price=26515.0, trend=0.1, step_minutes=30)
+        pos_runner.sl = 26502.0  # SL actual en BE
+        actions_trail = trader.check_and_apply_runner_trailing(now_utc)
+        self.assertTrue(len(actions_trail) >= 1)
+        self.assertGreater(actions_trail[0]["new_sl"], 26502.0)
+
+    def test_regional_european_correlation_rejection(self):
+        """Verifica que si ya hay un índice europeo abierto, no se permita abrir otro europeo simultáneamente."""
+        import unittest.mock as mock
+        import pandas as pd
+        adapter = MockMT5Adapter()
+        # DAX ya está abierto
+        adapter.mock_positions = [
+            SimpleNamespace(ticket=101, magic=20261018, symbol="GERMANY40", type=0, volume=0.8, price_open=26500.0, sl=26465.0, tp=26522.0, price_current=26505.0)
+        ]
+        bp = 20000.0
+        adapter.mock_rates_m15["[IBEX35]"] = make_synthetic_rates(160, base_price=bp, trend=0.5, step_minutes=15)
+        adapter.mock_rates_h1["[IBEX35]"] = make_synthetic_rates(80, base_price=bp, trend=1.0, step_minutes=60)
+        adapter.mock_ticks["[IBEX35]"] = SimpleNamespace(bid=bp, ask=bp + 3.0)
+
+        cfg = DemoTraderConfig(
+            symbols=["[IBEX35]"],
+            strategy="institutional_sniper_scalp",
+            dry_run=True,
+            max_open_positions=5,
+            max_concurrent_indices=2,
+            max_european_indices=1,
+            enable_news_blackout=False,
+        )
+        trader = DemoPaperTrader(config=cfg, adapter=adapter)
+        trader.initialize()
+        now_valid = datetime(2026, 11, 10, 10, 0, tzinfo=timezone.utc)
+
+        with mock.patch("trading_v2.execution.demo_paper_trader.generate_sniper_signals") as mock_sig:
+            mock_sig.return_value = pd.DataFrame({"signal": [0, 1]})
+            res = trader.evaluate_symbol("[IBEX35]", now_valid)
+            self.assertEqual(res["status"], "REJECTED_EUROPEAN_INDEX_CORRELATION")
+
 
 
 if __name__ == "__main__":

@@ -432,6 +432,10 @@ class DemoTraderConfig:
     enable_friday_auto_square: bool = True
     friday_cutoff_hour: int = 20
     friday_cutoff_minute: int = 30
+    enable_runner_trailing: bool = True  # Arquitectura Híbrida 70/30 (+4.272€ en 4 años)
+    runner_ratio: float = 0.30           # 30% runner, 70% TP rápido
+    max_european_indices: int = 1        # Máximo 1 índice europeo abierto a la vez (evita correlación DAX+IBEX)
+    max_us_indices: int = 1              # Máximo 1 índice americano abierto a la vez
 
 
 class DemoPaperTrader:
@@ -462,6 +466,7 @@ class DemoPaperTrader:
         )
         self.last_traded_bar_time: dict[str, int] = {}
         self.last_trade_time: dict[str, datetime] = {}
+        self.active_runners: dict[str, dict] = {}
         self._load_state()
         self.recent_spreads: dict[str, list[float]] = {s: [] for s in self.cfg.symbols}
         self.latest_atr: dict[str, float] = {}
@@ -717,6 +722,7 @@ class DemoPaperTrader:
             data = {
                 "last_traded_bar_time": self.last_traded_bar_time,
                 "last_trade_time": {k: v.isoformat() for k, v in self.last_trade_time.items()},
+                "active_runners": self.active_runners,
             }
             with open(state_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
@@ -734,6 +740,7 @@ class DemoPaperTrader:
                 self.last_trade_time = {
                     k: datetime.fromisoformat(v) for k, v in raw_times.items()
                 }
+                self.active_runners = data.get("active_runners", {})
         except Exception:
             self.last_traded_bar_time = {}
             self.last_trade_time = {}
@@ -879,12 +886,12 @@ class DemoPaperTrader:
                 allow_s = True
             elif is_dax:
                 # GERMANY40 Micro-Sweep Reclaim M30 (80.0% WR, PF 1.83, +124.66 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 7, 17
+                target_u, stop_u, sweep_u, s_start, s_end = 22.0, 35.0, 0.0, 8, 15
                 min_wick = 0.35
                 allow_s = True
             elif is_ibex:
                 # [IBEX35] Micro-Sweep Reclaim M15 (86.7% WR, PF 2.10, +114.05 EUR en Oct 2026)
-                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 7, 17
+                target_u, stop_u, sweep_u, s_start, s_end = 20.0, 45.0, 0.0, 8, 15
                 min_wick = 0.35
                 allow_s = False
             elif is_dji:
@@ -1008,8 +1015,39 @@ class DemoPaperTrader:
             self.log(f"[{symbol}] Límite de posiciones abiertas alcanzado ({len(our_positions)}/{self.cfg.max_open_positions})")
             return {"status": "REJECTED_MAX_POSITIONS", "symbol": symbol}
 
-        # Filtro de correlación de cartera: limitar índices bursátiles simultáneos
+        # Filtro de correlación global de cartera: limitar total de índices bursátiles simultáneos
         INDEX_SYMBOLS = {"GERMANY40", "DE40", "[SP500]", "US500", "US100", "USTEC", "[DJI30]", "US30", "[IBEX35]", "IBEX35", "SPAIN35"}
+        if normalize_symbol_key(symbol) in {normalize_symbol_key(s) for s in INDEX_SYMBOLS}:
+            active_indices = [
+                p for p in our_positions
+                if normalize_symbol_key(getattr(p, "symbol", "")) in {normalize_symbol_key(s) for s in INDEX_SYMBOLS}
+            ]
+            if len(active_indices) >= self.cfg.max_concurrent_indices:
+                self.log(f"[{symbol}] Límite de correlación de índices alcanzado ({len(active_indices)}/{self.cfg.max_concurrent_indices} índices abiertos)")
+                return {"status": "REJECTED_CORRELATION_LIMIT", "symbol": symbol}
+
+        # Filtros de correlación regional: limitar índices europeos y estadounidenses
+        EUROPEAN_INDICES = {"GERMANY40", "DE40", "[IBEX35]", "IBEX35", "SPAIN35"}
+        US_INDICES = {"[SP500]", "US500", "US100", "USTEC", "[DJI30]", "US30"}
+
+        norm_sym = normalize_symbol_key(symbol)
+        if norm_sym in {normalize_symbol_key(s) for s in EUROPEAN_INDICES}:
+            active_euro = [
+                p for p in our_positions
+                if normalize_symbol_key(getattr(p, "symbol", "")) in {normalize_symbol_key(s) for s in EUROPEAN_INDICES}
+            ]
+            if len(active_euro) >= self.cfg.max_european_indices:
+                self.log(f"[{symbol}] Límite de correlación europea alcanzado ({len(active_euro)}/{self.cfg.max_european_indices} índice europeo abierto)")
+                return {"status": "REJECTED_EUROPEAN_INDEX_CORRELATION", "symbol": symbol}
+
+        if norm_sym in {normalize_symbol_key(s) for s in US_INDICES}:
+            active_us = [
+                p for p in our_positions
+                if normalize_symbol_key(getattr(p, "symbol", "")) in {normalize_symbol_key(s) for s in US_INDICES}
+            ]
+            if len(active_us) >= self.cfg.max_us_indices:
+                self.log(f"[{symbol}] Límite de correlación USA alcanzado ({len(active_us)}/{self.cfg.max_us_indices} índice americano abierto)")
+                return {"status": "REJECTED_US_INDEX_CORRELATION", "symbol": symbol}
         if normalize_symbol_key(symbol) in {normalize_symbol_key(s) for s in INDEX_SYMBOLS}:
             active_indices = [
                 p for p in our_positions
@@ -1102,15 +1140,53 @@ class DemoPaperTrader:
 
         # 13. Ejecución de la orden (Simulación o Live en DEMO)
         direction_str = "LONG" if sig == 1 else "SHORT"
-        self.log(
-            f"[DISPARO M15 {direction_str} en {symbol}] Lotes: {lot_res.lots} | "
-            f"Entrada: {entry_price:.{spec.digits}f} | SL: {sl_price:.{spec.digits}f} | TP: {tp_price:.{spec.digits}f} | "
-            f"Riesgo: {lot_res.actual_risk_account_ccy:.2f} {acc.currency} (Presupuesto: {lot_res.risk_budget_account_ccy:.2f} {acc.currency})"
-        )
+
+        # Comprobar divisibilidad cuantitativa para Arquitectura Híbrida 70/30
+        lots_total = lot_res.lots
+        can_split = False
+        lots_70 = lots_total
+        lots_30 = 0.0
+
+        if self.cfg.enable_runner_trailing and self.cfg.strategy == "institutional_sniper_scalp":
+            step_dec = max(0, -int(math.floor(math.log10(spec.lot_step) + 1e-9)))
+            calc_30 = round(lots_total * self.cfg.runner_ratio / spec.lot_step) * spec.lot_step
+            calc_30 = round(calc_30, step_dec)
+            if calc_30 >= spec.lot_min:
+                calc_70 = round((lots_total - calc_30) / spec.lot_step) * spec.lot_step
+                calc_70 = round(calc_70, step_dec)
+                if calc_70 >= spec.lot_min:
+                    lots_70 = calc_70
+                    lots_30 = calc_30
+                    can_split = True
+
+        if can_split:
+            self.log(
+                f"[DISPARO HÍBRIDO 70/30 {direction_str} en {symbol}] Lote 70%: {lots_70} | Lote 30% Runner: {lots_30} | "
+                f"Entrada: {entry_price:.{spec.digits}f} | SL: {sl_price:.{spec.digits}f} | TP 70%: {tp_price:.{spec.digits}f} | "
+                f"Riesgo Total: {lot_res.actual_risk_account_ccy:.2f} {acc.currency}"
+            )
+        else:
+            self.log(
+                f"[DISPARO M15 {direction_str} en {symbol}] Lotes: {lot_res.lots} | "
+                f"Entrada: {entry_price:.{spec.digits}f} | SL: {sl_price:.{spec.digits}f} | TP: {tp_price:.{spec.digits}f} | "
+                f"Riesgo: {lot_res.actual_risk_account_ccy:.2f} {acc.currency} (Presupuesto: {lot_res.risk_budget_account_ccy:.2f} {acc.currency})"
+            )
 
         if self.cfg.dry_run:
             self.last_traded_bar_time[symbol] = last_bar_time
             self.last_trade_time[symbol] = now_utc
+            if can_split:
+                dummy_ticket_70 = 9100000 + int(now_utc.timestamp()) % 100000
+                dummy_ticket_30 = dummy_ticket_70 + 1
+                self.active_runners[str(dummy_ticket_30)] = {
+                    "order_70_ticket": dummy_ticket_70,
+                    "entry_price": entry_price,
+                    "symbol": symbol,
+                    "sig": sig,
+                    "be_moved": False,
+                    "target_tp": tp_price,
+                    "digits": spec.digits,
+                }
             self._save_state()
             self.log(f"[DRY-RUN] Orden simulada registrada con éxito para {symbol}.")
             return {
@@ -1135,44 +1211,121 @@ class DemoPaperTrader:
             else:
                 filling = self.adapter.ORDER_FILLING_RETURN
 
-        trade_request = {
-            "action": self.adapter.TRADE_ACTION_DEAL,
-            "symbol": symbol,
-            "volume": lot_res.lots,
-            "type": order_type,
-            "price": entry_price,
-            "sl": sl_price,
-            "tp": tp_price,
-            "deviation": 20,
-            "magic": self.cfg.magic_number,
-            "comment": f"V2_M15_{direction_str}",
-            "type_time": self.adapter.ORDER_TIME_GTC,
-            "type_filling": filling,
-        }
+        if not can_split:
+            # Orden simple estándar sin división
+            trade_request = {
+                "action": self.adapter.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lot_res.lots,
+                "type": order_type,
+                "price": entry_price,
+                "sl": sl_price,
+                "tp": tp_price,
+                "deviation": 20,
+                "magic": self.cfg.magic_number,
+                "comment": f"V2_M15_{direction_str}",
+                "type_time": self.adapter.ORDER_TIME_GTC,
+                "type_filling": filling,
+            }
 
-        order_res = self.adapter.order_send(trade_request)
-        retcode = getattr(order_res, "retcode", None)
-        if retcode == self.adapter.TRADE_RETCODE_DONE:
-            order_ticket = getattr(order_res, "order", getattr(order_res, "deal", 0))
+            order_res = self.adapter.order_send(trade_request)
+            retcode = getattr(order_res, "retcode", None)
+            if retcode == self.adapter.TRADE_RETCODE_DONE:
+                order_ticket = getattr(order_res, "order", getattr(order_res, "deal", 0))
+                self.last_traded_bar_time[symbol] = last_bar_time
+                self.last_trade_time[symbol] = now_utc
+                self._save_state()
+                self.log(f"[ORDEN EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
+                return {
+                    "status": "LIVE_ORDER_EXECUTED",
+                    "symbol": symbol,
+                    "ticket": order_ticket,
+                    "direction": direction_str,
+                    "lots": lot_res.lots,
+                }
+            else:
+                err_comment = getattr(order_res, "comment", "Desconocido")
+                self.log(f"[ERROR MT5] Fallo al enviar orden en {symbol}: {err_comment} (retcode={retcode})")
+                return {
+                    "status": "ORDER_SEND_ERROR",
+                    "symbol": symbol,
+                    "retcode": retcode,
+                    "comment": err_comment,
+                }
+        else:
+            # Ejecución Híbrida 70 / 30 en DEMO:
+            # Tramo 1: 70% a TP fijo y SL inicial
+            req_70 = {
+                "action": self.adapter.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lots_70,
+                "type": order_type,
+                "price": entry_price,
+                "sl": sl_price,
+                "tp": tp_price,
+                "deviation": 20,
+                "magic": self.cfg.magic_number,
+                "comment": f"V2_70_{direction_str}",
+                "type_time": self.adapter.ORDER_TIME_GTC,
+                "type_filling": filling,
+            }
+            res_70 = self.adapter.order_send(req_70)
+            retcode_70 = getattr(res_70, "retcode", None)
+            if retcode_70 != self.adapter.TRADE_RETCODE_DONE:
+                err_70 = getattr(res_70, "comment", "Desconocido")
+                self.log(f"[ERROR MT5] Fallo al enviar tramo 70% en {symbol}: {err_70} (retcode={retcode_70})")
+                return {"status": "FAILED_ORDER_SEND_70", "symbol": symbol, "error": err_70}
+
+            ticket_70 = getattr(res_70, "order", getattr(res_70, "deal", 0))
+            self.log(f"[DEMO 70% EJECUTADO] {symbol} Ticket #{ticket_70} ({lots_70} lotes) | TP={tp_price} | SL={sl_price}")
+
+            # Tramo 2: 30% Runner (SL inicial, sin TP fijo para permitir trailing)
+            req_30 = {
+                "action": self.adapter.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lots_30,
+                "type": order_type,
+                "price": entry_price,
+                "sl": sl_price,
+                "tp": 0.0,
+                "deviation": 20,
+                "magic": self.cfg.magic_number,
+                "comment": f"V2_30_{direction_str}",
+                "type_time": self.adapter.ORDER_TIME_GTC,
+                "type_filling": filling,
+            }
+            res_30 = self.adapter.order_send(req_30)
+            retcode_30 = getattr(res_30, "retcode", None)
+            if retcode_30 == self.adapter.TRADE_RETCODE_DONE:
+                ticket_30 = getattr(res_30, "order", getattr(res_30, "deal", 0))
+                self.log(f"[DEMO 30% RUNNER EJECUTADO] {symbol} Ticket #{ticket_30} ({lots_30} lotes) | SL={sl_price} | TP=Trailing EMA20")
+                self.active_runners[str(ticket_30)] = {
+                    "order_70_ticket": ticket_70,
+                    "entry_price": entry_price,
+                    "symbol": symbol,
+                    "sig": sig,
+                    "be_moved": False,
+                    "target_tp": tp_price,
+                    "digits": spec.digits,
+                }
+            else:
+                ticket_30 = 0
+                err_30 = getattr(res_30, "comment", "Desconocido")
+                self.log(f"[ADVERTENCIA MT5] Fallo tramo 30% runner en {symbol}: {err_30}")
+
             self.last_traded_bar_time[symbol] = last_bar_time
             self.last_trade_time[symbol] = now_utc
             self._save_state()
-            self.log(f"[ORDEN EJECUTADA EN DEMO] {symbol} Ticket #{order_ticket} a {entry_price}")
             return {
                 "status": "LIVE_ORDER_EXECUTED",
                 "symbol": symbol,
-                "ticket": order_ticket,
+                "ticket": ticket_70,
+                "ticket_70": ticket_70,
+                "ticket_30": ticket_30,
                 "direction": direction_str,
-                "lots": lot_res.lots,
-            }
-        else:
-            err_comment = getattr(order_res, "comment", "Desconocido")
-            self.log(f"[ERROR MT5] Fallo al enviar orden en {symbol}: {err_comment} (retcode={retcode})")
-            return {
-                "status": "ORDER_SEND_ERROR",
-                "symbol": symbol,
-                "retcode": retcode,
-                "comment": err_comment,
+                "lots": lots_total,
+                "lots_70": lots_70,
+                "lots_30": lots_30,
             }
 
     def _close_position(self, pos: Any, reason: str) -> dict:
@@ -1414,12 +1567,111 @@ class DemoPaperTrader:
                 "comment": err_comment,
             }
 
+    def check_and_apply_runner_trailing(self, now_utc: datetime) -> list[dict]:
+        """Gestiona las posiciones Runner del 30%:
+        1. Al cerrarse el tramo 70% en TP (o precio alcanzar TP), mueve el SL del Runner a Breakeven.
+        2. En velas cerradas subsiguientes, persigue la tendencia ajustando el SL dinámicamente detrás de la EMA20.
+        """
+        if not self.active_runners:
+            return []
+
+        positions = self.adapter.positions_get()
+        open_pos_map = {}
+        if positions:
+            for p in positions:
+                t = getattr(p, "ticket", 0)
+                open_pos_map[t] = p
+
+        actions = []
+        finished_runners = []
+
+        for r_ticket_str, r_data in list(self.active_runners.items()):
+            try:
+                r_ticket = int(r_ticket_str)
+            except ValueError:
+                finished_runners.append(r_ticket_str)
+                continue
+
+            if r_ticket not in open_pos_map:
+                finished_runners.append(r_ticket_str)
+                continue
+
+            pos = open_pos_map[r_ticket]
+            symbol = r_data["symbol"]
+            sig = r_data["sig"]
+            entry_px = float(r_data["entry_price"])
+            target_tp = float(r_data["target_tp"])
+            ticket_70 = int(r_data.get("order_70_ticket", 0))
+            be_moved = r_data.get("be_moved", False)
+            digits = r_data.get("digits", 2)
+
+            tick = self.adapter.symbol_info_tick(symbol)
+            if not tick:
+                continue
+
+            curr_px = float(getattr(tick, "bid", 0.0)) if sig == 1 else float(getattr(tick, "ask", 0.0))
+
+            # 1. Comprobar si tramo 70% ya no está abierto (cerró en TP) o si precio superó TP
+            tranche_70_closed = (ticket_70 not in open_pos_map)
+            tp_hit = (curr_px >= target_tp) if sig == 1 else (curr_px <= target_tp)
+
+            if (tranche_70_closed or tp_hit) and not be_moved:
+                atr = self.latest_atr.get(symbol, 0.0)
+                be_lock_offset = (self.cfg.be_lock_atr * atr) if atr > 0 else 0.0
+                target_be_sl = round(entry_px + (sig * be_lock_offset), digits)
+                current_sl = float(getattr(pos, "sl", 0.0))
+
+                should_move = (target_be_sl > current_sl) if sig == 1 else (target_be_sl < current_sl or current_sl == 0.0)
+                if should_move:
+                    act = self._execute_modify_sl(pos, target_be_sl, "RUNNER_BREAKEVEN_PROTECT")
+                    actions.append(act)
+                    self.log(
+                        f"💰 [RUNNER BREAKEVEN] Tramo 70% asegurado. Stop Loss del Runner #{r_ticket} ({symbol}) "
+                        f"movido a Breakeven ({target_be_sl}) con RIESGO CERO."
+                    )
+                r_data["be_moved"] = True
+                self._save_state()
+
+            # 2. Si ya está en Breakeven, aplicar Trailing detrás de la EMA20 en velas cerradas
+            if r_data.get("be_moved", False):
+                tf_code = (
+                    self.adapter.TIMEFRAME_M30
+                    if symbol != "EURUSD" and "IBEX" not in symbol
+                    else self.adapter.TIMEFRAME_M15
+                )
+                rates = self.adapter.copy_rates_from_pos(symbol, tf_code, 1, 30)
+                if rates is not None and len(rates) >= 20:
+                    c_arr = pd.Series([float(r["close"]) for r in rates])
+                    ema20 = float(c_arr.ewm(span=20, adjust=False).mean().iloc[-1])
+                    current_sl = float(getattr(pos, "sl", 0.0))
+
+                    if sig == 1:
+                        target_sl = round(ema20, digits)
+                        if target_sl > current_sl:
+                            act = self._execute_modify_sl(pos, target_sl, "RUNNER_TRAIL_EMA20")
+                            actions.append(act)
+                            self.log(f"📈 [TRAILING EMA20] Subiendo SL de Runner #{r_ticket} ({symbol}): {current_sl} -> {target_sl}")
+                    else:
+                        target_sl = round(ema20, digits)
+                        if target_sl < current_sl or current_sl == 0.0:
+                            act = self._execute_modify_sl(pos, target_sl, "RUNNER_TRAIL_EMA20")
+                            actions.append(act)
+                            self.log(f"📉 [TRAILING EMA20] Bajando SL de Runner #{r_ticket} ({symbol}): {current_sl} -> {target_sl}")
+
+        for r_done in finished_runners:
+            del self.active_runners[r_done]
+            self.log(f"[RUNNER FINALIZADO] Posición Runner #{r_done} cerrada.")
+            self._save_state()
+
+        return actions
+
     def run_cycle(self) -> dict:
         """Ejecuta un ciclo completo de escaneo: sincronización deals, breakeven y evaluación."""
         now_utc = datetime.now(timezone.utc)
         deals_closed = self._sync_deals_history(now_utc)
         friday_actions = self._check_friday_auto_square(now_utc)
         be_actions = self.check_and_apply_causal_breakeven()
+        runner_actions = self.check_and_apply_runner_trailing(now_utc)
 
         evaluations = {}
         for sym in self.cfg.symbols:
@@ -1430,6 +1682,7 @@ class DemoPaperTrader:
             "deals_closed": deals_closed,
             "friday_auto_square": friday_actions,
             "breakeven_actions": be_actions,
+            "runner_actions": runner_actions,
             "evaluations": evaluations,
         }
 
@@ -1479,6 +1732,30 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         type=int,
         default=2,
         help="Límite máximo de índices bursátiles abiertos simultáneamente (default: 2).",
+    )
+    parser.add_argument(
+        "--disable-runner-trailing",
+        action="store_true",
+        default=False,
+        help="Deshabilita la arquitectura híbrida 70/30 de trailing runner.",
+    )
+    parser.add_argument(
+        "--runner-ratio",
+        type=float,
+        default=0.30,
+        help="Fracción de volumen asignada al tramo runner (default: 0.30 = 30%%).",
+    )
+    parser.add_argument(
+        "--max-european-indices",
+        type=int,
+        default=1,
+        help="Límite máximo de índices europeos simultáneos (default: 1).",
+    )
+    parser.add_argument(
+        "--max-us-indices",
+        type=int,
+        default=1,
+        help="Límite máximo de índices americanos simultáneos (default: 1).",
     )
     parser.add_argument(
         "--sl-atr",
@@ -1597,6 +1874,10 @@ def main():
         news_blackout_before_m=args.news_blackout_before_m,
         news_blackout_after_m=args.news_blackout_after_m,
         enable_friday_auto_square=not args.disable_friday_auto_square,
+        enable_runner_trailing=not args.disable_runner_trailing,
+        runner_ratio=args.runner_ratio,
+        max_european_indices=args.max_european_indices,
+        max_us_indices=args.max_us_indices,
     )
 
     trader = DemoPaperTrader(config=config)
